@@ -40,6 +40,30 @@ export function audit(store) {
       const ox = Math.min(Math.max(...xa), Math.max(...xb)) - Math.max(Math.min(...xa), Math.min(...xb)), oy = Math.min(Math.max(...ya), Math.max(...yb)) - Math.max(Math.min(...ya), Math.min(...yb));
       if (ox > 4 && oy > 4) out.overlaps.push(`${lv.name} : ${big[i].def.name.slice(0, 24)} × ${big[j].def.name.slice(0, 24)} (${Math.round(ox)}×${Math.round(oy)})`);
     }
+    // Ouvertures : hors du mur, à cheval sur un angle, ou l'une sur l'autre.
+    const junction = (w, n) => lv.walls.some((o) => o !== w && (o.a === n || o.b === n));
+    for (const w of lv.walls) {
+      const A = lv.nodes[w.a], B = lv.nodes[w.b], L = Math.hypot(B.x - A.x, B.y - A.y);
+      const sorted = [...w.openings].sort((p, q) => p.t - q.t);
+      sorted.forEach((o, i) => {
+        const x = Math.round(A.x + ((B.x - A.x) * o.t) / L), y = Math.round(A.y + ((B.y - A.y) * o.t) / L), tag = `${lv.name} : ${o.name || o.type} ${Math.round(o.width)} @${x},${y}`;
+        if (o.t - o.width / 2 < 12 || o.t + o.width / 2 > L - 12) (out.openingEnds ||= []).push(`${tag} (mur ${Math.round(L)}, t ${Math.round(o.t)})`);
+        if (i && sorted[i - 1].t + sorted[i - 1].width / 2 > o.t - o.width / 2 + 2) (out.openingOverlap ||= []).push(tag);
+        if (o.sill + o.height > lv.height - 2) (out.openingHigh ||= []).push(`${tag} haut ${o.sill + o.height} / ${lv.height}`);
+      });
+      void junction;
+    }
+    // Meubles qui bouchent un passage (zone d'un mètre devant chaque porte ou arche).
+    for (const w of lv.walls) for (const o of w.openings) {
+      if (o.sill > 10) continue;
+      const A = lv.nodes[w.a], B = lv.nodes[w.b], L = Math.hypot(B.x - A.x, B.y - A.y), ux = (B.x - A.x) / L, uy = (B.y - A.y) / L, px = A.x + ux * o.t, py = A.y + uy * o.t, nx = -uy, ny = ux;
+      for (const it of lv.items) {
+        const def = getItem(it.cat); if (!def || def.wall || def.ceiling || (it.z ?? 0) > 20 || ['tapis', 'art', 'rideau', 'terrasse', 'piscine', 'plantation', 'poteau', 'garde-corps'].includes(def.sub) || def.cat === 'exterieur') continue;
+        const C = itemCorners(it, def);
+        const hit = [1, -1].some((sgn) => C.some((q) => { const dx = q.x - px, dy = q.y - py, along = dx * ux + dy * uy, depth = (dx * nx + dy * ny) * sgn; return Math.abs(along) < Math.max(35, o.width / 2 - 10) && depth > 0 && depth < 70; }));
+        if (hit) (out.blockedDoors ||= []).push(`${lv.name} : ${o.name || o.type} @${Math.round(px)},${Math.round(py)} gêné par ${def.name.slice(0, 30)}`);
+      }
+    }
     void li; void pointInPolygon;
   });
   return out;

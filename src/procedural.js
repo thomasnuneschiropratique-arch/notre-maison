@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { solid, fabric, wood, glass, mirror, ceramic, chrome, blackMetal, brass, emissive, finishFromColor, texturedMaterial } from './materials.js';
+import { carModel } from './cars.js';
+import { leafyTree, cypressTree, parasolPine, clippedShrub, flowerBed, poolWaterMaterial, flames } from './foliage.js';
 
 /** UV en mètres par projection sur l'axe dominant, pour que les textures gardent leur échelle réelle. */
 function uvMeters(geo) {
@@ -672,6 +674,8 @@ function classicQuarter(p) {
   const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.04, bevelEnabled: false }); geo.rotateY(-Math.PI / 2); geo.translate(sideX, 0, 0); const side = new THREE.Mesh(geo, white); side.castShadow = side.receiveShadow = true; g.add(side);
   const under = new THREE.Shape(); under.moveTo(-w / 2 + f, 0); under.lineTo(w / 2, 0); under.lineTo(w / 2, h); under.lineTo(-w / 2 + f, rise * (nA + 1)); under.lineTo(-w / 2 + f, 0);
   const u2 = new THREE.ExtrudeGeometry(under, { depth: 0.04, bevelEnabled: false }); u2.translate(0, 0, -d / 2 + f + 0.0); const m2 = new THREE.Mesh(u2, white); m2.castShadow = m2.receiveShadow = true; g.add(m2);
+  // Le dessous de la volée haute est fermé : on ne voit jamais les marches par-dessous.
+  B(g, 0.03, h - 0.02, f, white, w / 2 - 0.015, 0, zB);
   const metal = blackMetal(), gl = glass();
   railRun(g, [sideX, 0.02, d / 2], [sideX, topA, -d / 2 + f + 0.02], 0.95, 'classic', metal, gl);
   railRun(g, [sideX, rise * (nA + 1), -d / 2 + f + 0.02], [w / 2, h, -d / 2 + f + 0.02], 0.95, 'classic', metal, gl);
@@ -840,30 +844,12 @@ function leafBlob(g, mat, x, y, z, sx, sy, sz, seed) {
 }
 
 function hedge(p) {
-  const g = new THREE.Group();
-  const { w = 3, d = 0.6, h = 1.6 } = p;
-  const leaf = texturedMaterial('forrest_ground_01', 0.45, { tint: '#6f9150' });
-  const n = Math.max(2, Math.round(w / 0.5));
-  for (let i = 0; i < n; i++) {
-    const x = -w / 2 + (i + 0.5) * (w / n);
-    leafBlob(g, leaf, x, h / 2, 0, (w / n) * 0.8, h * 0.54, d * 0.75, i * 1.7 + 1);
-  }
+  const g = new THREE.Group(), { w = 3, d = 0.6, h = 1.6 } = p, n = Math.max(1, Math.round(w / 2.4));
+  for (let i = 0; i < n; i++) { const s = clippedShrub({ w: w / n + 0.02, d, h }); s.position.x = -w / 2 + (i + 0.5) * (w / n); g.add(s); }
   return g;
 }
 
-function tree(p) {
-  const g = new THREE.Group();
-  const { h = 5, w = 3.4 } = p;
-  C(g, 0.1, 0.18, h * 0.5, wood('noyer'), 0, 0, 0, 14);
-  const leaf = texturedMaterial('forrest_ground_01', 0.7, { tint: '#7c9c58' });
-  let seed = 11;
-  const rnd = () => (seed = (seed * 48271) % 2147483647) / 2147483647;
-  for (let i = 0; i < 12; i++) {
-    const a = rnd() * 6.28, r = rnd() * w * 0.34, s = 0.5 + rnd() * 0.55;
-    leafBlob(g, leaf, Math.cos(a) * r, h * (0.55 + rnd() * 0.32), Math.sin(a) * r, s * w * 0.3, s * h * 0.17, s * w * 0.3, i * 2.3);
-  }
-  return g;
-}
+function tree(p) { return leafyTree(p); }
 
 function fence(p) {
   const g = new THREE.Group();
@@ -881,8 +867,7 @@ function pool(p) {
   const stone = texturedMaterial('concrete_tiles', 1.5, { tint: '#d9d3c7' });
   for (const sz of [-1, 1]) B(g, w + 0.8, 0.06, 0.4, stone, 0, 0, sz * (d / 2 + 0.2));
   for (const sx of [-1, 1]) B(g, 0.4, 0.06, d, stone, sx * (w / 2 + 0.2), 0, 0);
-  const water = new THREE.MeshPhysicalMaterial({ color: '#4fa8b8', roughness: 0.05, transmission: 0.45, ior: 1.33, transparent: true, opacity: 0.85 });
-  B(g, w, 0.01, d, water, 0, 0.03, 0, 0);
+  B(g, w, 0.01, d, poolWaterMaterial(), 0, 0.03, 0, 0);
   return g;
 }
 
@@ -899,8 +884,10 @@ function fireplace(p) {
   B(g, fw, fh, 0.08, soot, 0, sill, -d / 2 + 0.06, 0); B(g, 0.03, fh, d - 0.1, soot, -fw / 2 + 0.02, sill, 0, 0); B(g, 0.03, fh, d - 0.1, soot, fw / 2 - 0.02, sill, 0, 0);
   B(g, fw + 0.36, 0.08, d + 0.14, solid('#23211f', 0.55), 0, sill - 0.08, 0.08, 0);
   B(g, fw + 0.2, 0.14, d + 0.05, solid('#1b1a1c', 0.6), 0, sill + fh, 0.03, 0);
-  const fire = emissive('#e8430a', 1.1), glow = emissive('#ff9a2e', 1.3);
-  for (let i = 0; i < 11; i++) { const x = -fw * 0.38 + (i * fw * 0.76) / 10; S(g, 0.075, fire, x, sill + 0.17, 0.08, 0.8, 2.3 + (i % 3) * 0.7, 0.8); if (i % 2) S(g, 0.045, glow, x, sill + 0.1, 0.13, 0.8, 1.8, 0.8); }
+  const fl = flames(fw * 0.84, fh * 0.8); fl.position.set(0, sill + 0.08, 0.06); g.add(fl);
+  const emb = emissive('#ff5a14', 0.7), log = solid('#241710', 0.95);
+  for (let i = 0; i < 5; i++) { const m = mesh(new THREE.CylinderGeometry(0.05, 0.06, fw * 0.3, 10), log, -fw * 0.28 + i * fw * 0.14, sill + 0.08 + (i % 2) * 0.05, 0.08 + (i % 2) * 0.05); m.rotation.z = Math.PI / 2 + (i % 3) * 0.12; g.add(m); }
+  B(g, fw * 0.76, 0.03, 0.26, emb, 0, sill + 0.02, 0.08, 0);
   B(g, fw * 0.8, 0.09, 0.2, solid('#2a1a12', 0.9), 0, sill, 0.1, 0.03);
   if (!outdoor && h > 3.2) { const pw = w * 0.56; B(g, pw, h - 1.9, 0.05, walnutMat(), 0, 1.75, d / 2 + 0.01); }
   return g;
@@ -950,35 +937,10 @@ function parasol(p) {
   return g;
 }
 
-function topiary(p) {
-  const g = new THREE.Group(), { w = 0.9, h = 0.9 } = p, leaf = solid('#3e5c31', 0.95);
-  S(g, 0.5, leaf, 0, h / 2, 0, w, h, w);
-  return g;
-}
+function topiary(p) { const { w = 0.9, h = 0.9 } = p; return clippedShrub({ w, d: w, h, ball: true }); }
 
 /** Voiture de sport rouge, silhouette basse à moteur central. Longueur en Z, capot vers +Z. */
-function sportsCar(p) {
-  const g = new THREE.Group(), { w = 1.98, d = 4.6, h = 1.2 } = p;
-  const paint = new THREE.MeshPhysicalMaterial({ color: '#b3100f', roughness: 0.28, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.08 });
-  const side = new THREE.Shape(), L = d / 2, y0 = 0.17;
-  side.moveTo(-L, y0 + 0.14); side.lineTo(-L + 0.04, 0.62); side.lineTo(-L + 0.55, 0.78); side.lineTo(-L * 0.42, 0.86); side.lineTo(-L * 0.08, h * 0.98); side.lineTo(L * 0.2, h * 0.96); side.lineTo(L * 0.52, 0.74); side.lineTo(L * 0.92, 0.6); side.lineTo(L, 0.42); side.lineTo(L * 0.98, y0 + 0.06); side.lineTo(-L * 0.98, y0);
-  const body = new THREE.ExtrudeGeometry(side, { depth: w - 0.16, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.05, bevelSegments: 3, curveSegments: 4 });
-  body.rotateY(-Math.PI / 2); body.translate((w - 0.16) / 2, 0, 0);
-  const m = new THREE.Mesh(body, paint); m.castShadow = m.receiveShadow = true; g.add(m);
-  const dark = new THREE.MeshPhysicalMaterial({ color: '#10141a', roughness: 0.08, metalness: 0.4 });
-  const glassShape = new THREE.Shape();
-  glassShape.moveTo(-L * 0.4, 0.88); glassShape.lineTo(-L * 0.08, h * 1.0); glassShape.lineTo(L * 0.18, h * 0.98); glassShape.lineTo(L * 0.48, 0.78); glassShape.lineTo(L * 0.1, 0.8);
-  const cab = new THREE.ExtrudeGeometry(glassShape, { depth: w * 0.74, bevelEnabled: false });
-  cab.rotateY(-Math.PI / 2); cab.translate(w * 0.37, 0.012, 0);
-  g.add(new THREE.Mesh(cab, dark));
-  const tire = solid('#141416', 0.85), rim = solid('#c9c9cd', 0.3, 0.8), wr = 0.34;
-  for (const sz of [-L * 0.62, L * 0.6]) for (const sx of [-1, 1]) {
-    const t = mesh(new THREE.CylinderGeometry(wr, wr, 0.3, 28), tire, sx * (w / 2 - 0.13), wr, sz); t.rotation.z = Math.PI / 2; g.add(t);
-    const r = mesh(new THREE.CylinderGeometry(wr * 0.62, wr * 0.62, 0.31, 12), rim, sx * (w / 2 - 0.13), wr, sz); r.rotation.z = Math.PI / 2; g.add(r);
-  }
-  for (const sx of [-1, 1]) { B(g, 0.32, 0.05, 0.03, emissive('#fff3d6', 2.2), sx * (w * 0.32), 0.62, L * 0.97, 0); B(g, 0.14, 0.14, 0.03, emissive('#e01818', 1.6), sx * (w * 0.33), 0.62, -L - 0.01, 0); }
-  return g;
-}
+function sportsCar(p) { return carModel(p); }
 
 function canvasMap(W, H, draw) {
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
@@ -1249,27 +1211,16 @@ function vintageParasol(p) {
   return g;
 }
 
-function cypress(p) {
-  const g = new THREE.Group(), { w = 1.1, h = 8 } = p, leaf = texturedMaterial('forrest_ground_01', 0.5, { tint: '#8fbf72', gain: 1.5 });
-  C(g, 0.08, 0.12, h * 0.1, wood('noyer'), 0, 0, 0, 8);
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 18, 26), leaf); body.scale.set(w, h * 0.96, w); body.position.y = h * 0.53; body.castShadow = true; g.add(body);
-  return g;
-}
+function cypress(p) { return cypressTree(p); }
 
-function umbrellaPine(p) {
-  const g = new THREE.Group(), { w = 10, h = 12 } = p, leaf = texturedMaterial('forrest_ground_01', 0.7, { tint: '#55763e' }), bark = wood('noyer'), rnd = brushRnd(7211);
-  C(g, 0.22, 0.42, h * 0.78, bark, 0, 0, 0, 14);
-  for (const a of [0.5, 2.6, 4.7]) { const m = mesh(new THREE.CylinderGeometry(0.08, 0.2, w * 0.4, 8), bark, Math.cos(a) * w * 0.16, h * 0.78, Math.sin(a) * w * 0.16); m.rotation.z = -Math.cos(a) * 1; m.rotation.x = Math.sin(a) * 1; g.add(m); }
-  for (let i = 0; i < 16; i++) { const a = rnd() * 6.28, r = rnd() * w * 0.42; leafBlob(g, leaf, Math.cos(a) * r, h * (0.86 + rnd() * 0.07), Math.sin(a) * r, w * (0.17 + rnd() * 0.1), h * 0.055, w * (0.17 + rnd() * 0.1), i * 1.7); }
-  return g;
-}
+function umbrellaPine(p) { return parasolPine(p); }
 
 export const PROC = {
   sofa, armchair, tvBench, tv, bookcase, table, chair, barStool, bed, mattress: mattressOnly, drawers, wardrobe, desk, officeChair,
   kitchenBase, kitchenWall, kitchenTall, oven, sinkUnit, hob, hood, fridge, dishwasher, washer, worktop, island,
   bathtub, shower, vanity, wc, towelRadiator, mirrorWall, mirrorCabinet, rug, curtain, pendant, floorLamp, tableLamp, picture,
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
-  daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
+  flowerBed, daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
   bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine,
 };

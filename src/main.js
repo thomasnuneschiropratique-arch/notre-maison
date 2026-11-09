@@ -775,6 +775,7 @@ function openingPanel(body, w, o) {
     ${isDoor ? `<div class="field"><label>Ouverture (°)</label><input type="number" id="open" min="0" max="110" step="5" value="${o.open ?? 0}"/></div>
     <div class="btnrow"><button class="btn" id="flip">Inverser le sens</button><button class="btn" id="hinge">Changer le côté</button></div>` : ''}
     <div class="field"><label>Couleur</label><input type="color" id="col" value="${o.color || store.project.style.joinery}" style="height:36px;padding:2px"/></div>
+    ${o.type === 'bay' ? `<div class="field" style="margin-top:8px"><label>Baie ouverte</label><input type="checkbox" id="bayOpen" ${o.opened ? 'checked' : ''} style="width:22px;height:22px;justify-self:end"/></div>` : ''}
     ${isWin ? `<div class="dims" style="margin-top:8px"><div><label>Petits bois : colonnes</label><input type="number" min="1" max="8" id="mc" value="${o.muntins?.[0] ?? 1}"/></div><div><label>Rangées</label><input type="number" min="1" max="12" id="mr" value="${o.muntins?.[1] ?? 1}"/></div><div></div></div>` : ''}
     ${isWin ? `<div class="field"><label>Volet roulant</label><input type="checkbox" id="sh" ${o.shutter ? 'checked' : ''} style="width:22px;height:22px;justify-self:end"/></div>` : ''}
     <div class="btnrow"><button class="btn danger block" id="del">${icon('trash')}Retirer</button></div>
@@ -792,6 +793,7 @@ function openingPanel(body, w, o) {
   $('#col', body).onchange = (e) => live(() => { o.color = e.target.value; });
   const fl = $('#flip', body); if (fl) fl.onclick = () => live(() => { o.flip = !o.flip; });
   const hg = $('#hinge', body); if (hg) hg.onclick = () => live(() => { o.hinge = o.hinge === 'right' ? 'left' : 'right'; });
+  { const el = $('#bayOpen', body); if (el) el.onchange = () => live(() => { o.opened = el.checked; }); }
   for (const k of ['mc', 'mr']) { const el = $(`#${k}`, body); if (el) el.onchange = () => live(() => { const c = Math.max(1, Number($('#mc', body).value) || 1), r = Math.max(1, Number($('#mr', body).value) || 1); o.muntins = c === 1 && r === 1 ? undefined : [c, r]; }); }
   const sh = $('#sh', body); if (sh) sh.onchange = (e) => live(() => { o.shutter = e.target.checked; });
   $('#del', body).onclick = () => plan.deleteSelection();

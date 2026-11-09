@@ -6,6 +6,8 @@ import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -15,6 +17,7 @@ import { buildProc } from './procedural.js';
 import { getItem } from './catalog.js';
 import { getMaterial, configureTextures, materialInfo, glass } from './materials.js';
 import { isPhone, LOW } from './quality.js';
+import { tickLife } from './foliage.js';
 import { TerrainView } from './terrain3d.js';
 import { terrainOf, heightAt, levelBase } from './terrain.js';
 import { sunPosition, pointInPolygon, segmentsCross } from './geometry.js';
@@ -77,8 +80,8 @@ export class View3D {
     const r = this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: false });
     r.setPixelRatio(Math.min(devicePixelRatio, isPhone() ? 1.5 : 2));
     r.shadowMap.autoUpdate = false;
-    r.toneMapping = THREE.AgXToneMapping;
-    r.toneMappingExposure = 1.1;
+    r.toneMapping = THREE.ACESFilmicToneMapping;
+    r.toneMappingExposure = 0.8;
     r.shadowMap.enabled = true;
     r.shadowMap.type = THREE.PCFShadowMap;
     configureTextures(Math.min(LOW ? 4 : 8, r.capabilities.getMaxAnisotropy()), () => this.invalidate(false));
@@ -90,7 +93,7 @@ export class View3D {
     });
     const mgr = THREE.DefaultLoadingManager;
     mgr.onProgress = (url, loaded, total) => { this.pending = total - loaded; store.emit('loading', { loaded, total }); };
-    mgr.onLoad = () => { this.pending = 0; store.emit('loading', null); this.invalidate(false); };
+    mgr.onLoad = () => { this.pending = 0; store.emit('loading', null); this.clearProbes(); this.invalidate(false); };
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(46, 1, 0.08, 6000);
@@ -114,6 +117,12 @@ export class View3D {
     this.scene.add(this.sun, this.sun.target);
     this.hemi = new THREE.HemisphereLight('#dfe8f2', '#b5a48d', 0.25);
     this.scene.add(this.hemi);
+    // Le jour qui entre par les vraies fenêtres : un panneau lumineux par baie proche.
+    RectAreaLightUniformsLib.init();
+    this.windowLights = new THREE.Group(); this.windowLights.visible = false;
+    for (let i = 0; i < (LOW ? 2 : 5); i++) this.windowLights.add(new THREE.RectAreaLight('#e8eff8', 0, 1, 1));
+    this.scene.add(this.windowLights);
+    this.probes = new Map(); this.interior = false; this.roomKey = null;
 
     this.terrain = new TerrainView(this.scene, () => this.invalidate(false));
 
@@ -145,7 +154,12 @@ export class View3D {
     this.gtao = new GTAOPass(this.scene, this.camera, 1, 1);
     this.gtao.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.4, thickness: 1, scale: 1.25, samples: 16, distanceFallOff: 1, screenSpaceRadius: false });
     this.gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
+    // Vitres et feuillages n'assombrissent rien : on les retire du calcul des ombres de contact.
+    const baseHide = this.gtao._overrideVisibility.bind(this.gtao), cache = this.gtao._visibilityCache;
+    this.gtao._overrideVisibility = () => { baseHide(); this.scene.traverse((o) => { if (o.visible && (o.userData.noAO || (o.isMesh && o.material?.transmission > 0))) { o.visible = false; cache.push(o); } }); };
     this.composer.addPass(this.gtao);
+    // Léger halo autour des fenêtres et des lampes, comme sur une vraie photo.
+    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(320, 320), 0.14, 0.55, 2.2));
     this.composer.addPass(new OutputPass());
   }
 
@@ -214,6 +228,7 @@ export class View3D {
   }
 
   rebuild() {
+    this.clearProbes();
     const p = store.project; if (!p) return;
     this.dirty = false;
     disposeTree(this.house);
@@ -337,7 +352,7 @@ export class View3D {
     this.sunDir = dir;
     const name = this.skyFor(alt);
     const day = THREE.MathUtils.smoothstep(alt, -0.06, 0.2);
-    const interior = this.mode === 'walk';
+    const interior = this.interior;
     // Le soleil s'applique tout de suite ; le ciel suit dès qu'il est téléchargé.
     this.applySky(name, dir, interior);
     this.sun.intensity = name === 'couvert' ? 0.5 : 3.9 * day;
@@ -345,10 +360,16 @@ export class View3D {
     this.sun.position.copy(this.sun.target.position).addScaledVector(dir, 44);
     this.sun.castShadow = day > 0.01;
     this.hemi.color.set(interior ? '#ffe6c8' : '#dfe8f2');
-    this.hemi.intensity = (interior ? 0.85 : 0.22) + (this.scene.environment ? 0 : 0.9);
+    this.hemi.intensity = (interior ? 0.1 : 0.22) + (this.scene.environment ? 0 : 0.9);
     this.nightFactor = 1 - day;
+    this.skyGlow = name === 'nuit' ? 0 : (name === 'couvert' ? 1 : 1.7) * day;
+    this.skyTint = name === 'soir' || name === 'matin' ? '#ffdcb8' : '#e8eff8';
+    this.placeWindowLights();
     this.updateLamps();
-    this.renderer.toneMappingExposure = 1.05 * this.env.exposure * (interior ? 1.35 : 1);
+    this.exposureTarget = (interior ? 0.92 : 0.9) * this.env.exposure;
+    if (this.exposureNow === undefined || this.mode !== 'walk') this.exposureNow = this.exposureTarget;
+    this.renderer.toneMappingExposure = this.exposureNow;
+    if (!this.keepProbes) this.clearProbes();
     this.invalidate();
   }
 
@@ -362,11 +383,94 @@ export class View3D {
     const wanted = Math.atan2(dir.x, dir.z);
     const rotY = name === 'nuit' ? 0 : wanted - (-hdriAngle + Math.PI / 2);
     const first = !this.scene.environment;
-    this.scene.environment = sky.tex; this.scene.background = sky.tex;
-    this.scene.environmentRotation.set(0, rotY, 0); this.scene.backgroundRotation.set(0, rotY, 0);
-    this.scene.environmentIntensity = name === 'nuit' ? 0.45 : interior ? 0.55 : 0.6;
+    this.sky = { tex: sky.tex, rotY, intensity: name === 'nuit' ? 0.45 : 1 };
+    this.scene.background = sky.tex;
+    this.scene.backgroundRotation.set(0, rotY, 0);
     this.scene.backgroundIntensity = 1;
+    this.useEnvironment();
     if (first) this.hemi.intensity -= 0.9;
+    this.invalidate(false);
+  }
+
+  /** Dedans : la lumière captée dans la pièce. Dehors, ou en photo : le vrai ciel. */
+  useEnvironment() {
+    const s = this.scene, probe = this.interior && !this.photo ? this.probes.get(this.probeKey())?.tex : null;
+    if (probe) { s.environment = probe; s.environmentRotation.set(0, 0, 0); s.environmentIntensity = 1; }
+    else if (this.sky) { s.environment = this.sky.tex; s.environmentRotation.set(0, this.sky.rotY, 0); s.environmentIntensity = this.interior && !this.photo ? 0.3 : this.sky.intensity; }
+  }
+
+  probeKey() { return this.roomKey; }
+
+  clearProbes() { for (const p of this.probes.values()) p.rt.dispose(); this.probes.clear(); this.probeDirty = this.interior; }
+
+  /** Suit la pièce où l'on marche : éclairage, reflets et exposition s'adaptent. */
+  trackRoom() {
+    if (this.mode !== 'walk') return;
+    const x = this.camera.position.x / M, y = this.camera.position.z / M, lv = store.project.levels[store.levelIndex], a = store.analysis(lv);
+    const i = a.rooms.findIndex((r) => pointInPolygon({ x, y }, r.poly)), key = i >= 0 ? `${store.levelIndex}:${i}` : null;
+    if (key === this.roomKey) return;
+    const wasInside = this.interior;
+    this.roomKey = key; this.interior = i >= 0;
+    if (wasInside !== this.interior) { this.keepProbes = true; this.applyLighting(); this.keepProbes = false; }
+    this.placeWindowLights();
+    this.probeDirty = this.interior && !this.probes.has(key);
+    this.useEnvironment();
+    this.invalidate(false);
+  }
+
+  /** Allume un panneau de lumière sur les fenêtres de la pièce, puis des pièces voisines. */
+  placeWindowLights() {
+    const pool = this.windowLights.children;
+    this.windowLights.visible = this.mode === 'walk' && !this.photo;
+    pool.forEach((l) => { l.intensity = 0; });
+    if (!this.interior || !this.skyGlow || !this.roomKey) { return; }
+    const [li, ri] = this.roomKey.split(':').map(Number), lv = store.project.levels[li], a = store.analysis(lv), room = a.rooms[ri], list = [], base = this.baseOf(li);
+    const cx = this.camera.position.x / M, cy = this.camera.position.z / M;
+    for (const w of lv.walls) {
+      const l = a.sideRoom.get(`${w.id}:L`), r = a.sideRoom.get(`${w.id}:R`);
+      if ((l === undefined) === (r === undefined)) continue;
+      const A = lv.nodes[w.a], B = lv.nodes[w.b], L = Math.hypot(B.x - A.x, B.y - A.y), ux = (B.x - A.x) / L, uy = (B.y - A.y) / L, own = l ?? r;
+      for (const o of w.openings) {
+        if (['door', 'pocket', 'arch', 'passage', 'garage'].includes(o.type)) continue;
+        const px = A.x + ux * o.t, py = A.y + uy * o.t;
+        let nx = -uy, ny = ux;
+        if (!pointInPolygon({ x: px + nx * 30, y: py + ny * 30 }, a.rooms[own].poly)) { nx = -nx; ny = -ny; }
+        const d = Math.hypot(px - cx, py - cy) + (own === ri ? 0 : 900);
+        list.push({ px, py, nx, ny, d, o });
+      }
+    }
+    void room;
+    // Pièce sans fenêtre : ce sont ses lampes qui l'éclairent, à pleine puissance.
+    this.darkRoom = list.filter((f) => f.d < 900).reduce((t, f) => t + (f.o.width * f.o.height) / 1e4, 0) < (a.rooms[ri].area || 0) * 0.3;
+    this.hemi.intensity = this.darkRoom ? 0.42 : 0.2;
+    this.updateLamps();
+    list.sort((p, q) => p.d - q.d);
+    list.slice(0, pool.length).forEach((f, i) => {
+      const l = pool[i], y = base + (f.o.sill + f.o.height / 2) * M;
+      l.width = f.o.width * M; l.height = f.o.height * M; l.intensity = this.skyGlow; l.color.set(this.skyTint);
+      l.position.set((f.px + f.nx * 18) * M, y, (f.py + f.ny * 18) * M);
+      l.lookAt((f.px + f.nx * 300) * M, y - 0.6, (f.py + f.ny * 300) * M);
+    });
+  }
+
+  /** Photographie la pièce à 360° : ses couleurs et ses fenêtres deviennent sa lumière d'ambiance et ses reflets. */
+  captureProbe() {
+    this.probeDirty = false;
+    const key = this.roomKey;
+    if (!key || this.photo || this.probes.has(key) || !this.sky) return;
+    const [li, ri] = key.split(':').map(Number), c = store.analysis(store.project.levels[li]).rooms[ri].center, s = this.scene;
+    const size = LOW ? 64 : 192;
+    this.cubeRT ||= new THREE.WebGLCubeRenderTarget(size, { type: THREE.HalfFloatType, generateMipmaps: false });
+    this.cubeCam ||= new THREE.CubeCamera(0.05, 400, this.cubeRT);
+    this.pmrem ||= new THREE.PMREMGenerator(this.renderer);
+    this.cubeCam.position.set(c.x * M, this.baseOf(li) + 1.45, c.y * M);
+    s.environment = this.sky.tex; s.environmentRotation.set(0, this.sky.rotY, 0); s.environmentIntensity = 0.32;
+    if (!LOW) { this.cubeCam.update(this.renderer, s); const first = this.pmrem.fromCubemap(this.cubeRT.texture); s.environment = first.texture; s.environmentRotation.set(0, 0, 0); s.environmentIntensity = 0.9; this.cubeCam.update(this.renderer, s); first.dispose(); }
+    else this.cubeCam.update(this.renderer, s);
+    const rt = this.pmrem.fromCubemap(this.cubeRT.texture);
+    this.probes.set(key, { rt, tex: rt.texture });
+    if (this.probes.size > (LOW ? 4 : 24)) { const [old, v] = this.probes.entries().next().value; v.rt.dispose(); this.probes.delete(old); }
+    this.useEnvironment();
     this.invalidate(false);
   }
 
@@ -392,7 +496,7 @@ export class View3D {
     list.sort((a, b) => a.d - b.d);
     this.lampLights.children.forEach((pl, i) => {
       const e = list[i];
-      pl.intensity = e ? e.l.intensity * (0.35 + 0.65 * (this.nightFactor ?? 0)) : 0;
+      pl.intensity = e ? e.l.intensity * (this.interior && this.darkRoom ? 1.8 : 0.55 + 0.45 * (this.nightFactor ?? 0)) : 0;
       if (e) { pl.color.set(e.l.color); pl.position.copy(e.v); }
     });
     this.invalidate(false);
@@ -578,7 +682,7 @@ export class View3D {
   // ——— Visite à pied ———
   startWalk(spot) {
     this.camera.fov = 78; this.camera.updateProjectionMatrix();
-    this.mode = 'walk';
+    this.mode = 'walk'; this.roomKey = undefined;
     this.controls.enabled = false;
     const lv = store.level;
     const li = store.levelIndex;
@@ -599,9 +703,12 @@ export class View3D {
   }
 
   stopWalk() {
-    this.mode = 'orbit';
+    this.mode = 'orbit'; this.interior = false; this.roomKey = null;
+    this.windowLights.visible = false;
     this.camera.fov = 46; this.camera.updateProjectionMatrix();
     this.controls.enabled = true;
+    this.applyLighting();
+    this.useEnvironment();
     this.frame();
     store.emit('walk', false);
   }
@@ -866,6 +973,24 @@ export class View3D {
     if (this.lost) return;
     if (this.lampsDirty) this.applyLamps();
     if (this.photo) { this.photoFrame(); return; }
+    if (this.mode === 'walk') {
+      this.trackRoom();
+      if (this.lampsDirty) this.applyLamps();
+      if (this.probeDirty && !this.pending) this.captureProbe();
+      if (Math.abs(this.exposureNow - this.exposureTarget) > 0.002) { this.exposureNow = THREE.MathUtils.damp(this.exposureNow, this.exposureTarget, 3.5, dt); this.renderer.toneMappingExposure = this.exposureNow; this.needsRender = true; }
+    }
+    // Dehors, le vent et l'eau bougent ; un appareil qui peine reste sur une image fixe.
+    const outdoors = this.preset === 'exterior' || (this.mode === 'walk' && !this.interior);
+    if (outdoors && !LOW && !this.lifeOff && !document.hidden && t - (this.lifeT || 0) > 66) {
+      const gap = t - (this.lifeT || t);
+      this.lifeT = t; tickLife(t / 1000);
+      if (!this.needsRender && this.composer && !this.pending) {
+        this.composer.render(); this.finalPending = false;
+        if (gap < 500) { this.lifeAvg = (this.lifeAvg ?? gap) * 0.95 + gap * 0.05; if (this.lifeAvg > 130) this.lifeOff = true; }
+        return;
+      }
+      this.needsRender = true;
+    }
     if (this.needsRender) {
       // En mouvement : image directe, fluide. À l'arrêt : image finale avec les ombres de contact.
       this.needsRender = false;
@@ -902,6 +1027,7 @@ export class View3D {
     const { WebGLPathTracer, DenoiseMaterial } = await import('three-gpu-pathtracer');
     const glassMat = glass();
     const saved = { op: glassMat.opacity, tr: glassMat.transparent };
+    this.windowLights.visible = false;
     glassMat.opacity = 1; glassMat.transparent = false;
 
     const pt = new WebGLPathTracer(this.renderer);
@@ -928,6 +1054,9 @@ export class View3D {
     };
 
     this.photo = { pt, target, onProgress, saved, denoise };
+    if (this.terrain.meadow) this.terrain.meadow.visible = false;
+    if (this.terrain.birds) this.terrain.birds.visible = false;
+    this.useEnvironment();
     this.applyLamps();
     await new Promise((r) => setTimeout(r, 40));
     this.scene.updateMatrixWorld(true);
@@ -962,6 +1091,10 @@ export class View3D {
     g.opacity = saved.op; g.transparent = saved.tr;
     pt.dispose(); denoise.dispose?.();
     this.photo = null;
+    if (this.terrain.meadow) this.terrain.meadow.visible = true;
+    if (this.terrain.birds) this.terrain.birds.visible = true;
+    this.windowLights.visible = this.mode === 'walk';
+    this.useEnvironment();
     this.renderer.setRenderTarget(null);
     this.updateSelection();
     this.applyLamps();

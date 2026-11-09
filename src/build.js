@@ -263,7 +263,8 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
   const pf = grid ? 0.03 : 0.045;
   if (o.type === 'atelier') { const bars = Math.max(1, Math.round(h / 0.55) - 1); for (let j = 1; j <= bars; j++) box(g, innerW, 0.022, 0.03, joinery, 0, (j * h) / (bars + 1), zOff); }
   for (let i = 0; i < leaves; i++) {
-    const x = -innerW / 2 + leafW / 2 + i * leafW;
+    // Baie ouverte : un vantail sur deux est glissé derrière son voisin.
+    const x = -innerW / 2 + leafW / 2 + i * leafW - (o.opened && o.type === 'bay' && i % 2 ? leafW * 0.93 : 0);
     const slide = o.type === 'bay' ? (i % 2 ? 0.02 : -0.02) : 0;
     box(g, pf, h - 2 * fw, 0.04, joinery, x - leafW / 2 + pf / 2, h / 2, zOff + slide);
     box(g, pf, h - 2 * fw, 0.04, joinery, x + leafW / 2 - pf / 2, h / 2, zOff + slide);
@@ -452,16 +453,18 @@ export function buildRoof(project, level, baseY, zone) {
   const ov = roof.overhang;
   const alongX = roof.ridge === 'x' || (roof.ridge === 'auto' && b.x1 - b.x0 >= b.y1 - b.y0);
   // Repère local : s le long du faîtage, t en travers.
-  const sM = zone?.endCut ? 0 : maxT, s0 = (alongX ? b.x0 : b.y0) - sM, s1 = (alongX ? b.x1 : b.y1) + sM;
+  const cutS0 = zone?.endCut || zone?.endA, cutS1 = zone?.endCut || zone?.endB, s0 = (alongX ? b.x0 : b.y0) - (cutS0 ? 0 : maxT), s1 = (alongX ? b.x1 : b.y1) + (cutS1 ? 0 : maxT);
   // Un pignon qui croise le toit principal ne doit jamais descendre dans les pièces : pas de débord sur ses côtés.
-  const ovT = zone?.flush ? 0 : ov, tM = zone?.flush ? 0 : maxT;
-  const t0 = (alongX ? b.y0 : b.x0) - tM, t1 = (alongX ? b.y1 : b.x1) + tM;
+  // `flushA` : seul le côté bas ou gauche s'arrête contre un mur voisin.
+  const ovT = zone?.flush ? 0 : ov, tM = zone?.flush ? 0 : maxT, ovA = zone?.flushA ? 0 : ovT, ovB = zone?.flushB ? 0 : ovT;
+  const t0 = (alongX ? b.y0 : b.x0) - (zone?.flushA ? 0 : tM), t1 = (alongX ? b.y1 : b.x1) + (zone?.flushB ? 0 : tM);
   const slope = Math.tan((roof.pitch * Math.PI) / 180);
   const P = (s, t, y) => (alongX ? [s * M, y, t * M] : [t * M, y, s * M]);
   const half = (t1 - t0) / 2, tm = (t0 + t1) / 2;
-  const ridgeY = top + (half + ovT) * slope * M;
-  const eaveY = top - ovT * slope * M;
-  const ovS = zone?.endCut ? 0 : ov, sA = s0 - ovS, sB = s1 + ovS, tA = t0 - ovT, tB = t1 + ovT;
+  // Un toit sans débord est juste au-dessus du plafond, sans se confondre avec lui.
+  const lift = zone?.flush || zone?.flushA || zone?.flushB ? 0.05 : 0, ridgeY = top + (half + ovT) * slope * M + lift;
+  const eaveY = top - ovT * slope * M + lift, eaveA = top - ovA * slope * M + lift, eaveB = top - ovB * slope * M + lift;
+  const sA = s0 - (cutS0 ? 0 : ov), sB = s1 + (cutS1 ? 0 : ov), tA = t0 - ovA, tB = t1 + ovB;
   const hipIn = roof.type === 'hip' ? half + ovT : 0;
   const rA = sA + hipIn, rB = sB - hipIn;
   const roofB = new QuadBatch(), gable = new QuadBatch();
@@ -486,8 +489,8 @@ export function buildRoof(project, level, baseY, zone) {
     }
     box(g, 0.01, 0.01, 0.01, eaveMat, 0, top, 0);
   } else {
-    addPlane(P(sA, tA, eaveY), P(sB, tA, eaveY), P(rB, tm, ridgeY), P(rA, tm, ridgeY));
-    addPlane(P(sB, tB, eaveY), P(sA, tB, eaveY), P(rA, tm, ridgeY), P(rB, tm, ridgeY));
+    addPlane(P(sA, tA, eaveA), P(sB, tA, eaveA), P(rB, tm, ridgeY), P(rA, tm, ridgeY));
+    addPlane(P(sB, tB, eaveB), P(sA, tB, eaveB), P(rA, tm, ridgeY), P(rB, tm, ridgeY));
     if (roof.type === 'hip') {
       addPlane(P(sA, tA, eaveY), P(sA, tA, eaveY), P(rA, tm, ridgeY), P(sA, tB, eaveY));
       addPlane(P(sB, tB, eaveY), P(sB, tB, eaveY), P(rB, tm, ridgeY), P(sB, tA, eaveY));

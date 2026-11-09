@@ -1,10 +1,12 @@
 // Terrain en 3D : relief découpé sous la maison, sol peint, paysage jusqu'à l'horizon.
 import * as THREE from 'three';
 import { getMaterial } from './materials.js';
+import { getItem } from './catalog.js';
 import { GROUNDS, materialInfo } from './materials-data.js';
 import { T_N, T_SIZE, terrainOf, heightAt, environmentOf, fbm } from './terrain.js';
 import { pointInPolygon } from './geometry.js';
 import { LOW } from './quality.js';
+import { buildMeadow, birdFlock, distantTrees } from './foliage.js';
 
 const M = 0.01;
 const wet = () => new THREE.MeshStandardMaterial({ color: '#2f5f78', roughness: 0.07, metalness: 0.15 });
@@ -127,20 +129,22 @@ function scatter(hAt, env, cx, cz) {
     for (const i of g.index.array) idx.push(start + i);
     g.dispose();
   };
-  const cone = new THREE.ConeGeometry(1, 1, 7, 1), blob = new THREE.IcosahedronGeometry(1, 1), cube = new THREE.BoxGeometry(1, 1, 1);
+  const cone = new THREE.ConeGeometry(1, 1, 7, 1), blob = new THREE.IcosahedronGeometry(1, 2), cube = new THREE.BoxGeometry(1, 1, 1);
+  // Silhouette irrégulière et facettes : au loin, ça se lit comme un feuillage.
+  { const q = blob.attributes.position; for (let i = 0; i < q.count; i++) { const x = q.getX(i), y = q.getY(i), z = q.getZ(i), k = 1 + 0.16 * Math.sin(7 * x + 3) * Math.sin(6 * y + 1) * Math.sin(8 * z + 2) + 0.07 * Math.sin(17 * x + y * 13); q.setXYZ(i, x * k, y * k, z * k); } blob.computeVertexNormals(); }
   if (!blob.index) blob.setIndex([...Array(blob.attributes.position.count).keys()]);
   const mat = new THREE.Matrix4(), c = new THREE.Color();
   let seed = 3;
   const R = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const count = Math.round(env.trees * (LOW ? 0.4 : 1));
+  const count = Math.round(env.trees * (LOW ? 0.4 : 1)), leafy = [];
   for (let i = 0; i < count; i++) {
-    const a = R() * Math.PI * 2, r = 130 + R() ** 1.4 * 900, x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r, y = hAt(x, z);
+    const a = R() * Math.PI * 2, r = 85 + R() ** 1.4 * 900, x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r, y = hAt(x, z);
     if (env.sea !== undefined && y < env.sea + 1) continue;
     const h = 7 + R() * 11, w = h * (0.28 + R() * 0.16);
-    c.set(env.tree).multiplyScalar(0.75 + R() * 0.5).lerp(new THREE.Color('#b4c3d0'), Math.min(0.6, r / 1300));
+    c.set(env.tree).multiplyScalar(0.75 + R() * 0.5).lerp(new THREE.Color('#b4c3d0'), Math.min(0.42, r / 2200));
     if (env.id === 'neige') c.lerp(new THREE.Color('#ffffff'), 0.45);
     if (env.id === 'foret' || env.id === 'montagne') add(cone, mat.compose(new THREE.Vector3(x, y + h / 2, z), new THREE.Quaternion(), new THREE.Vector3(w, h, w)), c);
-    else for (let b = 0; b < 2; b++) add(blob, mat.compose(new THREE.Vector3(x + (R() - 0.5) * w, y + h * (0.45 + b * 0.2), z + (R() - 0.5) * w), new THREE.Quaternion().setFromEuler(new THREE.Euler(R() * 3, R() * 3, R() * 3)), new THREE.Vector3(w * (0.95 + R() * 0.4), h * (0.36 + R() * 0.14), w * (0.95 + R() * 0.4))), c);
+    else leafy.push({ x, y: y - 0.3, z, w: w * 2.4, h: h * 1.1, color: c.clone().multiplyScalar(3.4) });
   }
   if (env.city) for (let i = 0; i < (LOW ? 240 : 620); i++) {
     const a = R() * Math.PI * 2, r = 90 + R() * 800, x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r;
@@ -148,14 +152,14 @@ function scatter(hAt, env, cx, cz) {
     c.set(R() > 0.5 ? '#d9d2c4' : '#b9aa96').multiplyScalar(0.8 + R() * 0.3);
     add(cube, mat.compose(new THREE.Vector3(x, hAt(x, z) + h / 2, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), R() * 0.5), new THREE.Vector3(w, h, d)), c);
   }
-  if (!pos.length) return null;
+  if (!pos.length) return { leafy };
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array((pos.length / 3) * 2), 2));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
   g.setIndex(idx);
-  return g;
+  return { geo: g, leafy };
 }
 
 const images = new Map();
@@ -202,8 +206,19 @@ async function bakeGround(project, m) {
   tex.offset.set((half - cx) / T_SIZE, (half - cy) / T_SIZE);
   tex.flipY = false;
   const mat = getMaterial(project.site.ground).clone();
-  mat.map = tex; mat.color.set('#ffffff'); mat.needsUpdate = true;
+  mat.map = tex; mat.color.setScalar(Math.min(baseInfo.gain || 1, 1.6)); mat.needsUpdate = true;
   return mat;
+}
+
+/** Terrasses et piscines : pas d'herbe dessus. */
+function outdoorSlabs(project) {
+  const out = [];
+  for (const l of project.levels) for (const it of l.items) {
+    const def = getItem(it.cat); if (!def || !['terrasse', 'piscine'].includes(def.sub)) continue;
+    const a = (it.rot || 0) % 180 === 90, w = (a ? it.d ?? def.d : it.w ?? def.w) / 2 + 8, d = (a ? it.w ?? def.w : it.d ?? def.d) / 2 + 8;
+    out.push([Math.round(it.x - w), Math.round(it.y - d), Math.round(it.x + w), Math.round(it.y + d)]);
+  }
+  return out;
 }
 
 export class TerrainView {
@@ -213,12 +228,13 @@ export class TerrainView {
   /** `polys` : pièces à ne pas recouvrir de terre. */
   update(project, polys, force) {
     const m = terrainOf(project), env = environmentOf(project);
-    const sig = `${JSON.stringify(polys)}|${project.site.ground}`;
+    const slabs = outdoorSlabs(project), sig = `${JSON.stringify(polys)}|${project.site.ground}|${JSON.stringify(slabs)}`;
     const stamp = m?.src ?? 'plat';
     const farSig = `${env.id}|${stamp}`;
     if (force || sig !== this.sig || stamp !== this.stamp) {
       this.sig = sig; this.stamp = stamp;
       this.rebuildNear(project, m, polys);
+      this.rebuildMeadow(project, m, polys, slabs);
     }
     if (farSig !== this.farSig) { this.farSig = farSig; this.rebuildFar(m, env); }
   }
@@ -234,6 +250,25 @@ export class TerrainView {
     if (m && m.p.some((v) => v)) bakeGround(project, m).then((mat) => { if (token === this.bakeToken && this.near === mesh) { mesh.material = mat; this.onChange?.(); } }).catch(() => {});
   }
 
+  /** Herbe, fleurs et oiseaux, seulement sur un jardin engazonné. */
+  rebuildMeadow(project, m, polys, slabs) {
+    if (this.meadow) { this.group.remove(this.meadow); this.meadow.traverse((o) => o.geometry?.dispose()); this.meadow.children.forEach((o) => o.dispose?.()); this.meadow = null; }
+    if (!m || !/herbe|grass|pelouse/i.test(`${project.site.ground} ${materialInfo(project.site.ground)?.name || ''}`)) return;
+    const cx = m.cx * M, cz = m.cy * M, half = (T_N - 1) / 2;
+    const accept = (dx, dz) => {
+      const x = cx + dx, z = cz + dz, gx = Math.round(dx + half), gz = Math.round(dz + half);
+      if (gx < 0 || gz < 0 || gx >= T_N || gz >= T_N || m.p[gz * T_N + gx]) return null;
+      const X = x * 100, Y = z * 100;
+      if (slabs.some((s) => X > s[0] && X < s[2] && Y > s[1] && Y < s[3])) return null;
+      if (polys.some((p) => pointInPolygon({ x: X, y: Y }, p))) return null;
+      return { x, y: heightAt(m, X, Y), z };
+    };
+    this.meadow = buildMeadow(accept);
+    this.group.add(this.meadow);
+    if (!this.birds) { this.birds = birdFlock(0, 0); this.group.add(this.birds); }
+    this.birds.position.set(cx, 0, cz);
+  }
+
   rebuildFar(m, env) {
     for (const e of this.extras) { this.group.remove(e); e.geometry.dispose(); }
     this.extras = [];
@@ -241,7 +276,9 @@ export class TerrainView {
     const mk = (geo, mat) => { const x = new THREE.Mesh(geo, mat); x.receiveShadow = false; x.userData.kind = 'landscape'; this.group.add(x); this.extras.push(x); return x; };
     this.vmat ||= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 });
     mk(farGeometry((x, z) => hAt(x, z) - 0.35, env, cx, cz), this.vmat);
-    const s = scatter(hAt, env, cx, cz); if (s) mk(s, this.vmat);
+    const s = scatter(hAt, env, cx, cz);
+    if (s.geo) mk(s.geo, this.vmat);
+    if (s.leafy.length) for (const t of distantTrees(s.leafy)) { this.group.add(t); this.extras.push(t); }
     if (env.sea !== undefined) { const w = mk(new THREE.PlaneGeometry(6000, 6000), wet()); w.rotation.x = -Math.PI / 2; w.position.set(cx, env.sea, cz); }
     this.onChange?.();
   }

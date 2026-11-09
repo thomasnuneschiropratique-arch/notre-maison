@@ -55,7 +55,9 @@ export function getMaterial(id) {
   const info = materialInfo(id);
   let m;
   if (info?.hex) {
-    m = new THREE.MeshStandardMaterial({ color: new THREE.Color(info.hex), roughness: 0.82, metalness: 0 });
+    m = new THREE.MeshStandardMaterial({ color: new THREE.Color(info.hex), roughness: 0.78, metalness: 0, normalMap: scaled(loadTex('clay_plaster', 'nor', false), 1.4) });
+    // Un enduit peint n'est jamais parfaitement lisse : ce léger grain accroche la lumière rasante.
+    m.normalScale.set(0.14, 0.14);
     matCache.set(id, m);
   } else if (info?.t) {
     m = texturedMaterial(info.t, info.s, { tint: info.tint, gain: info.gain });

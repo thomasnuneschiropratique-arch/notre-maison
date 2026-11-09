@@ -92,8 +92,8 @@ export const ROOFS = [
 ];
 
 export const GROUNDS = [
-  { id: 'grass', name: 'Pelouse', t: 'sparse_grass', s: 3.5, tint: '#93d858', gain: 1.65 },
-  { id: 'gravel', name: 'Gravier', t: 'gravelly_sand', s: 3 },
+  { id: 'grass', name: 'Pelouse', t: 'sparse_grass', s: 3.5, tint: '#93d858', gain: 2.3 },
+  { id: 'gravel', name: 'Gravier', t: 'gravelly_sand', s: 3, tint: '#cfcabf' },
   { id: 'forest', name: 'Sous-bois', t: 'forrest_ground_01', s: 4 },
   { id: 'prairie', name: 'Prairie', t: 'sparse_grass', s: 3.5, tint: '#c6cf72', gain: 1.5 },
   { id: 'terre', name: 'Terre', t: 'brown_mud_dry', s: 4 },
