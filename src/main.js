@@ -676,7 +676,7 @@ function renderStyle(body) {
     <div class="field"><label>Latitude</label><input type="number" step="0.01" id="lat" value="${p.site.lat}"/></div>
     <div class="field"><label>Longitude</label><input type="number" step="0.01" id="lon" value="${p.site.lon}"/></div>
     <div class="field"><label>Orientation du nord (°)</label><input type="number" id="north" value="${p.site.north}"/></div>
-    <p class="note">Réglé par défaut sur Albi. Le soleil de la vue 3D suit sa position réelle à cet endroit : tu peux vérifier quelle pièce est éclairée le matin ou le soir.</p>
+    <p class="note">Réglé par défaut sur la périphérie de Toulouse. Indique les coordonnées exactes du terrain une fois choisi. Le soleil de la vue 3D suit sa position réelle à cet endroit : tu peux vérifier quelle pièce est éclairée le matin ou le soir.</p>
     <h3 class="s">${esc(lv.name)}</h3>
     <div class="field wide"><label>Nom</label><input id="lvn" value="${esc(lv.name)}"/></div>
     <div class="field"><label>Hauteur sous plafond (cm)</label><input type="number" id="lvh" value="${lv.height}"/></div>
@@ -961,6 +961,8 @@ function templatePicker() {
 }
 
 function openProject(p) {
+  // Les projets créés avec l'ancien réglage par défaut passent sur Toulouse.
+  if (p.site?.city === 'Albi') Object.assign(p.site, { lat: 43.6, lon: 1.44, city: 'Périphérie de Toulouse' });
   setCustom(p.custom);
   store.levelIndex = 0;
   store.load(p);

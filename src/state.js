@@ -25,7 +25,7 @@ export function newLevel(name = 'Rez-de-chaussée', height = 260) {
 export function newProject(name = 'Notre maison') {
   return {
     v: 1, id: uid('P'), name, updated: Date.now(),
-    site: { lat: 43.93, lon: 2.15, north: 0, ground: 'grass', city: 'Albi' },
+    site: { lat: 43.6, lon: 1.44, north: 0, ground: 'grass', city: 'Périphérie de Toulouse' },
     style: { facade: 'facade_enduit', roof: 'roof_terracotta', joinery: '#3b3f43' },
     roof: { type: 'gable', pitch: 32, overhang: 45, ridge: 'auto' },
     levels: [newLevel()],

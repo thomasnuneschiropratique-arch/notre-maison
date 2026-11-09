@@ -127,7 +127,7 @@ function compute(project, s, analyze) {
   const pctNot = s.vendeur === 'particulier' ? 0.075 : 0.025;
   add(terrain, 'notaire', `Frais de notaire (${s.vendeur === 'particulier' ? 'vendeur particulier' : 'lotisseur'})`, s.terrain, '€', pctNot, { note: 'Environ 7 à 8 % chez un particulier, 2 à 3 % si le vendeur est assujetti à la TVA.' });
   add(terrain, 'bornage', 'Bornage par un géomètre', 1, 'forfait', [900, 1200, 1500], { est: true });
-  add(terrain, 'sol', 'Étude de sol G1 + G2', 1, 'forfait', [1200, 1800, 3000], { note: 'Plus cher sur terrain argileux ou en pente, fréquent dans le Tarn.' });
+  add(terrain, 'sol', 'Étude de sol G1 + G2', 1, 'forfait', [1200, 1800, 3000], { note: 'Plus cher sur terrain argileux ou en pente.' });
 
   // ——— Gros œuvre ———
   const go = G('grosoeuvre', 'Gros œuvre et toiture');
@@ -265,7 +265,7 @@ function compute(project, s, analyze) {
   const baseTA = Math.min(m.taxable, 100) * (TA_VALEUR / 2) + Math.max(0, m.taxable - 100) * TA_VALEUR;
   const poolArea = items.filter((l) => l.def.sub === 'piscine').reduce((t, l) => t + ((l.it.w ?? l.def.w) * (l.it.d ?? l.def.d)) / 1e4, 0);
   const base = baseTA + poolArea * TA_PISCINE;
-  add(tax, 'ta', `Taxe d'aménagement (${String(s.commune + s.dept).replace('.', ',')} %)`, base, '€', (s.commune + s.dept) / 100, { plan: true, note: '892 €/m² en 2026, moitié pour les 100 premiers m². Taux pris au maximum par prudence : à confirmer en mairie.' });
+  add(tax, 'ta', `Taxe d'aménagement (${String(s.commune + s.dept).replace('.', ',')} %)`, base, '€', (s.commune + s.dept) / 100, { plan: true, note: '892 €/m² en 2026, moitié pour les 100 premiers m². Le taux dépend de la commune : 5 % au plus en général, jusqu’à 20 % dans certains secteurs. À confirmer en mairie.' });
   add(tax, 'tap', "Taxe d'archéologie préventive (0,40 %)", base, '€', TAP, { plan: true });
   finalize(tax);
 
