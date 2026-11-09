@@ -1,0 +1,6204 @@
+[
+{
+"cat": "salon",
+"sub": "canape",
+"name": "EKTORP",
+"type": "canapé 2 places",
+"price": 699.0,
+"w": 24.0,
+"d": 88.0,
+"h": 88.0,
+"dims": {
+"largeur accoudoir": 24.0,
+"profondeur": 88.0,
+"hauteur coussins dossier inclus": 88.0,
+"prof. assise": 49.0,
+"haut. assise": 45.0,
+"largeur": 179.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/ektorp-canape-2-places-alhamn-bleu-gris-fonce-s89628682/",
+"slug": "ektorp-canape-2-places-alhamn-bleu-gris-fonce-s89628682"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "EKTORP",
+"type": "canapé 2 places",
+"price": 699.0,
+"w": 24.0,
+"d": 88.0,
+"h": 88.0,
+"dims": {
+"largeur accoudoir": 24.0,
+"profondeur": 88.0,
+"hauteur coussins dossier inclus": 88.0,
+"prof. assise": 49.0,
+"haut. assise": 45.0,
+"largeur": 179.0
+},
+"color": "#d4ab4a",
+"url": "https://www.ikea.com/fr/fr/p/ektorp-canape-2-places-alhamn-jaune-fonce-brun-s19628685/",
+"slug": "ektorp-canape-2-places-alhamn-jaune-fonce-brun-s19628685"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "EKTORP",
+"type": "canapé 2 places",
+"price": 699.0,
+"w": 24.0,
+"d": 88.0,
+"h": 88.0,
+"dims": {
+"largeur accoudoir": 24.0,
+"profondeur": 88.0,
+"hauteur coussins dossier inclus": 88.0,
+"prof. assise": 49.0,
+"haut. assise": 45.0,
+"largeur": 179.0
+},
+"color": "#8a3a2e",
+"url": "https://www.ikea.com/fr/fr/p/ektorp-canape-2-places-alhamn-rouge-orange-fonce-s69628678/",
+"slug": "ektorp-canape-2-places-alhamn-rouge-orange-fonce-s69628678"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "FRIHETEN",
+"type": "canapé 3 places convertible",
+"price": 549.0,
+"w": 225.0,
+"d": 105.0,
+"h": 83.0,
+"dims": {
+"long. couchage": 199.0,
+"larg. couchage": 144.0,
+"profondeur": 105.0,
+"hauteur": 83.0,
+"prof. assise": 61.0,
+"haut. assise": 46.0,
+"largeur": 225.0
+},
+"color": "#c6793c",
+"url": "https://www.ikea.com/fr/fr/p/friheten-canape-3-places-convertible-faringe-brun-orange-90551224/",
+"slug": "friheten-canape-3-places-convertible-faringe-brun-orange-90551224"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "FRIHETEN",
+"type": "canapé 3 places convertible",
+"price": 549.0,
+"w": 225.0,
+"d": 105.0,
+"h": 83.0,
+"dims": {
+"long. couchage": 199.0,
+"larg. couchage": 144.0,
+"profondeur": 105.0,
+"hauteur": 83.0,
+"prof. assise": 61.0,
+"haut. assise": 46.0,
+"largeur": 225.0
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/friheten-canape-3-places-convertible-faringe-gris-clair-60551225/",
+"slug": "friheten-canape-3-places-convertible-faringe-gris-clair-60551225"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "FRIHETEN",
+"type": "canapé convertible angle+rangement",
+"price": 649.0,
+"w": 230.0,
+"d": 151.0,
+"h": 86.0,
+"dims": {
+"profondeur": 151.0,
+"prof. assise": 78.0,
+"haut. assise": 44.0,
+"larg. couchage": 140.0,
+"long. couchage": 204.0,
+"hauteur coussins dossier inclus": 86.0,
+"hauteur dossier": 66.0,
+"largeur": 230.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/friheten-canape-convertible-angle-rangement-bomstad-noir-s69216818/",
+"slug": "friheten-canape-convertible-angle-rangement-bomstad-noir-s69216818"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "GLOSTAD",
+"type": "canapé 2 pl + méridienne",
+"price": 169.0,
+"w": 58.0,
+"d": 78.0,
+"h": 57.0,
+"dims": {
+"hauteur accoudoir": 57.0,
+"profondeur": 78.0,
+"hauteur espace sous meuble": 23.0,
+"prof. assise": 54.0,
+"profondeur d'assise, méridienne": 122.0,
+"haut. assise": 41.0,
+"larg. assise": 114.0,
+"largeur d'assise, méridienne": 58.0,
+"largeur": 121.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/glostad-canape-2-pl-meridienne-knisa-gris-fonce-s49543920/",
+"slug": "glostad-canape-2-pl-meridienne-knisa-gris-fonce-s49543920"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "GLOSTAD",
+"type": "canapé 2 places",
+"price": 119.0,
+"w": 3.5,
+"d": 78.0,
+"h": 57.0,
+"dims": {
+"hauteur accoudoir": 57.0,
+"largeur accoudoir": 3.5,
+"profondeur": 78.0,
+"hauteur espace sous meuble": 23.0,
+"hauteur dossier": 68.0,
+"prof. assise": 54.0,
+"haut. assise": 41.0,
+"larg. assise": 114.0,
+"largeur": 121.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/glostad-canape-2-places-knisa-gris-fonce-50489012/",
+"slug": "glostad-canape-2-places-knisa-gris-fonce-50489012"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "GLOSTAD",
+"type": "canapé 3 places avec méridienne",
+"price": 199.0,
+"w": 58.0,
+"d": 78.0,
+"h": 57.0,
+"dims": {
+"hauteur accoudoir": 57.0,
+"profondeur": 78.0,
+"hauteur espace sous meuble": 23.0,
+"hauteur": 68.0,
+"prof. assise": 54.0,
+"profondeur d'assise, méridienne": 122.0,
+"haut. assise": 41.0,
+"larg. assise": 164.0,
+"largeur d'assise, méridienne": 58.0,
+"largeur": 171.0,
+"profondeur méridienne": 146.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/glostad-canape-3-places-avec-meridienne-knisa-gris-fonce-s89542669/",
+"slug": "glostad-canape-3-places-avec-meridienne-knisa-gris-fonce-s89542669"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "HYLTARP",
+"type": "canapé 2 places convertible",
+"price": 1149.0,
+"w": 11.0,
+"d": 93.0,
+"h": 63.0,
+"dims": {
+"hauteur accoudoir": 63.0,
+"largeur accoudoir": 11.0,
+"hauteur du lit": 52.0,
+"long. couchage": 200.0,
+"larg. couchage": 140.0,
+"profondeur": 93.0,
+"hauteur espace sous meuble": 6.0,
+"hauteur dossier": 82.0,
+"hauteur coussins dossier inclus": 91.0,
+"epaisseur matelas": 12.0,
+"prof. assise": 60.0,
+"haut. assise": 48.0,
+"larg. assise": 124.0,
+"profondeur totale, déplié": 240.0,
+"largeur": 182.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/hyltarp-canape-2-places-convertible-gransel-gris-brun-s09489581/",
+"slug": "hyltarp-canape-2-places-convertible-gransel-gris-brun-s09489581"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "HYLTARP",
+"type": "canapé 2 places convertible",
+"price": 1149.0,
+"w": 11.0,
+"d": 93.0,
+"h": 63.0,
+"dims": {
+"hauteur accoudoir": 63.0,
+"largeur accoudoir": 11.0,
+"hauteur du lit": 52.0,
+"long. couchage": 200.0,
+"larg. couchage": 140.0,
+"profondeur": 93.0,
+"hauteur espace sous meuble": 6.0,
+"hauteur dossier": 82.0,
+"hauteur coussins dossier inclus": 91.0,
+"epaisseur matelas": 12.0,
+"prof. assise": 60.0,
+"haut. assise": 48.0,
+"larg. assise": 124.0,
+"profondeur totale, déplié": 240.0,
+"largeur": 182.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/hyltarp-canape-2-places-convertible-gransel-gris-s99514859/",
+"slug": "hyltarp-canape-2-places-convertible-gransel-gris-s99514859"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "HYLTARP",
+"type": "canapé 2 places convertible",
+"price": 1149.0,
+"w": 11.0,
+"d": 93.0,
+"h": 63.0,
+"dims": {
+"hauteur accoudoir": 63.0,
+"largeur accoudoir": 11.0,
+"hauteur du lit": 52.0,
+"long. couchage": 200.0,
+"larg. couchage": 140.0,
+"profondeur": 93.0,
+"hauteur espace sous meuble": 6.0,
+"hauteur dossier": 82.0,
+"hauteur coussins dossier inclus": 91.0,
+"epaisseur matelas": 12.0,
+"prof. assise": 60.0,
+"haut. assise": 48.0,
+"larg. assise": 124.0,
+"profondeur totale, déplié": 240.0,
+"largeur": 182.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/hyltarp-canape-2-places-convertible-gransel-naturel-s29489603/",
+"slug": "hyltarp-canape-2-places-convertible-gransel-naturel-s29489603"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "JÄTTEBO",
+"type": "canapé 2,5 places avec méridienne",
+"price": 1495.0,
+"w": 190.0,
+"d": 160.0,
+"h": 87.0,
+"dims": {
+"largeur": 190.0,
+"profondeur": 160.0,
+"hauteur": 87.0,
+"prof. assise": 69.0,
+"haut. assise": 46.0,
+"largeur accoudoir": 25.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/jaettebo-canape-2-5-places-avec-meridienne-gauche-avec-appuie-tete-axvall-blanc-casse-s79607623/",
+"slug": "jaettebo-canape-2-5-places-avec-meridienne-gauche-avec-appuie-tete-axvall-blanc-casse-s79607623"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "JÄTTEBO",
+"type": "canapé 2,5 places avec méridienne",
+"price": 1495.0,
+"w": 20.0,
+"d": 61.6,
+"h": 88.0,
+"dims": {
+"largeur": 20.0,
+"profondeur": 61.6,
+"hauteur": 88.0,
+"prof. structure": 60.0,
+"haut. structure": 80.0,
+"prof. assise": 69.0,
+"haut. assise": 46.0,
+"largeur accoudoir": 25.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/jaettebo-canape-2-5-places-avec-meridienne-gauche-avec-appuie-tete-axvall-bleu-gris-fonce-s59607619/",
+"slug": "jaettebo-canape-2-5-places-avec-meridienne-gauche-avec-appuie-tete-axvall-bleu-gris-fonce-s59607619"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "JÄTTEBO",
+"type": "canapé 2,5 places avec méridienne",
+"price": 1535.0,
+"w": 190.0,
+"d": 160.0,
+"h": 87.0,
+"dims": {
+"largeur": 190.0,
+"profondeur": 160.0,
+"hauteur": 87.0,
+"prof. assise": 69.0,
+"haut. assise": 46.0,
+"largeur accoudoir": 25.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/jaettebo-canape-2-5-places-avec-meridienne-gauche-avec-appuie-tete-johanneshov-brun-beige-s39607615/",
+"slug": "jaettebo-canape-2-5-places-avec-meridienne-gauche-avec-appuie-tete-johanneshov-brun-beige-s39607615"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "KIVIK",
+"type": "canapé 2 places",
+"price": 849.0,
+"w": 190.0,
+"d": 95.0,
+"h": 51.0,
+"dims": {
+"hauteur": 51.0,
+"diamètre": 41.0,
+"profondeur": 95.0,
+"prof. assise": 60.0,
+"haut. assise": 45.0,
+"larg. assise": 140.0,
+"largeur": 190.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/kivik-canape-2-places-grann-bomstad-brun-fonce-50519523/",
+"slug": "kivik-canape-2-places-grann-bomstad-brun-fonce-50519523"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "KIVIK",
+"type": "canapé 2 places",
+"price": 849.0,
+"w": 90.0,
+"d": 55.0,
+"h": 41.0,
+"dims": {
+"longueur matelas": 200.0,
+"largeur matelas": 90.0,
+"profondeur tiroir (intérieur)": 55.0,
+"hauteur pied de lit": 41.0,
+"hauteur tête de lit": 66.0,
+"hauteur tiroir (intérieur)": 14.0,
+"longueur": 206.0,
+"largeur": 96.0,
+"profondeur": 95.0,
+"hauteur": 83.0,
+"prof. assise": 60.0,
+"haut. assise": 45.0,
+"larg. assise": 140.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/kivik-canape-2-places-grann-bomstad-noir-50519518/",
+"slug": "kivik-canape-2-places-grann-bomstad-noir-50519518"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "KIVIK",
+"type": "canapé 2 places",
+"price": 599.0,
+"w": 190.0,
+"d": 95.0,
+"h": 83.0,
+"dims": {
+"largeur": 190.0,
+"profondeur": 95.0,
+"hauteur": 83.0,
+"larg. assise": 140.0,
+"prof. assise": 60.0,
+"haut. assise": 45.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/kivik-canape-2-places-gunnared-beige-s59484755/",
+"slug": "kivik-canape-2-places-gunnared-beige-s59484755"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "KLIPPAN",
+"type": "canapé 2 places",
+"price": 399.0,
+"w": 177.0,
+"d": 88.0,
+"h": 66.0,
+"dims": {
+"largeur": 177.0,
+"profondeur": 88.0,
+"hauteur": 66.0,
+"prof. assise": 54.0,
+"haut. assise": 43.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/klippan-canape-2-places-bomstad-noir-40399314/",
+"slug": "klippan-canape-2-places-bomstad-noir-40399314"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "KLIPPAN",
+"type": "canapé 2 places",
+"price": 279.0,
+"w": 180.0,
+"d": 88.0,
+"h": 66.0,
+"dims": {
+"largeur": 180.0,
+"profondeur": 88.0,
+"hauteur": 66.0,
+"hauteur espace sous meuble": 11.0,
+"prof. assise": 54.0,
+"haut. assise": 43.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/klippan-canape-2-places-grimsmala-noir-beige-s89625202/",
+"slug": "klippan-canape-2-places-grimsmala-noir-beige-s89625202"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "KLIPPAN",
+"type": "demi-étagère",
+"price": 269.0,
+"w": 180.0,
+"d": 88.0,
+"h": 66.0,
+"dims": {
+"largeur": 180.0,
+"profondeur": 88.0,
+"hauteur": 66.0,
+"hauteur espace sous meuble": 11.0,
+"prof. assise": 54.0,
+"haut. assise": 43.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/klippan-canape-2-places-vissle-gris-s79010614/",
+"slug": "klippan-canape-2-places-vissle-gris-s79010614"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "LANDSKRONA",
+"type": "canapé 2 places",
+"price": 899.0,
+"w": 164.0,
+"d": 89.0,
+"h": 78.0,
+"dims": {
+"largeur": 164.0,
+"profondeur": 89.0,
+"hauteur": 78.0,
+"hauteur accoudoir": 64.0,
+"larg. assise": 140.0,
+"prof. assise": 61.0,
+"haut. assise": 44.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/landskrona-canape-2-places-grann-bomstad-brun-dore-bois-s69270264/",
+"slug": "landskrona-canape-2-places-grann-bomstad-brun-dore-bois-s69270264"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "LANDSKRONA",
+"type": "canapé 2 places",
+"price": 899.0,
+"w": 164.0,
+"d": 89.0,
+"h": 78.0,
+"dims": {
+"largeur": 164.0,
+"profondeur": 89.0,
+"hauteur": 78.0,
+"hauteur accoudoir": 64.0,
+"larg. assise": 140.0,
+"prof. assise": 61.0,
+"haut. assise": 44.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/landskrona-canape-2-places-grann-bomstad-brun-dore-metal-s19270266/",
+"slug": "landskrona-canape-2-places-grann-bomstad-brun-dore-metal-s19270266"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "LANDSKRONA",
+"type": "canapé 2 places",
+"price": 899.0,
+"w": 164.0,
+"d": 89.0,
+"h": 78.0,
+"dims": {
+"largeur": 164.0,
+"profondeur": 89.0,
+"hauteur": 78.0,
+"hauteur accoudoir": 64.0,
+"prof. assise": 61.0,
+"haut. assise": 44.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/landskrona-canape-2-places-grann-bomstad-noir-bois-s29031746/",
+"slug": "landskrona-canape-2-places-grann-bomstad-noir-bois-s29031746"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "SÖDERHAMN",
+"type": "canapé 2 pl + méridienne",
+"price": 800.0,
+"w": 186.0,
+"d": 151.0,
+"h": 83.0,
+"dims": {
+"hauteur coussins dossier inclus": 83.0,
+"hauteur dossier": 69.0,
+"profondeur méridienne": 151.0,
+"largeur": 186.0,
+"profondeur": 99.0,
+"profondeur d'assise, méridienne": 100.0,
+"hauteur espace sous meuble": 14.0,
+"prof. assise": 48.0,
+"haut. assise": 40.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/soederhamn-canape-2-pl-meridienne-alhamn-bleu-gris-fonce-s99621779/",
+"slug": "soederhamn-canape-2-pl-meridienne-alhamn-bleu-gris-fonce-s99621779"
+},
+{
+"cat": "salon",
+"sub": "canape",
+"name": "SÖDERHAMN",
+"type": "canapé 2 pl + méridienne",
+"price": 800.0,
+"w": 186.0,
+"d": 151.0,
+"h": 83.0,
+"dims": {
+"hauteur coussins dossier inclus": 83.0,
+"hauteur dossier": 69.0,
+"profondeur méridienne": 151.0,
+"largeur": 186.0,
+"profondeur": 99.0,
+"profondeur d'assise, méridienne": 100.0,
+"hauteur espace sous meuble": 14.0,
+"prof. assise": 48.0,
+"haut. assise": 40.0
+},
+"color": "#d4ab4a",
+"url": "https://www.ikea.com/fr/fr/p/soederhamn-canape-2-pl-meridienne-alhamn-jaune-fonce-brun-s79621775/",
+"slug": "soederhamn-canape-2-pl-meridienne-alhamn-jaune-fonce-brun-s79621775"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "EKENÄSET",
+"type": "fauteuil avec repose-pieds",
+"price": 348.95,
+"w": null,
+"d": null,
+"h": null,
+"dims": {},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/ekenaeset-fauteuil-avec-repose-pieds-motif-chene-axvall-blanc-casse-s29622796/",
+"slug": "ekenaeset-fauteuil-avec-repose-pieds-motif-chene-axvall-blanc-casse-s29622796"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "EKENÄSET",
+"type": "fauteuil avec repose-pieds",
+"price": 268.99,
+"w": null,
+"d": null,
+"h": null,
+"dims": {},
+"color": "#b8925f",
+"url": "https://www.ikea.com/fr/fr/p/ekenaeset-fauteuil-avec-repose-pieds-motif-chene-kilanda-beige-clair-s89622802/",
+"slug": "ekenaeset-fauteuil-avec-repose-pieds-motif-chene-kilanda-beige-clair-s89622802"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "EKTORP",
+"type": "fauteuil",
+"price": 419.0,
+"w": 104.0,
+"d": 88.0,
+"h": 88.0,
+"dims": {
+"largeur": 104.0,
+"profondeur": 88.0,
+"hauteur": 88.0,
+"prof. assise": 54.0,
+"haut. assise": 45.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/ektorp-fauteuil-alhamn-bleu-gris-fonce-s19628633/",
+"slug": "ektorp-fauteuil-alhamn-bleu-gris-fonce-s19628633"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "EKTORP",
+"type": "fauteuil",
+"price": 419.0,
+"w": 104.0,
+"d": 88.0,
+"h": 88.0,
+"dims": {
+"largeur": 104.0,
+"profondeur": 88.0,
+"hauteur": 88.0,
+"prof. assise": 54.0,
+"haut. assise": 45.0
+},
+"color": "#d4ab4a",
+"url": "https://www.ikea.com/fr/fr/p/ektorp-fauteuil-alhamn-jaune-fonce-brun-s49628636/",
+"slug": "ektorp-fauteuil-alhamn-jaune-fonce-brun-s49628636"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "MUREN",
+"type": "fauteuil confort",
+"price": 429.0,
+"w": 85.0,
+"d": 94.0,
+"h": 97.0,
+"dims": {
+"largeur": 85.0,
+"profondeur": 94.0,
+"hauteur": 97.0,
+"larg. assise": 54.0,
+"prof. assise": 54.0,
+"haut. assise": 45.0
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/muren-fauteuil-confort-remmarn-gris-clair-00438553/",
+"slug": "muren-fauteuil-confort-remmarn-gris-clair-00438553"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "POÄNG",
+"type": "fauteuil à bascule",
+"price": 219.0,
+"w": 83.0,
+"d": 30.0,
+"h": 3.0,
+"dims": {
+"largeur": 83.0,
+"profondeur": 30.0,
+"hauteur": 3.0,
+"larg. assise": 56.0,
+"prof. assise": 50.0,
+"haut. assise": 45.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/poaeng-fauteuil-a-bascule-plaque-bouleau-gunnared-beige-s29502039/",
+"slug": "poaeng-fauteuil-a-bascule-plaque-bouleau-gunnared-beige-s29502039"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "POÄNG",
+"type": "fauteuil à bascule",
+"price": 219.0,
+"w": 68.0,
+"d": 94.0,
+"h": 95.0,
+"dims": {
+"largeur": 68.0,
+"profondeur": 94.0,
+"hauteur": 95.0,
+"larg. assise": 56.0,
+"prof. assise": 50.0,
+"haut. assise": 45.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/poaeng-fauteuil-a-bascule-plaque-bouleau-gunnared-gris-fonce-s49502118/",
+"slug": "poaeng-fauteuil-a-bascule-plaque-bouleau-gunnared-gris-fonce-s49502118"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "STRANDMON",
+"type": "fauteuil à oreilles av repose-pieds",
+"price": 398.95,
+"w": null,
+"d": null,
+"h": null,
+"dims": {},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/strandmon-fauteuil-a-oreilles-av-repose-pieds-nordvalla-gris-fonce-s39618100/",
+"slug": "strandmon-fauteuil-a-oreilles-av-repose-pieds-nordvalla-gris-fonce-s39618100"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "STRANDMON",
+"type": "fauteuil à oreilles av repose-pieds",
+"price": 398.95,
+"w": 42.6,
+"d": 33.3,
+"h": 3.5,
+"dims": {
+"largeur": 42.6,
+"larg. structure": 50.0,
+"profondeur": 33.3,
+"hauteur": 3.5,
+"prof. structure": 35.0,
+"amplitude maximum d'ouverture": 21.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/strandmon-fauteuil-a-oreilles-av-repose-pieds-sulviken-bleu-beige-s99590339/",
+"slug": "strandmon-fauteuil-a-oreilles-av-repose-pieds-sulviken-bleu-beige-s99590339"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "TULLSTA",
+"type": "fauteuil",
+"price": 179.0,
+"w": 79.0,
+"d": 69.0,
+"h": 78.0,
+"dims": {
+"largeur": 79.0,
+"profondeur": 69.0,
+"hauteur": 78.0,
+"larg. assise": 52.0,
+"prof. assise": 54.0,
+"haut. assise": 43.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/tullsta-fauteuil-lofallet-beige-s29272712/",
+"slug": "tullsta-fauteuil-lofallet-beige-s29272712"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "TULLSTA",
+"type": "fauteuil",
+"price": 179.0,
+"w": 79.0,
+"d": 69.0,
+"h": 78.0,
+"dims": {
+"largeur": 79.0,
+"profondeur": 69.0,
+"hauteur": 78.0,
+"larg. assise": 52.0,
+"prof. assise": 54.0,
+"haut. assise": 43.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/tullsta-fauteuil-naggen-beige-s09619686/",
+"slug": "tullsta-fauteuil-naggen-beige-s09619686"
+},
+{
+"cat": "salon",
+"sub": "fauteuil",
+"name": "VEDBO",
+"type": "fauteuil",
+"price": 249.0,
+"w": 73.0,
+"d": 65.0,
+"h": 75.0,
+"dims": {
+"hauteur coussins dossier inclus": 75.0,
+"largeur": 73.0,
+"profondeur": 65.0,
+"hauteur espace sous meuble": 24.0,
+"hauteur accoudoir": 20.0,
+"larg. assise": 45.0,
+"prof. assise": 48.0,
+"haut. assise": 44.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/vedbo-fauteuil-gunnared-gris-fonce-10424126/",
+"slug": "vedbo-fauteuil-gunnared-gris-fonce-10424126"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "BORGEBY",
+"type": "table basse",
+"price": 99.95,
+"w": 70.0,
+"d": 70.0,
+"h": 42.0,
+"dims": {
+"hauteur": 42.0,
+"diamètre": 70.0,
+"hauteur espace sous meuble": 6.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/borgeby-table-basse-noir-30500355/",
+"slug": "borgeby-table-basse-noir-30500355"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "BORGEBY",
+"type": "table basse",
+"price": 99.95,
+"w": 70.0,
+"d": 70.0,
+"h": 42.0,
+"dims": {
+"hauteur": 42.0,
+"diamètre": 70.0,
+"hauteur espace sous meuble": 6.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/borgeby-table-basse-plaque-bouleau-70389356/",
+"slug": "borgeby-table-basse-plaque-bouleau-70389356"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "KRAGSTA",
+"type": "table basse",
+"price": 129.0,
+"w": 90.0,
+"d": 90.0,
+"h": 48.0,
+"dims": {
+"hauteur": 48.0,
+"diamètre": 90.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/kragsta-table-basse-blanc-20286638/",
+"slug": "kragsta-table-basse-blanc-20286638"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "KRAGSTA",
+"type": "table basse",
+"price": 129.0,
+"w": 160.0,
+"d": 90.0,
+"h": 48.0,
+"dims": {
+"longueur": 230.0,
+"largeur": 160.0,
+"superficie": 368.0,
+"longueur poil": 1000.0,
+"hauteur": 48.0,
+"diamètre": 90.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/kragsta-table-basse-noir-80262253/",
+"slug": "kragsta-table-basse-noir-80262253"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "LACK",
+"type": "table basse",
+"price": 45.0,
+"w": 78.0,
+"d": null,
+"h": 45.0,
+"dims": {
+"longueur": 118.0,
+"largeur": 78.0,
+"hauteur": 45.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/lack-table-basse-blanc-80449901/",
+"slug": "lack-table-basse-blanc-80449901"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "LACK",
+"type": "table basse",
+"price": 22.99,
+"w": 55.0,
+"d": null,
+"h": 45.0,
+"dims": {
+"longueur": 90.0,
+"largeur": 55.0,
+"hauteur": 45.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/lack-table-basse-blanc-90449905/",
+"slug": "lack-table-basse-blanc-90449905"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "LISTERBY",
+"type": "table basse",
+"price": 199.0,
+"w": 90.0,
+"d": 90.0,
+"h": 37.0,
+"dims": {
+"hauteur": 37.0,
+"diamètre": 90.0,
+"hauteur espace sous meuble": 12.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/listerby-table-basse-brun-fonce-plaque-hetre-40562244/",
+"slug": "listerby-table-basse-brun-fonce-plaque-hetre-40562244"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "STOCKHOLM",
+"type": "table basse",
+"price": 299.0,
+"w": 48.0,
+"d": null,
+"h": 120.0,
+"dims": {
+"largeur": 48.0,
+"hauteur": 120.0,
+"longueur": 180.0
+},
+"color": "#6b4a32",
+"url": "https://www.ikea.com/fr/fr/p/stockholm-table-basse-plaque-noyer-70239710/",
+"slug": "stockholm-table-basse-plaque-noyer-70239710"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "STOCKHOLM",
+"type": "tables gigognes, lot de 2",
+"price": 249.0,
+"w": 47.0,
+"d": null,
+"h": 36.0,
+"dims": {
+"longueur": 72.0,
+"largeur": 47.0,
+"hauteur max.": 36.0
+},
+"color": "#6b4a32",
+"url": "https://www.ikea.com/fr/fr/p/stockholm-tables-gigognes-lot-de-2-plaque-noyer-10239713/",
+"slug": "stockholm-tables-gigognes-lot-de-2-plaque-noyer-10239713"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "VITTSJÖ",
+"type": "table basse",
+"price": 79.99,
+"w": 75.0,
+"d": 75.0,
+"h": 45.0,
+"dims": {
+"hauteur": 45.0,
+"diamètre": 75.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/vittsjoe-table-basse-beige-clair-verre-30604348/",
+"slug": "vittsjoe-table-basse-beige-clair-verre-30604348"
+},
+{
+"cat": "salon",
+"sub": "table-basse",
+"name": "VITTSJÖ",
+"type": "table basse",
+"price": 79.99,
+"w": 75.0,
+"d": 75.0,
+"h": 45.0,
+"dims": {
+"hauteur": 45.0,
+"diamètre": 75.0
+},
+"color": "#2f251e",
+"url": "https://www.ikea.com/fr/fr/p/vittsjoe-table-basse-brun-noir-verre-80213309/",
+"slug": "vittsjoe-table-basse-brun-noir-verre-80213309"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "BESTÅ",
+"type": "banc TV avec portes",
+"price": 245.0,
+"w": 180.0,
+"d": 42.0,
+"h": 38.0,
+"dims": {
+"largeur": 180.0,
+"profondeur": 42.0,
+"hauteur": 38.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/besta-banc-tv-avec-portes-blanc-bergsviken-beige-s49422211/",
+"slug": "besta-banc-tv-avec-portes-blanc-bergsviken-beige-s49422211"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "BESTÅ",
+"type": "banc TV avec portes",
+"price": 200.0,
+"w": 120.0,
+"d": 42.0,
+"h": 48.0,
+"dims": {
+"largeur": 120.0,
+"profondeur": 42.0,
+"hauteur": 48.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/besta-banc-tv-avec-portes-blanc-bergsviken-oesarp-beige-s49419464/",
+"slug": "besta-banc-tv-avec-portes-blanc-bergsviken-oesarp-beige-s49419464"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "BRIMNES",
+"type": "banc TV",
+"price": 149.0,
+"w": 216.0,
+"d": 41.0,
+"h": 54.0,
+"dims": {
+"largeur": 216.0,
+"profondeur": 41.0,
+"hauteur": 54.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/brimnes-banc-tv-blanc-00593092/",
+"slug": "brimnes-banc-tv-blanc-00593092"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "BRIMNES",
+"type": "banc TV",
+"price": 99.95,
+"w": 120.0,
+"d": 41.0,
+"h": 53.0,
+"dims": {
+"largeur": 120.0,
+"profondeur": 41.0,
+"hauteur": 53.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/brimnes-banc-tv-blanc-40337694/",
+"slug": "brimnes-banc-tv-blanc-40337694"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "HEMNES",
+"type": "banc TV",
+"price": 229.0,
+"w": 148.0,
+"d": 47.0,
+"h": 57.0,
+"dims": {
+"largeur": 148.0,
+"profondeur": 47.0,
+"hauteur": 57.0
+},
+"color": "#ded8cc",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-banc-tv-teinte-blanc-brun-clair-50413526/",
+"slug": "hemnes-banc-tv-teinte-blanc-brun-clair-50413526"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "HEMNES",
+"type": "combinaison meuble TV",
+"price": 807.0,
+"w": 326.0,
+"d": 47.0,
+"h": 197.0,
+"dims": {
+"largeur": 326.0,
+"hauteur": 197.0,
+"prof. min.": 37.0,
+"profondeur max.": 47.0
+},
+"color": "#ded8cc",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-combinaison-meuble-tv-teinte-blanc-brun-clair-verre-transparent-s19299571/",
+"slug": "hemnes-combinaison-meuble-tv-teinte-blanc-brun-clair-verre-transparent-s19299571"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "LACK",
+"type": "banc TV",
+"price": 16.99,
+"w": 90.0,
+"d": 36.0,
+"h": 45.0,
+"dims": {
+"länge": 70.0,
+"breite": 16.0,
+"largeur": 90.0,
+"profondeur": 36.0,
+"hauteur": 45.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/lack-banc-tv-blanc-00625521/",
+"slug": "lack-banc-tv-blanc-00625521"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "LACK",
+"type": "banc TV",
+"price": 49.99,
+"w": 120.0,
+"d": 35.0,
+"h": 36.0,
+"dims": {
+"largeur": 120.0,
+"profondeur": 35.0,
+"hauteur": 36.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/lack-banc-tv-blanc-30498890/",
+"slug": "lack-banc-tv-blanc-30498890"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "TONSTAD",
+"type": "banc TV",
+"price": 195.0,
+"w": 176.8,
+"d": 37.1,
+"h": 55.8,
+"dims": {
+"profondeur": 37.1,
+"hauteur": 55.8,
+"largeur": 176.8
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/tonstad-banc-tv-blanc-casse-60488880/",
+"slug": "tonstad-banc-tv-blanc-casse-60488880"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "TONSTAD",
+"type": "banc TV",
+"price": 245.0,
+"w": 178.4,
+"d": 37.2,
+"h": 54.9,
+"dims": {
+"profondeur": 37.2,
+"hauteur": 54.9,
+"largeur": 178.4
+},
+"color": "#b8925f",
+"url": "https://www.ikea.com/fr/fr/p/tonstad-banc-tv-plaque-chene-00489302/",
+"slug": "tonstad-banc-tv-plaque-chene-00489302"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "VIHALS",
+"type": "banc TV",
+"price": 95.0,
+"w": 146.0,
+"d": 37.0,
+"h": 50.0,
+"dims": {
+"largeur": 146.0,
+"profondeur": 37.0,
+"hauteur": 50.0,
+"largeur tiroir (intérieur)": 42.0,
+"profondeur tiroir (intérieur)": 30.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/vihals-banc-tv-blanc-20483295/",
+"slug": "vihals-banc-tv-blanc-20483295"
+},
+{
+"cat": "salon",
+"sub": "meuble-tv",
+"name": "VIHALS",
+"type": "banc TV",
+"price": 119.0,
+"w": 176.3,
+"d": 37.0,
+"h": 50.0,
+"dims": {
+"largeur": 176.3,
+"profondeur": 37.0,
+"hauteur": 50.0,
+"largeur tiroir (intérieur)": 52.0,
+"profondeur tiroir (intérieur)": 30.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/vihals-banc-tv-blanc-80542857/",
+"slug": "vihals-banc-tv-blanc-80542857"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "BAGGEBO",
+"type": "bibliothèque",
+"price": 27.99,
+"w": 50.0,
+"d": 25.0,
+"h": 160.0,
+"dims": {
+"largeur": 50.0,
+"profondeur": 25.0,
+"hauteur": 160.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/baggebo-bibliotheque-blanc-20436713/",
+"slug": "baggebo-bibliotheque-blanc-20436713"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "BAGGEBO",
+"type": "étagère",
+"price": 19.99,
+"w": 60.0,
+"d": 25.0,
+"h": 116.0,
+"dims": {
+"largeur": 60.0,
+"hauteur": 116.0,
+"profondeur": 25.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/baggebo-etagere-metal-blanc-50481172/",
+"slug": "baggebo-etagere-metal-blanc-50481172"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "BAGGEBO",
+"type": "étagère",
+"price": 19.99,
+"w": 60.0,
+"d": 30.3,
+"h": 80.0,
+"dims": {
+"largeur": 60.0,
+"hauteur": 80.0,
+"profondeur": 30.3
+},
+"color": "#67745a",
+"url": "https://www.ikea.com/fr/fr/p/baggebo-etagere-vert-vif-30621480/",
+"slug": "baggebo-etagere-vert-vif-30621480"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "BILLY",
+"type": "bibliothèque avec surmeuble",
+"price": 89.99,
+"w": 80.0,
+"d": 28.0,
+"h": 237.0,
+"dims": {
+"largeur": 80.0,
+"profondeur": 28.0,
+"hauteur": 237.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/billy-bibliotheque-avec-surmeuble-blanc-s59638673/",
+"slug": "billy-bibliotheque-avec-surmeuble-blanc-s59638673"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "BILLY",
+"type": "bibliothèque avec surmeuble",
+"price": 74.99,
+"w": 40.0,
+"d": 28.0,
+"h": 237.0,
+"dims": {
+"laius": 49.5,
+"kõrgus": 229.4,
+"raam, kõrgus": 236.4,
+"paksus": 2.0,
+"profondeur": 28.0,
+"hauteur": 237.0,
+"largeur": 40.0
+},
+"color": "#6b4a32",
+"url": "https://www.ikea.com/fr/fr/p/billy-bibliotheque-avec-surmeuble-brun-motif-noyer-s09581891/",
+"slug": "billy-bibliotheque-avec-surmeuble-brun-motif-noyer-s09581891"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "BILLY",
+"type": "bibliothèque avec surmeuble",
+"price": 99.99,
+"w": 80.0,
+"d": 28.0,
+"h": 237.0,
+"dims": {
+"profondeur": 28.0,
+"hauteur": 237.0,
+"largeur": 80.0
+},
+"color": "#6b4a32",
+"url": "https://www.ikea.com/fr/fr/p/billy-bibliotheque-avec-surmeuble-brun-motif-noyer-s39581880/",
+"slug": "billy-bibliotheque-avec-surmeuble-brun-motif-noyer-s39581880"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "HEMNES",
+"type": "bibliothèque",
+"price": 209.0,
+"w": 90.0,
+"d": 37.0,
+"h": 197.0,
+"dims": {
+"largeur": 90.0,
+"profondeur": 37.0,
+"hauteur": 197.0
+},
+"color": "#2f251e",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-bibliotheque-brun-noir-brun-clair-20452294/",
+"slug": "hemnes-bibliotheque-brun-noir-brun-clair-20452294"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "HEMNES",
+"type": "bibliothèque",
+"price": 209.0,
+"w": 90.0,
+"d": 37.0,
+"h": 197.0,
+"dims": {
+"profondeur": 37.0,
+"hauteur": 197.0,
+"largeur": 90.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-bibliotheque-gris-vert-teinte-brun-clair-40596159/",
+"slug": "hemnes-bibliotheque-gris-vert-teinte-brun-clair-40596159"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "HEMNES",
+"type": "bibliothèque",
+"price": 209.0,
+"w": 147.0,
+"d": 37.0,
+"h": 114.0,
+"dims": {
+"longueur": 233.0,
+"largeur": 147.0,
+"hauteur": 114.0,
+"profondeur": 37.0
+},
+"color": "#ded8cc",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-bibliotheque-teinte-blanc-brun-clair-60413502/",
+"slug": "hemnes-bibliotheque-teinte-blanc-brun-clair-60413502"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "IVAR",
+"type": "étagère",
+"price": 164.99,
+"w": 89.0,
+"d": 50.0,
+"h": 226.0,
+"dims": {
+"largeur": 89.0,
+"profondeur": 50.0,
+"hauteur": 226.0
+},
+"color": "#c9a26a",
+"url": "https://www.ikea.com/fr/fr/p/ivar-etagere-6-tablettes-pin-s09631216/",
+"slug": "ivar-etagere-6-tablettes-pin-s09631216"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "IVAR",
+"type": "étagère",
+"price": 177.99,
+"w": 89.0,
+"d": 30.0,
+"h": 179.0,
+"dims": {
+"largeur": 89.0,
+"profondeur": 30.0,
+"hauteur": 179.0
+},
+"color": "#c9a26a",
+"url": "https://www.ikea.com/fr/fr/p/ivar-etagere-avec-2-portes-pin-feutre-feutre-s79572572/",
+"slug": "ivar-etagere-avec-2-portes-pin-feutre-feutre-s79572572"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "IVAR",
+"type": "étagère",
+"price": 162.99,
+"w": 89.0,
+"d": 30.0,
+"h": 226.4,
+"dims": {
+"largeur": 89.0,
+"profondeur": 30.0,
+"hauteur": 226.4
+},
+"color": "#c9a26a",
+"url": "https://www.ikea.com/fr/fr/p/ivar-etagere-avec-2-tablettes-a-compartiments-pin-s29590578/",
+"slug": "ivar-etagere-avec-2-tablettes-a-compartiments-pin-s29590578"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "KALLAX",
+"type": "étagère avec 10 accessoires",
+"price": 369.0,
+"w": 182.0,
+"d": 39.0,
+"h": 182.0,
+"dims": {
+"largeur": 182.0,
+"profondeur": 39.0,
+"hauteur": 182.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/kallax-etagere-avec-10-accessoires-blanc-s09278338/",
+"slug": "kallax-etagere-avec-10-accessoires-blanc-s09278338"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "KALLAX",
+"type": "étagère avec 10 accessoires",
+"price": 404.0,
+"w": 182.0,
+"d": 39.0,
+"h": 182.0,
+"dims": {
+"largeur": 182.0,
+"profondeur": 39.0,
+"hauteur": 182.0
+},
+"color": "#2f251e",
+"url": "https://www.ikea.com/fr/fr/p/kallax-etagere-avec-10-accessoires-brun-noir-s69278335/",
+"slug": "kallax-etagere-avec-10-accessoires-brun-noir-s69278335"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "KALLAX",
+"type": "étagère avec 10 accessoires",
+"price": 404.0,
+"w": 182.0,
+"d": 39.0,
+"h": 182.0,
+"dims": {
+"largeur": 182.0,
+"profondeur": 39.0,
+"hauteur": 182.0
+},
+"color": "#d8cdb9",
+"url": "https://www.ikea.com/fr/fr/p/kallax-etagere-avec-10-accessoires-effet-chene-blanchi-s09197605/",
+"slug": "kallax-etagere-avec-10-accessoires-effet-chene-blanchi-s09197605"
+},
+{
+"cat": "salon",
+"sub": "bibliotheque",
+"name": "TONSTAD",
+"type": "bibliothèque",
+"price": 199.0,
+"w": 81.0,
+"d": 37.1,
+"h": 200.8,
+"dims": {
+"profondeur": 37.1,
+"hauteur": 200.8,
+"largeur": 81.0,
+"étagère, profondeur": 34.8
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/tonstad-bibliotheque-blanc-casse-10528464/",
+"slug": "tonstad-bibliotheque-blanc-casse-10528464"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "DANDERYD",
+"type": "table à rabats",
+"price": 249.0,
+"w": 80.0,
+"d": null,
+"h": 75.0,
+"dims": {
+"hauteur": 75.0,
+"longueur max.": 134.0,
+"longueur min.": 74.0,
+"largeur": 80.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/danderyd-table-a-rabats-plaque-chene-blanc-10516121/",
+"slug": "danderyd-table-a-rabats-plaque-chene-blanc-10516121"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "DANDERYD",
+"type": "table",
+"price": 179.0,
+"w": 80.0,
+"d": null,
+"h": 75.0,
+"dims": {
+"longueur": 130.0,
+"largeur": 80.0,
+"hauteur": 75.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/danderyd-table-blanc-40568726/",
+"slug": "danderyd-table-blanc-40568726"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "LISABO",
+"type": "table",
+"price": 189.0,
+"w": 105.0,
+"d": 105.0,
+"h": 74.0,
+"dims": {
+"diamètre": 105.0,
+"hauteur": 74.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/lisabo-table-noir-plaque-frene-50416501/",
+"slug": "lisabo-table-noir-plaque-frene-50416501"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "LISABO",
+"type": "table",
+"price": 129.0,
+"w": 78.0,
+"d": null,
+"h": 74.0,
+"dims": {
+"longueur": 140.0,
+"largeur": 78.0,
+"hauteur": 74.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/lisabo-table-noir-plaque-frene-80382439/",
+"slug": "lisabo-table-noir-plaque-frene-80382439"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "MÖRBYLÅNGA",
+"type": "table",
+"price": 649.0,
+"w": 85.0,
+"d": null,
+"h": 75.0,
+"dims": {
+"longueur": 140.0,
+"largeur": 85.0,
+"hauteur": 75.0
+},
+"color": "#b8925f",
+"url": "https://www.ikea.com/fr/fr/p/moerbylanga-table-plaque-chene-teinte-brun-50386245/",
+"slug": "moerbylanga-table-plaque-chene-teinte-brun-50386245"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "MÖRBYLÅNGA",
+"type": "table",
+"price": 749.0,
+"w": 145.0,
+"d": 145.0,
+"h": 75.0,
+"dims": {
+"diamètre": 145.0,
+"hauteur": 75.0
+},
+"color": "#b8925f",
+"url": "https://www.ikea.com/fr/fr/p/moerbylanga-table-plaque-chene-teinte-brun-60412885/",
+"slug": "moerbylanga-table-plaque-chene-teinte-brun-60412885"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "NORDEN",
+"type": "table à rabat",
+"price": 279.0,
+"w": 80.0,
+"d": null,
+"h": 74.0,
+"dims": {
+"longueur": 89.0,
+"longueur min.": 26.0,
+"longueur max.": 152.0,
+"largeur": 80.0,
+"hauteur": 74.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/norden-table-a-rabat-blanc-10423886/",
+"slug": "norden-table-a-rabat-blanc-10423886"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "NORDEN",
+"type": "table à rabat",
+"price": 299.0,
+"w": 80.0,
+"d": null,
+"h": 74.0,
+"dims": {
+"longueur": 89.0,
+"longueur min.": 26.0,
+"longueur max.": 152.0,
+"largeur": 80.0,
+"hauteur": 74.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/norden-table-a-rabat-bouleau-90423887/",
+"slug": "norden-table-a-rabat-bouleau-90423887"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "NORDVIKEN",
+"type": "table à rabat",
+"price": 119.0,
+"w": 74.0,
+"d": null,
+"h": 75.0,
+"dims": {
+"longueur min.": 74.0,
+"longueur max.": 104.0,
+"largeur": 74.0,
+"hauteur": 75.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/nordviken-table-a-rabat-blanc-50368717/",
+"slug": "nordviken-table-a-rabat-blanc-50368717"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "NORDVIKEN",
+"type": "table à rabat",
+"price": 119.0,
+"w": 74.0,
+"d": null,
+"h": 75.0,
+"dims": {
+"longueur min.": 74.0,
+"longueur max.": 104.0,
+"largeur": 74.0,
+"hauteur": 75.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/nordviken-table-a-rabat-noir-70368716/",
+"slug": "nordviken-table-a-rabat-noir-70368716"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "SANDSBERG",
+"type": "table et 2 chaises",
+"price": 59.97,
+"w": 67.0,
+"d": 47.0,
+"h": 75.0,
+"dims": {
+"longueur": 67.0,
+"largeur": 67.0,
+"hauteur": 75.0,
+"largeur chaise": 39.0,
+"profondeur chaise": 47.0,
+"hauteur chaise": 77.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/sandsberg-table-et-2-chaises-noir-noir-blanc-s89608392/",
+"slug": "sandsberg-table-et-2-chaises-noir-noir-blanc-s89608392"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "SANDSBERG",
+"type": "table et 2 chaises",
+"price": 59.97,
+"w": 67.0,
+"d": 47.0,
+"h": 75.0,
+"dims": {
+"longueur": 67.0,
+"largeur": 67.0,
+"hauteur": 75.0,
+"largeur chaise": 39.0,
+"profondeur chaise": 47.0,
+"hauteur chaise": 77.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/sandsberg-table-et-2-chaises-noir-noir-bleu-s09608391/",
+"slug": "sandsberg-table-et-2-chaises-noir-noir-bleu-s09608391"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "SKOGSTA",
+"type": "table",
+"price": 299.0,
+"w": 120.0,
+"d": 120.0,
+"h": 74.0,
+"dims": {
+"diamètre": 120.0,
+"hauteur": 74.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/skogsta-table-acacia-80611884/",
+"slug": "skogsta-table-acacia-80611884"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "SKOGSTA",
+"type": "table",
+"price": 349.0,
+"w": 81.0,
+"d": null,
+"h": 74.0,
+"dims": {
+"longueur": 160.0,
+"largeur": 81.0,
+"hauteur": 74.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/skogsta-table-acacia-noir-00452643/",
+"slug": "skogsta-table-acacia-noir-00452643"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "STRANDTORP",
+"type": "table extensible",
+"price": 549.0,
+"w": 95.0,
+"d": null,
+"h": 75.0,
+"dims": {
+"longueur": 205.0,
+"longueur min.": 150.0,
+"longueur max.": 260.0,
+"largeur": 95.0,
+"hauteur": 75.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/strandtorp-table-extensible-blanc-40487278/",
+"slug": "strandtorp-table-extensible-blanc-40487278"
+},
+{
+"cat": "repas",
+"sub": "table",
+"name": "STRANDTORP",
+"type": "table extensible",
+"price": 549.0,
+"w": 95.0,
+"d": null,
+"h": 75.0,
+"dims": {
+"longueur": 205.0,
+"longueur min.": 150.0,
+"longueur max.": 260.0,
+"largeur": 95.0,
+"hauteur": 75.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/strandtorp-table-extensible-brun-80388587/",
+"slug": "strandtorp-table-extensible-brun-80388587"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "BERGMUND",
+"type": "chaise av housse mi-longue",
+"price": 99.99,
+"w": 52.0,
+"d": 59.0,
+"h": 95.0,
+"dims": {
+"largeur": 52.0,
+"profondeur": 59.0,
+"hauteur": 95.0,
+"larg. assise": 52.0,
+"prof. assise": 41.0,
+"haut. assise": 51.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/bergmund-chaise-av-housse-mi-longue-blanc-djuparp-gris-fonce-s19399735/",
+"slug": "bergmund-chaise-av-housse-mi-longue-blanc-djuparp-gris-fonce-s19399735"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "GUNDE",
+"type": "chaise pliante",
+"price": 9.99,
+"w": 41.0,
+"d": 45.0,
+"h": 78.0,
+"dims": {
+"largeur": 41.0,
+"profondeur": 45.0,
+"hauteur": 78.0,
+"larg. assise": 37.0,
+"prof. assise": 34.0,
+"haut. assise": 45.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/gunde-chaise-pliante-noir-00217797/",
+"slug": "gunde-chaise-pliante-noir-00217797"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "INGOLF",
+"type": "chaise junior",
+"price": 69.99,
+"w": 41.0,
+"d": 45.0,
+"h": 77.0,
+"dims": {
+"largeur": 41.0,
+"profondeur": 45.0,
+"hauteur": 77.0,
+"larg. assise": 30.0,
+"prof. assise": 25.0,
+"haut. assise": 52.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/ingolf-chaise-junior-vernis-effet-anc-60353838/",
+"slug": "ingolf-chaise-junior-vernis-effet-anc-60353838"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "KRYLBO",
+"type": "chaise",
+"price": 79.99,
+"w": 55.0,
+"d": 51.0,
+"h": 75.0,
+"dims": {
+"profondeur": 51.0,
+"hauteur": 75.0,
+"prof. assise": 41.0,
+"haut. assise": 49.0,
+"larg. assise": 49.0,
+"largeur": 55.0
+},
+"color": "#3d5168",
+"url": "https://www.ikea.com/fr/fr/p/krylbo-chaise-axvall-bleu-50628206/",
+"slug": "krylbo-chaise-axvall-bleu-50628206"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "LISABO",
+"type": "chaise",
+"price": 69.99,
+"w": 46.0,
+"d": 51.0,
+"h": 80.0,
+"dims": {
+"largeur": 46.0,
+"profondeur": 51.0,
+"hauteur": 80.0,
+"larg. assise": 44.0,
+"prof. assise": 39.0,
+"haut. assise": 45.0
+},
+"color": "#c7a67b",
+"url": "https://www.ikea.com/fr/fr/p/lisabo-chaise-frene-00457235/",
+"slug": "lisabo-chaise-frene-00457235"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "NORDVIKEN",
+"type": "chaise de bar",
+"price": 89.99,
+"w": 150.0,
+"d": 60.0,
+"h": 201.2,
+"dims": {
+"largeur": 150.0,
+"profondeur": 60.0,
+"hauteur": 201.2,
+"larg. assise": 40.0,
+"prof. assise": 34.0,
+"haut. assise": 62.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/nordviken-chaise-de-bar-hauteur-plateau-noir-00424693/",
+"slug": "nordviken-chaise-de-bar-hauteur-plateau-noir-00424693"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "ODGER",
+"type": "chaise",
+"price": 89.99,
+"w": 45.0,
+"d": 51.0,
+"h": 81.0,
+"dims": {
+"largeur": 45.0,
+"profondeur": 51.0,
+"hauteur": 81.0,
+"larg. assise": 45.0,
+"prof. assise": 41.0,
+"haut. assise": 43.0
+},
+"color": "#3b3d3f",
+"url": "https://www.ikea.com/fr/fr/p/odger-chaise-anthracite-50457313/",
+"slug": "odger-chaise-anthracite-50457313"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "SKANSNÄS",
+"type": "chaise",
+"price": 99.95,
+"w": 48.0,
+"d": 51.0,
+"h": 78.0,
+"dims": {
+"profondeur": 51.0,
+"hauteur": 78.0,
+"prof. assise": 42.0,
+"haut. assise": 47.0,
+"larg. assise": 47.0,
+"largeur": 48.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/skansnaes-chaise-brun-hetre-70563242/",
+"slug": "skansnaes-chaise-brun-hetre-70563242"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "STEFAN",
+"type": "chaise",
+"price": 39.0,
+"w": 42.0,
+"d": 49.0,
+"h": 90.0,
+"dims": {
+"profondeur": 49.0,
+"hauteur": 90.0,
+"prof. assise": 37.0,
+"haut. assise": 46.0,
+"larg. assise": 42.0,
+"largeur": 42.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/stefan-chaise-blanc-knisa-gris-beige-90575201/",
+"slug": "stefan-chaise-blanc-knisa-gris-beige-90575201"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "TEODORES",
+"type": "chaise",
+"price": 39.99,
+"w": 46.0,
+"d": 54.0,
+"h": 80.0,
+"dims": {
+"largeur": 46.0,
+"profondeur": 54.0,
+"hauteur": 80.0,
+"larg. assise": 40.0,
+"prof. assise": 37.0,
+"haut. assise": 45.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/teodores-chaise-blanc-90350937/",
+"slug": "teodores-chaise-blanc-90350937"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "TOBIAS",
+"type": "chaise",
+"price": 99.95,
+"w": 150.0,
+"d": 56.0,
+"h": 175.0,
+"dims": {
+"hauteur": 175.0,
+"epaisseur": 2.0,
+"largeur": 150.0,
+"profondeur": 56.0,
+"larg. assise": 48.0,
+"prof. assise": 46.0,
+"haut. assise": 44.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/tobias-chaise-noir-gris-noir-30635123/",
+"slug": "tobias-chaise-noir-gris-noir-30635123"
+},
+{
+"cat": "repas",
+"sub": "chaise",
+"name": "VOXLÖV",
+"type": "chaise",
+"price": 99.95,
+"w": 43.0,
+"d": 53.0,
+"h": 85.0,
+"dims": {
+"largeur": 43.0,
+"profondeur": 53.0,
+"hauteur": 85.0,
+"larg. assise": 45.0,
+"prof. assise": 43.0,
+"haut. assise": 46.0
+},
+"color": "#c9ad78",
+"url": "https://www.ikea.com/fr/fr/p/voxloev-chaise-bambou-clair-50450236/",
+"slug": "voxloev-chaise-bambou-clair-50450236"
+},
+{
+"cat": "repas",
+"sub": "buffet",
+"name": "HEMNES",
+"type": "buffet",
+"price": 319.0,
+"w": 157.0,
+"d": 47.0,
+"h": 88.0,
+"dims": {
+"largeur": 157.0,
+"profondeur": 47.0,
+"hauteur": 88.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-buffet-gris-vert-teinte-brun-clair-80628667/",
+"slug": "hemnes-buffet-gris-vert-teinte-brun-clair-80628667"
+},
+{
+"cat": "repas",
+"sub": "buffet",
+"name": "HEMNES",
+"type": "buffet",
+"price": 299.0,
+"w": 157.0,
+"d": 47.0,
+"h": 88.0,
+"dims": {
+"largeur": 157.0,
+"profondeur": 47.0,
+"hauteur": 88.0
+},
+"color": "#ded8cc",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-buffet-teinte-blanc-brun-clair-70476259/",
+"slug": "hemnes-buffet-teinte-blanc-brun-clair-70476259"
+},
+{
+"cat": "repas",
+"sub": "buffet",
+"name": "IDANÄS",
+"type": "buffet",
+"price": 349.0,
+"w": 124.0,
+"d": 50.0,
+"h": 95.0,
+"dims": {
+"profondeur": 50.0,
+"hauteur": 95.0,
+"largeur": 124.0,
+"largeur tiroir (intérieur)": 53.0,
+"profondeur tiroir (intérieur)": 40.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-buffet-blanc-80496025/",
+"slug": "idanaes-buffet-blanc-80496025"
+},
+{
+"cat": "repas",
+"sub": "buffet",
+"name": "TONSTAD",
+"type": "buffet",
+"price": 279.0,
+"w": 119.6,
+"d": 47.1,
+"h": 90.8,
+"dims": {
+"profondeur": 47.1,
+"hauteur": 90.8,
+"largeur": 119.6,
+"largeur tiroir (intérieur)": 52.4,
+"profondeur tiroir (intérieur)": 40.2
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/tonstad-buffet-blanc-casse-90488874/",
+"slug": "tonstad-buffet-blanc-casse-90488874"
+},
+{
+"cat": "repas",
+"sub": "buffet",
+"name": "TONSTAD",
+"type": "buffet",
+"price": 329.0,
+"w": 120.6,
+"d": 47.2,
+"h": 89.9,
+"dims": {
+"pikkus": 23.0,
+"laius": 19.0,
+"kõrgus": 9.0,
+"profondeur": 47.2,
+"hauteur": 89.9,
+"largeur": 120.6,
+"largeur tiroir (intérieur)": 52.4,
+"profondeur tiroir (intérieur)": 40.2
+},
+"color": "#b8925f",
+"url": "https://www.ikea.com/fr/fr/p/tonstad-buffet-plaque-chene-20489297/",
+"slug": "tonstad-buffet-plaque-chene-20489297"
+},
+{
+"cat": "repas",
+"sub": "buffet",
+"name": "VIHALS",
+"type": "buffet",
+"price": 179.0,
+"w": 140.0,
+"d": 37.0,
+"h": 75.0,
+"dims": {
+"profondeur": 37.0,
+"hauteur": 75.0,
+"largeur": 140.0,
+"largeur tiroir (intérieur)": 62.0,
+"profondeur tiroir (intérieur)": 30.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/vihals-buffet-blanc-30491718/",
+"slug": "vihals-buffet-blanc-30491718"
+},
+{
+"cat": "repas",
+"sub": "buffet",
+"name": "VIHALS",
+"type": "buffet",
+"price": 169.0,
+"w": 140.0,
+"d": 37.0,
+"h": 75.0,
+"dims": {
+"profondeur": 37.0,
+"hauteur": 75.0,
+"largeur": 140.0,
+"largeur tiroir (intérieur)": 62.0,
+"profondeur tiroir (intérieur)": 30.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/vihals-buffet-gris-fonce-60542924/",
+"slug": "vihals-buffet-gris-fonce-60542924"
+},
+{
+"cat": "repas",
+"sub": "tabouret",
+"name": "MARIUS",
+"type": "tabouret",
+"price": 5.99,
+"w": 40.0,
+"d": null,
+"h": null,
+"dims": {
+"diam. assise": 32.0,
+"largeur": 40.0,
+"haut. assise": 45.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/marius-tabouret-blanc-90184047/",
+"slug": "marius-tabouret-blanc-90184047"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "BJÖRKSNÄS",
+"type": "cadre de lit",
+"price": 609.0,
+"w": 180.0,
+"d": null,
+"h": 43.0,
+"dims": {
+"longueur": 214.0,
+"largeur": 180.0,
+"hauteur": 43.0,
+"hauteur pied de lit": 55.0,
+"hauteur tête de lit": 109.0,
+"hauteur espace sous meuble": 24.0,
+"longueur matelas": 200.0,
+"largeur matelas": 160.0,
+"largeur tête de lit": 181.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/bjoerksnaes-cadre-de-lit-bouleau-leirsund-s79501693/",
+"slug": "bjoerksnaes-cadre-de-lit-bouleau-leirsund-s79501693"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "BJÖRKSNÄS",
+"type": "cadre de lit",
+"price": 549.0,
+"w": 160.0,
+"d": null,
+"h": 42.0,
+"dims": {
+"longueur": 214.0,
+"largeur": 160.0,
+"hauteur": 42.0,
+"hauteur pied de lit": 55.0,
+"hauteur tête de lit": 109.0,
+"hauteur espace sous meuble": 25.0,
+"longueur matelas": 200.0,
+"largeur matelas": 140.0,
+"largeur tête de lit": 161.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/bjoerksnaes-cadre-de-lit-bouleau-plaque-bouleau-leirsund-s69501684/",
+"slug": "bjoerksnaes-cadre-de-lit-bouleau-plaque-bouleau-leirsund-s69501684"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "BJÖRKSNÄS",
+"type": "cadre de lit",
+"price": 499.0,
+"w": 160.0,
+"d": null,
+"h": 42.0,
+"dims": {
+"longueur": 214.0,
+"largeur": 160.0,
+"hauteur": 42.0,
+"hauteur pied de lit": 55.0,
+"hauteur tête de lit": 109.0,
+"hauteur espace sous meuble": 25.0,
+"longueur matelas": 200.0,
+"largeur matelas": 140.0,
+"largeur tête de lit": 161.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/bjoerksnaes-cadre-de-lit-bouleau-plaque-bouleau-loenset-s79501688/",
+"slug": "bjoerksnaes-cadre-de-lit-bouleau-plaque-bouleau-loenset-s79501688"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "BRIMNES",
+"type": "cadre de lit+rangement/tête de lit",
+"price": 449.0,
+"w": 146.0,
+"d": null,
+"h": 111.0,
+"dims": {
+"longueur": 234.0,
+"largeur": 146.0,
+"hauteur": 111.0,
+"longueur matelas": 200.0,
+"largeur matelas": 140.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/brimnes-cadre-de-lit-rangement-tete-de-lit-blanc-leirsund-s99157469/",
+"slug": "brimnes-cadre-de-lit-rangement-tete-de-lit-blanc-leirsund-s99157469"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "BRIMNES",
+"type": "cadre de lit+rangement/tête de lit",
+"price": 539.0,
+"w": 166.0,
+"d": null,
+"h": 111.0,
+"dims": {
+"longueur": 234.0,
+"largeur": 166.0,
+"hauteur": 111.0,
+"longueur matelas": 200.0,
+"largeur matelas": 160.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/brimnes-cadre-de-lit-rangement-tete-de-lit-blanc-leirsund-s99157474/",
+"slug": "brimnes-cadre-de-lit-rangement-tete-de-lit-blanc-leirsund-s99157474"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "BRIMNES",
+"type": "cadre de lit+rangement/tête de lit",
+"price": 429.0,
+"w": 166.0,
+"d": null,
+"h": 111.0,
+"dims": {
+"longueur": 234.0,
+"largeur": 166.0,
+"hauteur": 111.0,
+"longueur matelas": 200.0,
+"largeur matelas": 160.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/brimnes-cadre-de-lit-rangement-tete-de-lit-blanc-lillhaellan-s49619284/",
+"slug": "brimnes-cadre-de-lit-rangement-tete-de-lit-blanc-lillhaellan-s49619284"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "HEMNES",
+"type": "lit banquette 2 places (structure)",
+"price": 299.0,
+"w": 89.0,
+"d": 70.0,
+"h": 20.0,
+"dims": {
+"hauteur tiroir (intérieur)": 20.0,
+"longueur": 209.0,
+"largeur": 89.0,
+"hauteur": 83.0,
+"largeur tiroir (intérieur)": 55.0,
+"profondeur tiroir (intérieur)": 70.0,
+"larg. couchage": 160.0,
+"long. couchage": 200.0,
+"longueur matelas": 200.0,
+"largeur matelas": 80.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-lit-banquette-2-places-structure-blanc-90349326/",
+"slug": "hemnes-lit-banquette-2-places-structure-blanc-90349326"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "HEMNES",
+"type": "lit banquette 2 places (structure)",
+"price": 349.0,
+"w": 89.0,
+"d": 70.0,
+"h": 18.0,
+"dims": {
+"hauteur tiroir (intérieur)": 18.0,
+"longueur": 209.0,
+"largeur": 89.0,
+"hauteur": 83.0,
+"largeur tiroir (intérieur)": 55.0,
+"profondeur tiroir (intérieur)": 70.0,
+"larg. couchage": 160.0,
+"long. couchage": 200.0,
+"longueur matelas": 200.0,
+"largeur matelas": 80.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-lit-banquette-2-places-structure-gris-60372276/",
+"slug": "hemnes-lit-banquette-2-places-structure-gris-60372276"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "HEMNES",
+"type": "lit banquette 2 places (structure)",
+"price": 349.0,
+"w": 80.0,
+"d": 70.0,
+"h": 83.0,
+"dims": {
+"hauteur": 83.0,
+"hauteur tiroir (intérieur)": 18.0,
+"longueur matelas": 200.0,
+"largeur matelas": 80.0,
+"largeur": 91.0,
+"largeur tiroir (intérieur)": 54.0,
+"profondeur tiroir (intérieur)": 70.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-lit-banquette-2-places-structure-gris-vert-80622892/",
+"slug": "hemnes-lit-banquette-2-places-structure-gris-vert-80622892"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "IDANÄS",
+"type": "cadre de lit",
+"price": 529.0,
+"w": 160.0,
+"d": null,
+"h": 63.0,
+"dims": {
+"hauteur pied de lit": 63.0,
+"hauteur tête de lit": 112.0,
+"longueur": 207.0,
+"longueur matelas": 200.0,
+"largeur matelas": 160.0,
+"largeur": 171.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-cadre-de-lit-brun-fonce-leirsund-s39392200/",
+"slug": "idanaes-cadre-de-lit-brun-fonce-leirsund-s39392200"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "IDANÄS",
+"type": "cadre de lit",
+"price": 449.0,
+"w": 140.0,
+"d": null,
+"h": 63.0,
+"dims": {
+"hauteur pied de lit": 63.0,
+"hauteur tête de lit": 112.0,
+"longueur": 207.0,
+"longueur matelas": 200.0,
+"largeur matelas": 140.0,
+"largeur": 151.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-cadre-de-lit-brun-fonce-leirsund-s99389209/",
+"slug": "idanaes-cadre-de-lit-brun-fonce-leirsund-s99389209"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "IDANÄS",
+"type": "cadre de lit",
+"price": 399.0,
+"w": 140.0,
+"d": null,
+"h": 63.0,
+"dims": {
+"hauteur pied de lit": 63.0,
+"hauteur tête de lit": 112.0,
+"longueur": 207.0,
+"longueur matelas": 200.0,
+"largeur matelas": 140.0,
+"largeur": 151.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-cadre-de-lit-brun-fonce-loenset-s59392195/",
+"slug": "idanaes-cadre-de-lit-brun-fonce-loenset-s59392195"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "KLEPPSTAD",
+"type": "cadre de lit",
+"price": 149.0,
+"w": 146.0,
+"d": null,
+"h": 86.0,
+"dims": {
+"hauteur": 86.0,
+"largeur": 146.0,
+"longueur": 207.0,
+"hauteur pied de lit": 27.0,
+"hauteur espace sous meuble": 20.0,
+"longueur matelas": 200.0,
+"largeur matelas": 140.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/kleppstad-cadre-de-lit-blanc-vissle-beige-00492677/",
+"slug": "kleppstad-cadre-de-lit-blanc-vissle-beige-00492677"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "KLEPPSTAD",
+"type": "cadre de lit",
+"price": 179.0,
+"w": 166.0,
+"d": null,
+"h": 86.0,
+"dims": {
+"hauteur": 86.0,
+"largeur": 166.0,
+"longueur": 207.0,
+"hauteur pied de lit": 27.0,
+"hauteur espace sous meuble": 20.0,
+"longueur matelas": 200.0,
+"largeur matelas": 160.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/kleppstad-cadre-de-lit-blanc-vissle-beige-10492672/",
+"slug": "kleppstad-cadre-de-lit-blanc-vissle-beige-10492672"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "MALM",
+"type": "cadre de lit avec matelas",
+"price": 378.0,
+"w": 105.0,
+"d": null,
+"h": 38.0,
+"dims": {
+"longueur": 209.0,
+"largeur": 105.0,
+"hauteur pied de lit": 38.0,
+"hauteur tête de lit": 100.0,
+"longueur matelas": 200.0,
+"largeur matelas": 90.0,
+"hauteur": 100.0,
+"hauteur espace sous meuble": 21.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/malm-cadre-de-lit-avec-matelas-blanc-abygda-ferme-s29536850/",
+"slug": "malm-cadre-de-lit-avec-matelas-blanc-abygda-ferme-s29536850"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "MALM",
+"type": "cadre de lit avec matelas",
+"price": 608.0,
+"w": 176.0,
+"d": null,
+"h": 100.0,
+"dims": {
+"longueur": 209.0,
+"largeur": 176.0,
+"hauteur": 100.0,
+"hauteur tête de lit": 100.0,
+"longueur matelas": 200.0,
+"largeur matelas": 160.0,
+"hauteur pied de lit": 38.0,
+"hauteur espace sous meuble": 21.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/malm-cadre-de-lit-avec-matelas-blanc-abygda-ferme-s49536854/",
+"slug": "malm-cadre-de-lit-avec-matelas-blanc-abygda-ferme-s49536854"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "MALM",
+"type": "cadre de lit avec matelas",
+"price": 498.0,
+"w": 156.0,
+"d": null,
+"h": 38.0,
+"dims": {
+"longueur": 209.0,
+"largeur": 156.0,
+"hauteur pied de lit": 38.0,
+"hauteur tête de lit": 100.0,
+"longueur matelas": 200.0,
+"largeur matelas": 140.0,
+"hauteur": 100.0,
+"hauteur espace sous meuble": 21.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/malm-cadre-de-lit-avec-matelas-blanc-abygda-ferme-s69544711/",
+"slug": "malm-cadre-de-lit-avec-matelas-blanc-abygda-ferme-s69544711"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "NEIDEN",
+"type": "cadre de lit",
+"price": 49.0,
+"w": 94.0,
+"d": 63.5,
+"h": 30.0,
+"dims": {
+"longueur": 186.0,
+"profondeur": 63.5,
+"epaisseur": 3.8,
+"largeur": 94.0,
+"hauteur pied de lit": 30.0,
+"hauteur tête de lit": 65.0,
+"hauteur espace sous meuble": 20.0,
+"longueur matelas": 200.0,
+"largeur matelas": 90.0
+},
+"color": "#c9a26a",
+"url": "https://www.ikea.com/fr/fr/p/neiden-cadre-de-lit-pin-40395245/",
+"slug": "neiden-cadre-de-lit-pin-40395245"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "NEIDEN",
+"type": "cadre de lit",
+"price": 69.0,
+"w": 144.0,
+"d": null,
+"h": 30.0,
+"dims": {
+"longueur": 205.0,
+"largeur": 144.0,
+"hauteur pied de lit": 30.0,
+"hauteur tête de lit": 65.0,
+"hauteur espace sous meuble": 20.0,
+"longueur matelas": 200.0,
+"largeur matelas": 140.0
+},
+"color": "#c9a26a",
+"url": "https://www.ikea.com/fr/fr/p/neiden-cadre-de-lit-pin-70395239/",
+"slug": "neiden-cadre-de-lit-pin-70395239"
+},
+{
+"cat": "chambre",
+"sub": "lit",
+"name": "NEIDEN",
+"type": "cadre de lit",
+"price": 89.0,
+"w": 94.0,
+"d": null,
+"h": 30.0,
+"dims": {
+"longueur": 205.0,
+"largeur": 94.0,
+"hauteur pied de lit": 30.0,
+"hauteur tête de lit": 65.0,
+"hauteur espace sous meuble": 20.0,
+"longueur matelas": 200.0,
+"largeur matelas": 90.0
+},
+"color": "#c9a26a",
+"url": "https://www.ikea.com/fr/fr/p/neiden-cadre-de-lit-pin-lillhaellan-s69615812/",
+"slug": "neiden-cadre-de-lit-pin-lillhaellan-s69615812"
+},
+{
+"cat": "chambre",
+"sub": "matelas",
+"name": "ÅGOTNES",
+"type": "matelas en mousse",
+"price": 49.0,
+"w": 90.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 200.0,
+"largeur": 90.0,
+"epaisseur": 10.0
+},
+"color": "#3d5168",
+"url": "https://www.ikea.com/fr/fr/p/agotnes-matelas-en-mousse-ferme-bleu-clair-00480858/",
+"slug": "agotnes-matelas-en-mousse-ferme-bleu-clair-00480858"
+},
+{
+"cat": "chambre",
+"sub": "matelas",
+"name": "VALEVÅG",
+"type": "matelas à ressorts ensachés",
+"price": 319.0,
+"w": 180.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 200.0,
+"largeur": 180.0,
+"epaisseur": 24.0
+},
+"color": "#3d5168",
+"url": "https://www.ikea.com/fr/fr/p/valevag-matelas-a-ressorts-ensaches-extra-ferme-bleu-clair-00470005/",
+"slug": "valevag-matelas-a-ressorts-ensaches-extra-ferme-bleu-clair-00470005"
+},
+{
+"cat": "chambre",
+"sub": "matelas",
+"name": "VESTERÖY",
+"type": "matelas à ressorts ensachés",
+"price": 149.0,
+"w": 90.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 200.0,
+"largeur": 90.0,
+"epaisseur": 20.0
+},
+"color": "#3d5168",
+"url": "https://www.ikea.com/fr/fr/p/vesteroey-matelas-a-ressorts-ensaches-ferme-bleu-clair-00450502/",
+"slug": "vesteroey-matelas-a-ressorts-ensaches-ferme-bleu-clair-00450502"
+},
+{
+"cat": "chambre",
+"sub": "matelas",
+"name": "VESTMARKA",
+"type": "matelas à ressorts",
+"price": 199.0,
+"w": 160.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 200.0,
+"largeur": 160.0,
+"epaisseur": 18.0
+},
+"color": "#3d5168",
+"url": "https://www.ikea.com/fr/fr/p/vestmarka-matelas-a-ressorts-ferme-bleu-clair-10451290/",
+"slug": "vestmarka-matelas-a-ressorts-ferme-bleu-clair-10451290"
+},
+{
+"cat": "chambre",
+"sub": "chevet",
+"name": "BRIMNES",
+"type": "table de chevet",
+"price": 49.99,
+"w": 39.0,
+"d": 41.0,
+"h": 53.0,
+"dims": {
+"largeur": 39.0,
+"profondeur": 41.0,
+"hauteur": 53.0,
+"largeur tiroir (intérieur)": 31.0,
+"profondeur tiroir (intérieur)": 36.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/brimnes-table-de-chevet-blanc-10234942/",
+"slug": "brimnes-table-de-chevet-blanc-10234942"
+},
+{
+"cat": "chambre",
+"sub": "chevet",
+"name": "HEMNES",
+"type": "commode 2 tiroirs",
+"price": 99.99,
+"w": 54.0,
+"d": 38.0,
+"h": 66.0,
+"dims": {
+"largeur": 54.0,
+"profondeur": 38.0,
+"hauteur": 66.0,
+"profondeur tiroir (intérieur)": 31.0,
+"hauteur espace sous meuble": 11.0,
+"ouverture tiroir": 22.5
+},
+"color": "#ded8cc",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-commode-2-tiroirs-teinte-blanc-80242627/",
+"slug": "hemnes-commode-2-tiroirs-teinte-blanc-80242627"
+},
+{
+"cat": "chambre",
+"sub": "chevet",
+"name": "KULLEN",
+"type": "commode 2 tiroirs",
+"price": 35.0,
+"w": 35.0,
+"d": 40.0,
+"h": 49.0,
+"dims": {
+"largeur": 35.0,
+"profondeur": 40.0,
+"hauteur": 49.0,
+"profondeur tiroir (intérieur)": 34.0,
+"largeur tiroir (intérieur)": 30.0
+},
+"color": "#2f251e",
+"url": "https://www.ikea.com/fr/fr/p/kullen-commode-2-tiroirs-brun-noir-60322130/",
+"slug": "kullen-commode-2-tiroirs-brun-noir-60322130"
+},
+{
+"cat": "chambre",
+"sub": "chevet",
+"name": "NORDLI",
+"type": "commode 2 tiroirs",
+"price": 119.99,
+"w": 40.0,
+"d": 47.0,
+"h": 54.0,
+"dims": {
+"largeur": 40.0,
+"profondeur": 47.0,
+"hauteur": 54.0,
+"profondeur tiroir (intérieur)": 37.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/nordli-commode-2-tiroirs-blanc-s09239827/",
+"slug": "nordli-commode-2-tiroirs-blanc-s09239827"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "BRIMNES",
+"type": "armoire 2 portes",
+"price": 149.0,
+"w": 78.0,
+"d": 50.0,
+"h": 190.0,
+"dims": {
+"largeur": 78.0,
+"profondeur": 50.0,
+"hauteur": 190.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/brimnes-armoire-2-portes-blanc-40400478/",
+"slug": "brimnes-armoire-2-portes-blanc-40400478"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "BRIMNES",
+"type": "armoire 2 portes",
+"price": 149.0,
+"w": 78.0,
+"d": 50.0,
+"h": 190.0,
+"dims": {
+"profondeur": 50.0,
+"hauteur": 190.0,
+"largeur": 78.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/brimnes-armoire-2-portes-gris-90602803/",
+"slug": "brimnes-armoire-2-portes-gris-90602803"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "BRIMNES",
+"type": "armoire 3 portes",
+"price": 199.0,
+"w": 117.0,
+"d": 50.0,
+"h": 190.0,
+"dims": {
+"largeur": 117.0,
+"profondeur": 50.0,
+"hauteur": 190.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/brimnes-armoire-3-portes-blanc-40407922/",
+"slug": "brimnes-armoire-3-portes-blanc-40407922"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "GURSKEN",
+"type": "armoire-penderie",
+"price": 79.99,
+"w": 49.4,
+"d": 55.0,
+"h": 185.7,
+"dims": {
+"profondeur": 55.0,
+"hauteur": 185.7,
+"largeur": 49.4
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/gursken-armoire-penderie-beige-clair-20486326/",
+"slug": "gursken-armoire-penderie-beige-clair-20486326"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "HAUGA",
+"type": "armoire 2 portes",
+"price": 179.0,
+"w": 70.0,
+"d": 46.0,
+"h": 199.0,
+"dims": {
+"largeur": 70.0,
+"profondeur": 46.0,
+"hauteur": 199.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hauga-armoire-2-portes-blanc-20415046/",
+"slug": "hauga-armoire-2-portes-blanc-20415046"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "HAUGA",
+"type": "armoire 2 portes",
+"price": 179.0,
+"w": 70.0,
+"d": 46.0,
+"h": 60.0,
+"dims": {
+"hauteur": 60.0,
+"diamètre": 39.0,
+"largeur": 70.0,
+"profondeur": 46.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/hauga-armoire-2-portes-gris-60415054/",
+"slug": "hauga-armoire-2-portes-gris-60415054"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "HAUGA",
+"type": "armoire à portes coulissantes",
+"price": 279.0,
+"w": 118.0,
+"d": 55.0,
+"h": 199.0,
+"dims": {
+"largeur": 118.0,
+"profondeur": 55.0,
+"hauteur": 199.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hauga-armoire-a-portes-coulissantes-blanc-60456916/",
+"slug": "hauga-armoire-a-portes-coulissantes-blanc-60456916"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "IDANÄS",
+"type": "armoire ouverte",
+"price": 229.0,
+"w": 59.0,
+"d": 49.0,
+"h": 211.0,
+"dims": {
+"largeur": 59.0,
+"profondeur": 49.0,
+"hauteur": 211.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-armoire-ouverte-blanc-20458842/",
+"slug": "idanaes-armoire-ouverte-blanc-20458842"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "IDANÄS",
+"type": "armoire-penderie",
+"price": 399.0,
+"w": 121.0,
+"d": 59.0,
+"h": 211.0,
+"dims": {
+"largeur": 121.0,
+"profondeur": 59.0,
+"hauteur": 211.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-armoire-penderie-blanc-60458835/",
+"slug": "idanaes-armoire-penderie-blanc-60458835"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "IDANÄS",
+"type": "combinaison armoire",
+"price": 628.0,
+"w": 180.0,
+"d": 59.0,
+"h": 211.0,
+"dims": {
+"profondeur": 59.0,
+"hauteur": 211.0,
+"largeur": 180.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-combinaison-armoire-blanc-s89388291/",
+"slug": "idanaes-combinaison-armoire-blanc-s89388291"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "KLEPPSTAD",
+"type": "armoire 2 portes",
+"price": 99.99,
+"w": 79.0,
+"d": 55.0,
+"h": 176.0,
+"dims": {
+"largeur": 79.0,
+"profondeur": 55.0,
+"hauteur": 176.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/kleppstad-armoire-2-portes-blanc-80437234/",
+"slug": "kleppstad-armoire-2-portes-blanc-80437234"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "KLEPPSTAD",
+"type": "armoire 3 portes",
+"price": 149.0,
+"w": 100.0,
+"d": 55.0,
+"h": 176.0,
+"dims": {
+"superficie": 155.0,
+"longueur": 155.0,
+"largeur tissu": 100.0,
+"largeur store": 103.6,
+"largeur": 117.0,
+"profondeur": 55.0,
+"hauteur": 176.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/kleppstad-armoire-3-portes-blanc-00441758/",
+"slug": "kleppstad-armoire-3-portes-blanc-00441758"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "KLEPPSTAD",
+"type": "armoire à portes coulissantes",
+"price": 199.0,
+"w": 117.0,
+"d": 55.0,
+"h": 176.0,
+"dims": {
+"largeur": 117.0,
+"profondeur": 55.0,
+"hauteur": 176.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/kleppstad-armoire-a-portes-coulissantes-blanc-90437238/",
+"slug": "kleppstad-armoire-a-portes-coulissantes-blanc-90437238"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "PAX",
+"type": "armoire d'angle",
+"price": 1095.0,
+"w": 210.5,
+"d": null,
+"h": 201.0,
+"dims": {
+"hauteur": 201.0,
+"largeur gauche": 210.5,
+"largeur droite": 213.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/pax-armoire-dangle-blanc-s19503138/",
+"slug": "pax-armoire-dangle-blanc-s19503138"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "PAX",
+"type": "armoire d'angle",
+"price": 858.0,
+"w": 60.0,
+"d": 61.9,
+"h": 88.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.9,
+"hauteur": 88.0,
+"prof. structure": 60.0,
+"haut. structure": 80.0,
+"largeur droite": 160.5,
+"largeur gauche": 210.5
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/pax-armoire-dangle-blanc-s49502986/",
+"slug": "pax-armoire-dangle-blanc-s49502986"
+},
+{
+"cat": "chambre",
+"sub": "armoire",
+"name": "PAX",
+"type": "armoire d'angle",
+"price": 788.0,
+"w": 160.5,
+"d": null,
+"h": 201.2,
+"dims": {
+"hauteur": 201.2,
+"largeur droite": 160.5,
+"largeur gauche": 210.5
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/pax-armoire-dangle-blanc-s69502985/",
+"slug": "pax-armoire-dangle-blanc-s69502985"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "HAUGA",
+"type": "commode 3 tiroirs avec tablette",
+"price": 139.0,
+"w": 70.0,
+"d": 46.0,
+"h": 116.0,
+"dims": {
+"largeur": 70.0,
+"profondeur": 46.0,
+"hauteur": 116.0,
+"largeur tiroir (intérieur)": 61.0,
+"profondeur tiroir (intérieur)": 38.0,
+"ouverture tiroir": 23.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hauga-commode-3-tiroirs-avec-tablette-blanc-50581529/",
+"slug": "hauga-commode-3-tiroirs-avec-tablette-blanc-50581529"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "HAUGA",
+"type": "commode 3 tiroirs avec tablette",
+"price": 139.0,
+"w": 70.0,
+"d": 46.0,
+"h": 116.0,
+"dims": {
+"largeur": 70.0,
+"profondeur": 46.0,
+"hauteur": 116.0,
+"largeur tiroir (intérieur)": 61.0,
+"profondeur tiroir (intérieur)": 38.0,
+"ouverture tiroir": 23.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/hauga-commode-3-tiroirs-avec-tablette-gris-30581525/",
+"slug": "hauga-commode-3-tiroirs-avec-tablette-gris-30581525"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "HEMNES",
+"type": "commode 3 tiroirs",
+"price": 229.0,
+"w": 108.0,
+"d": 50.0,
+"h": 96.0,
+"dims": {
+"largeur": 108.0,
+"profondeur": 50.0,
+"hauteur": 96.0,
+"profondeur tiroir (intérieur)": 43.0,
+"hauteur espace sous meuble": 11.0,
+"ouverture tiroir": 29.4
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-commode-3-tiroirs-gris-vert-teinte-brun-clair-70610738/",
+"slug": "hemnes-commode-3-tiroirs-gris-vert-teinte-brun-clair-70610738"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "HEMNES",
+"type": "commode 3 tiroirs",
+"price": 229.0,
+"w": 108.0,
+"d": 50.0,
+"h": 96.0,
+"dims": {
+"largeur": 108.0,
+"profondeur": 50.0,
+"hauteur": 96.0,
+"profondeur tiroir (intérieur)": 43.0,
+"hauteur espace sous meuble": 11.0,
+"ouverture tiroir": 29.4
+},
+"color": "#ded8cc",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-commode-3-tiroirs-teinte-blanc-80424745/",
+"slug": "hemnes-commode-3-tiroirs-teinte-blanc-80424745"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "IDANÄS",
+"type": "commode 4 tiroirs",
+"price": 299.0,
+"w": 104.0,
+"d": 50.0,
+"h": 118.0,
+"dims": {
+"largeur": 104.0,
+"profondeur": 50.0,
+"hauteur": 118.0,
+"largeur tiroir (intérieur)": 92.0,
+"profondeur tiroir (intérieur)": 40.0,
+"hauteur espace sous meuble": 16.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-commode-4-tiroirs-blanc-10458767/",
+"slug": "idanaes-commode-4-tiroirs-blanc-10458767"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "IDANÄS",
+"type": "commode 6 tiroirs",
+"price": 399.0,
+"w": 162.0,
+"d": 50.0,
+"h": 95.0,
+"dims": {
+"largeur": 162.0,
+"profondeur": 50.0,
+"hauteur": 95.0,
+"largeur tiroir (intérieur)": 72.0,
+"profondeur tiroir (intérieur)": 40.0,
+"hauteur espace sous meuble": 16.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-commode-6-tiroirs-blanc-10458710/",
+"slug": "idanaes-commode-6-tiroirs-blanc-10458710"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "KULLEN",
+"type": "commode 5 tiroirs",
+"price": 109.0,
+"w": 70.0,
+"d": 40.0,
+"h": 112.0,
+"dims": {
+"largeur": 70.0,
+"profondeur": 40.0,
+"hauteur": 112.0,
+"profondeur tiroir (intérieur)": 34.0,
+"largeur tiroir (intérieur)": 63.0
+},
+"color": "#2f251e",
+"url": "https://www.ikea.com/fr/fr/p/kullen-commode-5-tiroirs-brun-noir-40393661/",
+"slug": "kullen-commode-5-tiroirs-brun-noir-40393661"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "KULLEN",
+"type": "commode 6 tiroirs",
+"price": 149.0,
+"w": 140.0,
+"d": 40.0,
+"h": 72.0,
+"dims": {
+"largeur": 140.0,
+"profondeur": 40.0,
+"hauteur": 72.0,
+"profondeur tiroir (intérieur)": 34.0,
+"largeur tiroir (intérieur)": 63.0
+},
+"color": "#2f251e",
+"url": "https://www.ikea.com/fr/fr/p/kullen-commode-6-tiroirs-brun-noir-00309235/",
+"slug": "kullen-commode-6-tiroirs-brun-noir-00309235"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "NORDLI",
+"type": "commode 10 tiroirs",
+"price": 478.0,
+"w": 160.0,
+"d": 47.0,
+"h": 99.0,
+"dims": {
+"largeur": 160.0,
+"profondeur": 47.0,
+"hauteur": 99.0,
+"profondeur tiroir (intérieur)": 37.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/nordli-commode-10-tiroirs-blanc-s29248010/",
+"slug": "nordli-commode-10-tiroirs-blanc-s29248010"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "NORDLI",
+"type": "commode 2 tiroirs",
+"price": 159.99,
+"w": 40.0,
+"d": 47.0,
+"h": 99.0,
+"dims": {
+"largeur": 40.0,
+"profondeur": 47.0,
+"hauteur": 99.0,
+"profondeur tiroir (intérieur)": 37.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/nordli-commode-2-tiroirs-blanc-s49276549/",
+"slug": "nordli-commode-2-tiroirs-blanc-s49276549"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "RAST",
+"type": "commode 3 tiroirs",
+"price": 59.99,
+"w": 60.0,
+"d": 35.0,
+"h": 59.0,
+"dims": {
+"profondeur": 35.0,
+"profondeur tiroir (intérieur)": 29.0,
+"hauteur": 59.0,
+"largeur": 60.0,
+"largeur tiroir (intérieur)": 52.0,
+"ouverture tiroir": 15.2
+},
+"color": "#c9a26a",
+"url": "https://www.ikea.com/fr/fr/p/rast-commode-3-tiroirs-pin-20609860/",
+"slug": "rast-commode-3-tiroirs-pin-20609860"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "SONGESAND",
+"type": "commode 3 tiroirs",
+"price": 139.0,
+"w": 82.0,
+"d": 50.0,
+"h": 81.0,
+"dims": {
+"largeur": 82.0,
+"profondeur": 50.0,
+"hauteur": 81.0,
+"largeur tiroir (intérieur)": 71.0,
+"profondeur tiroir (intérieur)": 40.0,
+"ouverture tiroir": 22.8
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/songesand-commode-3-tiroirs-blanc-90366839/",
+"slug": "songesand-commode-3-tiroirs-blanc-90366839"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "SONGESAND",
+"type": "commode 4 tiroirs",
+"price": 159.0,
+"w": 82.0,
+"d": 50.0,
+"h": 104.0,
+"dims": {
+"largeur": 82.0,
+"profondeur": 50.0,
+"hauteur": 104.0,
+"largeur tiroir (intérieur)": 71.0,
+"profondeur tiroir (intérieur)": 40.0,
+"ouverture tiroir": 22.8
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/songesand-commode-4-tiroirs-blanc-10366777/",
+"slug": "songesand-commode-4-tiroirs-blanc-10366777"
+},
+{
+"cat": "chambre",
+"sub": "commode",
+"name": "TONSTAD",
+"type": "commode 4 tiroirs",
+"price": 259.0,
+"w": 82.0,
+"d": 47.0,
+"h": 91.0,
+"dims": {
+"profondeur": 47.0,
+"profondeur tiroir (intérieur)": 35.0,
+"hauteur": 91.0,
+"largeur": 82.0,
+"largeur tiroir (intérieur)": 72.0,
+"ouverture tiroir": 24.6
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/tonstad-commode-4-tiroirs-blanc-casse-70614618/",
+"slug": "tonstad-commode-4-tiroirs-blanc-casse-70614618"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "ALEX",
+"type": "bureau",
+"price": 119.0,
+"w": 100.0,
+"d": 48.0,
+"h": 76.0,
+"dims": {
+"largeur": 100.0,
+"profondeur": 48.0,
+"hauteur": 76.0,
+"hauteur espace sous meuble": 62.0,
+"largeur tiroir (intérieur)": 44.0,
+"profondeur tiroir (intérieur)": 31.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/alex-bureau-blanc-10473555/",
+"slug": "alex-bureau-blanc-10473555"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "ALEX",
+"type": "bureau",
+"price": 149.0,
+"w": 132.0,
+"d": 58.0,
+"h": 76.0,
+"dims": {
+"largeur": 132.0,
+"profondeur": 58.0,
+"hauteur": 76.0,
+"hauteur espace sous meuble": 62.0,
+"largeur tiroir (intérieur)": 60.0,
+"profondeur tiroir (intérieur)": 42.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/alex-bureau-blanc-80483438/",
+"slug": "alex-bureau-blanc-80483438"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "FREDDE",
+"type": "bureau gamer",
+"price": 319.0,
+"w": 185.0,
+"d": 74.0,
+"h": 146.0,
+"dims": {
+"profondeur": 74.0,
+"hauteur": 146.0,
+"larg. min.": 140.0,
+"largeur max.": 185.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/fredde-bureau-gamer-noir-50219044/",
+"slug": "fredde-bureau-gamer-noir-50219044"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "HEMNES",
+"type": "bureau à 2 tiroirs",
+"price": 199.0,
+"w": 120.0,
+"d": 47.0,
+"h": 75.0,
+"dims": {
+"largeur": 120.0,
+"profondeur": 47.0,
+"hauteur": 75.0,
+"largeur tiroir (intérieur)": 46.0,
+"profondeur tiroir (intérieur)": 29.0
+},
+"color": "#2f251e",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-bureau-a-2-tiroirs-brun-noir-brun-clair-50534953/",
+"slug": "hemnes-bureau-a-2-tiroirs-brun-noir-brun-clair-50534953"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "HEMNES",
+"type": "bureau à 2 tiroirs",
+"price": 199.0,
+"w": 120.0,
+"d": 47.0,
+"h": 75.0,
+"dims": {
+"largeur": 120.0,
+"profondeur": 47.0,
+"hauteur": 75.0,
+"largeur tiroir (intérieur)": 46.0,
+"profondeur tiroir (intérieur)": 29.0
+},
+"color": "#ded8cc",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-bureau-a-2-tiroirs-teinte-blanc-brun-clair-30534954/",
+"slug": "hemnes-bureau-a-2-tiroirs-teinte-blanc-brun-clair-30534954"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "IDANÄS",
+"type": "bureau",
+"price": 479.0,
+"w": 152.0,
+"d": 70.0,
+"h": 75.0,
+"dims": {
+"largeur": 152.0,
+"profondeur": 70.0,
+"hauteur": 75.0,
+"hauteur espace sous meuble": 65.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-bureau-blanc-10514155/",
+"slug": "idanaes-bureau-blanc-10514155"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "IDANÄS",
+"type": "bureau",
+"price": 479.0,
+"w": 152.0,
+"d": 70.0,
+"h": 75.0,
+"dims": {
+"largeur": 152.0,
+"profondeur": 70.0,
+"hauteur": 75.0,
+"hauteur espace sous meuble": 65.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/idanaes-bureau-brun-60514153/",
+"slug": "idanaes-bureau-brun-60514153"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "LAGKAPTEN",
+"type": "bureau",
+"price": 130.97,
+"w": 60.0,
+"d": null,
+"h": 73.0,
+"dims": {
+"longueur": 120.0,
+"largeur": 60.0,
+"hauteur": 73.0
+},
+"color": "#ded8cc",
+"url": "https://www.ikea.com/fr/fr/p/lagkapten-bureau-teinte-blanc-motif-chene-blanc-s29638113/",
+"slug": "lagkapten-bureau-teinte-blanc-motif-chene-blanc-s29638113"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "MICKE",
+"type": "bureau",
+"price": 59.99,
+"w": 73.0,
+"d": 50.0,
+"h": 75.0,
+"dims": {
+"largeur": 73.0,
+"profondeur": 50.0,
+"hauteur": 75.0,
+"hauteur espace sous meuble": 63.0,
+"largeur tiroir (intérieur)": 62.0,
+"profondeur tiroir (intérieur)": 36.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/micke-bureau-blanc-30213076/",
+"slug": "micke-bureau-blanc-30213076"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "MICKE",
+"type": "bureau",
+"price": 89.99,
+"w": 105.0,
+"d": 50.0,
+"h": 75.0,
+"dims": {
+"largeur": 105.0,
+"profondeur": 50.0,
+"hauteur": 75.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/micke-bureau-blanc-80213074/",
+"slug": "micke-bureau-blanc-80213074"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "MITTZON",
+"type": "bureau assis/debout",
+"price": 449.0,
+"w": 58.0,
+"d": 60.0,
+"h": 41.0,
+"dims": {
+"hauteur": 41.0,
+"longueur": 68.0,
+"largeur": 58.0,
+"profondeur": 60.0,
+"hauteur max.": 126.0,
+"haut. min.": 62.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/mittzon-bureau-assis-debout-electrique-blanc-noir-s09526116/",
+"slug": "mittzon-bureau-assis-debout-electrique-blanc-noir-s09526116"
+},
+{
+"cat": "bureau",
+"sub": "bureau",
+"name": "MITTZON",
+"type": "bureau assis/debout",
+"price": 579.0,
+"w": 160.0,
+"d": 80.0,
+"h": 126.0,
+"dims": {
+"largeur": 160.0,
+"profondeur": 80.0,
+"hauteur max.": 126.0,
+"haut. min.": 62.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/mittzon-bureau-assis-debout-electrique-blanc-noir-s29529883/",
+"slug": "mittzon-bureau-assis-debout-electrique-blanc-noir-s29529883"
+},
+{
+"cat": "bureau",
+"sub": "siege",
+"name": "FLINTAN",
+"type": "chaise de bureau",
+"price": 69.99,
+"w": 71.0,
+"d": 71.0,
+"h": 114.0,
+"dims": {
+"profondeur": 71.0,
+"hauteur max.": 114.0,
+"haut. assise max.": 58.0,
+"haut. assise min.": 45.0,
+"prof. assise": 49.0,
+"larg. assise": 46.0,
+"largeur": 71.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/flintan-chaise-de-bureau-beige-70492202/",
+"slug": "flintan-chaise-de-bureau-beige-70492202"
+},
+{
+"cat": "bureau",
+"sub": "siege",
+"name": "HATTEFJÄLL",
+"type": "chaise de bureau av accoudoirs",
+"price": 279.0,
+"w": 68.0,
+"d": 68.0,
+"h": 114.0,
+"dims": {
+"largeur": 68.0,
+"profondeur": 68.0,
+"hauteur max.": 114.0,
+"larg. assise": 50.0,
+"prof. assise": 40.0,
+"haut. assise min.": 46.0,
+"haut. assise max.": 56.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hattefjaell-chaise-de-bureau-av-accoudoirs-gunnared-beige-blanc-60538955/",
+"slug": "hattefjaell-chaise-de-bureau-av-accoudoirs-gunnared-beige-blanc-60538955"
+},
+{
+"cat": "bureau",
+"sub": "siege",
+"name": "MARKUS",
+"type": "chaise de bureau av accoudoirs",
+"price": 228.99,
+"w": 71.0,
+"d": 71.0,
+"h": 114.0,
+"dims": {
+"largeur": 71.0,
+"profondeur": 71.0,
+"hauteur max.": 114.0,
+"haut. min.": 103.0,
+"larg. assise": 46.0,
+"prof. assise": 49.0,
+"haut. assise max.": 58.0,
+"haut. assise min.": 45.0,
+"hauteur accoudoir min.": 69.0,
+"hauteur accoudoir max.": 81.0
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/markus-chaise-de-bureau-av-accoudoirs-avec-protection-de-sol-gris-clair-s19628039/",
+"slug": "markus-chaise-de-bureau-av-accoudoirs-avec-protection-de-sol-gris-clair-s19628039"
+},
+{
+"cat": "bureau",
+"sub": "siege",
+"name": "MATCHSPEL",
+"type": "chaise gaming",
+"price": 179.0,
+"w": 66.0,
+"d": 66.0,
+"h": 132.0,
+"dims": {
+"largeur": 66.0,
+"profondeur": 66.0,
+"hauteur max.": 132.0,
+"haut. min.": 120.0,
+"larg. assise": 54.0,
+"prof. assise": 48.0,
+"haut. assise max.": 59.0,
+"haut. assise min.": 47.0
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/matchspel-chaise-gaming-bomstad-gris-clair-90571528/",
+"slug": "matchspel-chaise-gaming-bomstad-gris-clair-90571528"
+},
+{
+"cat": "bureau",
+"sub": "siege",
+"name": "MILLBERGET",
+"type": "chaise pivotante",
+"price": 129.0,
+"w": 70.0,
+"d": 70.0,
+"h": 123.0,
+"dims": {
+"largeur": 70.0,
+"profondeur": 70.0,
+"hauteur max.": 123.0,
+"larg. assise": 50.0,
+"prof. assise": 46.0,
+"haut. assise max.": 58.0,
+"haut. assise min.": 45.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/millberget-chaise-pivotante-murum-beige-70489389/",
+"slug": "millberget-chaise-pivotante-murum-beige-70489389"
+},
+{
+"cat": "bureau",
+"sub": "siege",
+"name": "ODGER",
+"type": "chaise",
+"price": 89.99,
+"w": 185.0,
+"d": 60.0,
+"h": 236.4,
+"dims": {
+"largeur": 185.0,
+"profondeur": 60.0,
+"hauteur": 236.4,
+"larg. assise": 45.0,
+"prof. assise": 41.0,
+"haut. assise": 43.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/odger-chaise-blanc-beige-60359996/",
+"slug": "odger-chaise-blanc-beige-60359996"
+},
+{
+"cat": "bureau",
+"sub": "siege",
+"name": "RENBERGET",
+"type": "chaise pivotante",
+"price": 69.99,
+"w": 67.0,
+"d": 67.0,
+"h": 111.0,
+"dims": {
+"largeur": 67.0,
+"profondeur": 67.0,
+"hauteur max.": 111.0,
+"haut. min.": 100.0,
+"larg. assise": 48.0,
+"prof. assise": 43.0,
+"haut. assise max.": 55.0,
+"haut. assise min.": 44.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/renberget-chaise-pivotante-bomstad-noir-60493546/",
+"slug": "renberget-chaise-pivotante-bomstad-noir-60493546"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 575.0,
+"w": 60.0,
+"d": 61.6,
+"h": 208.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 208.0,
+"prof. structure": 60.0,
+"haut. structure": 200.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-askersund-effet-frene-clair-s19471929/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-askersund-effet-frene-clair-s19471929"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 544.0,
+"w": 60.0,
+"d": 61.6,
+"h": 208.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 208.0,
+"prof. structure": 60.0,
+"haut. structure": 200.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-askersund-effet-frene-clair-s39471928/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-askersund-effet-frene-clair-s39471928"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "plateau",
+"price": 589.0,
+"w": 60.0,
+"d": 61.6,
+"h": 228.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 228.0,
+"prof. structure": 60.0,
+"haut. structure": 220.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-askersund-effet-frene-clair-s99471930/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-askersund-effet-frene-clair-s99471930"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 608.0,
+"w": 40.0,
+"d": 61.6,
+"h": 88.0,
+"dims": {
+"largeur": 40.0,
+"profondeur": 61.6,
+"hauteur": 88.0,
+"prof. structure": 60.0,
+"haut. structure": 80.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-aspudden-blanc-mat-s09624273/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-aspudden-blanc-mat-s09624273"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 645.0,
+"w": 60.0,
+"d": 61.6,
+"h": 208.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 208.0,
+"prof. structure": 60.0,
+"haut. structure": 200.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-aspudden-blanc-mat-s29624738/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-aspudden-blanc-mat-s29624738"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 663.0,
+"w": 60.0,
+"d": 61.6,
+"h": 228.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 228.0,
+"prof. structure": 60.0,
+"haut. structure": 220.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-aspudden-blanc-mat-s29624837/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-aspudden-blanc-mat-s29624837"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 608.0,
+"w": 60.0,
+"d": 61.6,
+"h": 208.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 208.0,
+"prof. structure": 60.0,
+"haut. structure": 200.0
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-clair-s19604726/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-clair-s19604726"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 645.0,
+"w": 60.0,
+"d": 61.6,
+"h": 208.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 208.0,
+"prof. structure": 60.0,
+"haut. structure": 200.0
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-clair-s79605822/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-clair-s79605822"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 663.0,
+"w": 60.0,
+"d": 61.6,
+"h": 228.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 228.0,
+"prof. structure": 60.0,
+"haut. structure": 220.0
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-clair-s99604727/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-clair-s99604727"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 608.0,
+"w": 60.0,
+"d": 61.6,
+"h": 208.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 208.0,
+"prof. structure": 60.0,
+"haut. structure": 200.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-vert-fonce-s49604225/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-vert-fonce-s49604225"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 645.0,
+"w": 60.0,
+"d": 61.6,
+"h": 208.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 61.6,
+"hauteur": 208.0,
+"prof. structure": 60.0,
+"haut. structure": 200.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-vert-fonce-s69604795/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-vert-fonce-s69604795"
+},
+{
+"cat": "cuisine",
+"sub": "meuble",
+"name": "METOD",
+"type": "armoire avec rangement coulissant",
+"price": 663.0,
+"w": 50.0,
+"d": 61.6,
+"h": 195.0,
+"dims": {
+"hauteur": 195.0,
+"largeur": 50.0,
+"système, hauteur": 229.0,
+"système, largeur": 50.0,
+"profondeur": 61.6,
+"prof. structure": 60.0,
+"haut. structure": 220.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-vert-fonce-s79605474/",
+"slug": "metod-armoire-avec-rangement-coulissant-blanc-aspudden-gris-vert-fonce-s79605474"
+},
+{
+"cat": "cuisine",
+"sub": "facade",
+"name": "ASKERSUND",
+"type": "porte",
+"price": 36.0,
+"w": 59.7,
+"d": null,
+"h": 99.7,
+"dims": {
+"largeur": 59.7,
+"système, hauteur": 100.0,
+"système, largeur": 60.0,
+"hauteur": 99.7,
+"epaisseur": 1.6
+},
+"color": "#c7a67b",
+"url": "https://www.ikea.com/fr/fr/p/askersund-porte-effet-frene-clair-10331858/",
+"slug": "askersund-porte-effet-frene-clair-10331858"
+},
+{
+"cat": "cuisine",
+"sub": "facade",
+"name": "AXSTAD",
+"type": "porte élément bas d'angle, 2pcs",
+"price": 65.0,
+"w": 25.5,
+"d": null,
+"h": 79.7,
+"dims": {
+"largeur": 25.5,
+"hauteur": 79.7,
+"epaisseur": 2.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/axstad-porte-element-bas-dangle-2pcs-gris-vert-90563967/",
+"slug": "axstad-porte-element-bas-dangle-2pcs-gris-vert-90563967"
+},
+{
+"cat": "cuisine",
+"sub": "facade",
+"name": "BODBYN",
+"type": "porte",
+"price": 187.0,
+"w": 39.7,
+"d": null,
+"h": 199.7,
+"dims": {
+"largeur": 39.7,
+"système, hauteur": 200.0,
+"système, largeur": 40.0,
+"hauteur": 199.7,
+"epaisseur": 1.9
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/bodbyn-porte-blanc-casse-00205488/",
+"slug": "bodbyn-porte-blanc-casse-00205488"
+},
+{
+"cat": "cuisine",
+"sub": "facade",
+"name": "ENKÖPING",
+"type": "porte",
+"price": 46.0,
+"w": 59.7,
+"d": null,
+"h": 139.7,
+"dims": {
+"largeur": 59.7,
+"système, hauteur": 140.0,
+"système, largeur": 60.0,
+"hauteur": 139.7,
+"epaisseur": 1.8
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/enkoeping-porte-blanc-effet-bois-00505769/",
+"slug": "enkoeping-porte-blanc-effet-bois-00505769"
+},
+{
+"cat": "cuisine",
+"sub": "facade",
+"name": "HAVSTORP",
+"type": "combinaison rangement portes",
+"price": 17.0,
+"w": 180.0,
+"d": 42.0,
+"h": 74.0,
+"dims": {
+"largeur": 180.0,
+"profondeur": 42.0,
+"hauteur": 74.0,
+"système, hauteur": 60.0,
+"système, largeur": 30.0,
+"epaisseur": 1.6
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/havstorp-porte-beige-00475258/",
+"slug": "havstorp-porte-beige-00475258"
+},
+{
+"cat": "cuisine",
+"sub": "facade",
+"name": "NICKEBO",
+"type": "porte élément bas d'angle, 2pcs",
+"price": 67.0,
+"w": 25.7,
+"d": null,
+"h": 79.7,
+"dims": {
+"largeur": 25.7,
+"système, hauteur": 80.0,
+"système, largeur": 25.0,
+"hauteur": 79.7,
+"epaisseur": 1.6
+},
+"color": "#3b3d3f",
+"url": "https://www.ikea.com/fr/fr/p/nickebo-porte-element-bas-dangle-2pcs-mat-anthracite-20537726/",
+"slug": "nickebo-porte-element-bas-dangle-2pcs-mat-anthracite-20537726"
+},
+{
+"cat": "cuisine",
+"sub": "facade",
+"name": "RINGHULT",
+"type": "porte",
+"price": 53.0,
+"w": 59.7,
+"d": null,
+"h": 99.7,
+"dims": {
+"largeur": 59.7,
+"système, hauteur": 100.0,
+"système, largeur": 60.0,
+"hauteur": 99.7,
+"epaisseur": 1.8
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/ringhult-porte-brillant-blanc-00205087/",
+"slug": "ringhult-porte-brillant-blanc-00205087"
+},
+{
+"cat": "cuisine",
+"sub": "facade",
+"name": "VALLSTENA",
+"type": "porte",
+"price": 39.0,
+"w": 59.7,
+"d": null,
+"h": 119.7,
+"dims": {
+"largeur": 59.7,
+"système, hauteur": 120.0,
+"système, largeur": 60.0,
+"hauteur": 119.7,
+"epaisseur": 1.6
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/vallstena-porte-blanc-00541687/",
+"slug": "vallstena-porte-blanc-00541687"
+},
+{
+"cat": "cuisine",
+"sub": "facade",
+"name": "VOXTORP",
+"type": "porte",
+"price": 45.0,
+"w": 39.6,
+"d": null,
+"h": 99.7,
+"dims": {
+"largeur": 39.6,
+"système, hauteur": 100.0,
+"système, largeur": 40.0,
+"hauteur": 99.7,
+"epaisseur": 2.1
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/voxtorp-porte-blanc-mat-00273175/",
+"slug": "voxtorp-porte-blanc-mat-00273175"
+},
+{
+"cat": "cuisine",
+"sub": "plan",
+"name": "EKBACKEN",
+"type": "plan de travail",
+"price": 69.0,
+"w": 186.0,
+"d": 63.5,
+"h": null,
+"dims": {
+"longueur": 186.0,
+"profondeur": 63.5,
+"epaisseur": 2.8
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/ekbacken-plan-de-travail-blanc-effet-marbre-scintillant-stratifie-10570349/",
+"slug": "ekbacken-plan-de-travail-blanc-effet-marbre-scintillant-stratifie-10570349"
+},
+{
+"cat": "cuisine",
+"sub": "plan",
+"name": "KARLBY",
+"type": "plan de travail",
+"price": 189.0,
+"w": 246.0,
+"d": 63.5,
+"h": null,
+"dims": {
+"épaisseur, placage": 300.0,
+"longueur": 246.0,
+"profondeur": 63.5,
+"epaisseur": 3.8
+},
+"color": "#b8925f",
+"url": "https://www.ikea.com/fr/fr/p/karlby-plan-de-travail-chene-plaque-60335199/",
+"slug": "karlby-plan-de-travail-chene-plaque-60335199"
+},
+{
+"cat": "cuisine",
+"sub": "plan",
+"name": "PINNARP",
+"type": "plan de travail",
+"price": 209.0,
+"w": 186.0,
+"d": 63.5,
+"h": null,
+"dims": {
+"épaisseur, placage": 300.0,
+"longueur": 186.0,
+"profondeur": 63.5,
+"epaisseur": 3.8
+},
+"color": "#c7a67b",
+"url": "https://www.ikea.com/fr/fr/p/pinnarp-plan-de-travail-frene-plaque-00372298/",
+"slug": "pinnarp-plan-de-travail-frene-plaque-00372298"
+},
+{
+"cat": "cuisine",
+"sub": "plan",
+"name": "SÄLJAN",
+"type": "plan de travail",
+"price": 70.0,
+"w": 186.0,
+"d": 63.5,
+"h": null,
+"dims": {
+"longueur": 186.0,
+"profondeur": 63.5,
+"epaisseur": 3.8
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/saeljan-plan-de-travail-blanc-gris-clair-motif-pierre-stratifie-20556871/",
+"slug": "saeljan-plan-de-travail-blanc-gris-clair-motif-pierre-stratifie-20556871"
+},
+{
+"cat": "cuisine",
+"sub": "evier",
+"name": "BOHOLMEN",
+"type": "évier intégré, 1 bac",
+"price": 66.0,
+"w": 80.0,
+"d": 45.0,
+"h": 15.0,
+"dims": {
+"longueur": 200.0,
+"largeur": 80.0,
+"epaisseur": 12.0,
+"hauteur": 15.0,
+"diamètre": 45.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/boholmen-evier-integre-1-bac-acier-inoxydable-s79157494/",
+"slug": "boholmen-evier-integre-1-bac-acier-inoxydable-s79157494"
+},
+{
+"cat": "cuisine",
+"sub": "evier",
+"name": "HAVSEN",
+"type": "évier, 2 bacs face avant visible",
+"price": 305.0,
+"w": 42.4,
+"d": 48.0,
+"h": null,
+"dims": {
+"largeur de la découpe": 42.4,
+"longueur de la découpe": 76.5,
+"grande bassine, profondeur": 19.0,
+"grande bassine, largeur": 35.0,
+"grande bassine, avant et arrière": 40.0,
+"petite bassine, profondeur": 19.0,
+"petite bassine, largeur": 35.0,
+"petite bassine, avant et arrière": 40.0,
+"avant et arrière": 48.0,
+"longueur": 82.0,
+"largeur": 82.0,
+"profondeur": 48.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/havsen-evier-2-bacs-face-avant-visible-blanc-s79250265/",
+"slug": "havsen-evier-2-bacs-face-avant-visible-blanc-s79250265"
+},
+{
+"cat": "cuisine",
+"sub": "evier",
+"name": "HILLESJÖN",
+"type": "évier à encastrer 1 1/2 bac",
+"price": 125.0,
+"w": 44.0,
+"d": 46.0,
+"h": null,
+"dims": {
+"largeur de la découpe": 44.0,
+"longueur de la découpe": 56.0,
+"grande bassine, profondeur": 18.0,
+"grande bassine, largeur": 33.0,
+"grande bassine, avant et arrière": 40.0,
+"petite bassine, profondeur": 12.0,
+"petite bassine, largeur": 16.0,
+"petite bassine, avant et arrière": 40.0,
+"avant et arrière": 46.0,
+"longueur": 58.0,
+"profondeur": 46.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/hillesjoen-evier-a-encastrer-1-1-2-bac-acier-inoxydable-s49140631/",
+"slug": "hillesjoen-evier-a-encastrer-1-1-2-bac-acier-inoxydable-s49140631"
+},
+{
+"cat": "cuisine",
+"sub": "evier",
+"name": "KILSVIKEN",
+"type": "évier intégré, 1 bac avec égouttoir",
+"price": 201.99,
+"w": 72.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 72.0,
+"avant et arrière": 46.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/kilsviken-evier-integre-1-bac-avec-egouttoir-blanc-composite-de-quartz-s59590398/",
+"slug": "kilsviken-evier-integre-1-bac-avec-egouttoir-blanc-composite-de-quartz-s59590398"
+},
+{
+"cat": "cuisine",
+"sub": "electro",
+"name": "KULINARISK",
+"type": "hotte aspirante murale",
+"price": 699.0,
+"w": 90.0,
+"d": 46.0,
+"h": 101.0,
+"dims": {
+"hauteur max. avec filtre à charbon": 101.0,
+"hauteur min. avec filtre à charbon": 73.0,
+"largeur": 90.0,
+"profondeur": 46.0,
+"hauteur": 6.0,
+"haut. min.": 73.0,
+"hauteur max.": 89.0,
+"longueur fil électrique": 110.0,
+"largeur de cheminée": 30.0,
+"profondeur de cheminée": 26.0,
+"hauteur d'aspiration max.": 89.0,
+"hauteur d'aspiration min.": 73.0,
+"hauteur max. en mode recyclage": 101.0,
+"hauteur min. en mode recyclage": 73.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/kulinarisk-hotte-aspirante-murale-acier-inoxydable-verre-30383144/",
+"slug": "kulinarisk-hotte-aspirante-murale-acier-inoxydable-verre-30383144"
+},
+{
+"cat": "cuisine",
+"sub": "electro",
+"name": "LAGAN",
+"type": "congélateur",
+"price": 329.0,
+"w": 54.0,
+"d": 55.0,
+"h": 85.5,
+"dims": {
+"largeur": 54.0,
+"profondeur": 55.0,
+"hauteur": 85.5,
+"longueur fil électrique": 240.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/lagan-congelateur-integre-00572848/",
+"slug": "lagan-congelateur-integre-00572848"
+},
+{
+"cat": "cuisine",
+"sub": "electro",
+"name": "LAGAN",
+"type": "four à micro-ondes encastrable",
+"price": 179.0,
+"w": 59.5,
+"d": 34.4,
+"h": 39.4,
+"dims": {
+"largeur": 59.5,
+"profondeur": 34.4,
+"hauteur": 39.4,
+"longueur fil électrique": 100.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/lagan-four-a-micro-ondes-encastrable-noir-40600057/",
+"slug": "lagan-four-a-micro-ondes-encastrable-noir-40600057"
+},
+{
+"cat": "cuisine",
+"sub": "electro",
+"name": "TILLREDA",
+"type": "four à micro-ondes",
+"price": 59.99,
+"w": 43.9,
+"d": 34.0,
+"h": 25.8,
+"dims": {
+"largeur": 43.9,
+"profondeur": 34.0,
+"hauteur": 25.8,
+"longueur fil électrique": 100.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/tillreda-four-a-micro-ondes-blanc-50486792/",
+"slug": "tillreda-four-a-micro-ondes-blanc-50486792"
+},
+{
+"cat": "cuisine",
+"sub": "electro",
+"name": "TILLREDA",
+"type": "réfrigérateur",
+"price": 119.0,
+"w": 60.0,
+"d": 30.0,
+"h": 101.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 30.0,
+"hauteur": 101.0,
+"longueur fil électrique": 170.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/tillreda-refrigerateur-independant-blanc-60578729/",
+"slug": "tillreda-refrigerateur-independant-blanc-60578729"
+},
+{
+"cat": "cuisine",
+"sub": "ilot",
+"name": "BEKVÄM",
+"type": "desserte",
+"price": 69.99,
+"w": 50.0,
+"d": null,
+"h": 85.0,
+"dims": {
+"longueur": 58.0,
+"largeur": 50.0,
+"hauteur": 85.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/bekvaem-desserte-bouleau-30240348/",
+"slug": "bekvaem-desserte-bouleau-30240348"
+},
+{
+"cat": "cuisine",
+"sub": "ilot",
+"name": "BROR",
+"type": "desserte",
+"price": 159.0,
+"w": 55.0,
+"d": null,
+"h": 88.0,
+"dims": {
+"longueur": 85.0,
+"largeur": 55.0,
+"hauteur": 88.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/bror-desserte-gris-vert-contreplaque-de-pin-80547384/",
+"slug": "bror-desserte-gris-vert-contreplaque-de-pin-80547384"
+},
+{
+"cat": "cuisine",
+"sub": "ilot",
+"name": "KUNGSFORS",
+"type": "desserte",
+"price": 159.0,
+"w": 40.0,
+"d": null,
+"h": 90.0,
+"dims": {
+"longueur": 60.0,
+"largeur": 40.0,
+"hauteur": 90.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/kungsfors-desserte-acier-inoxydable-80334924/",
+"slug": "kungsfors-desserte-acier-inoxydable-80334924"
+},
+{
+"cat": "cuisine",
+"sub": "ilot",
+"name": "STENSTORP",
+"type": "desserte",
+"price": 199.0,
+"w": 43.0,
+"d": 62.0,
+"h": 90.0,
+"dims": {
+"largeur": 43.0,
+"hauteur": 90.0,
+"prof. min.": 45.0,
+"profondeur max.": 62.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/stenstorp-desserte-blanc-chene-70596520/",
+"slug": "stenstorp-desserte-blanc-chene-70596520"
+},
+{
+"cat": "cuisine",
+"sub": "ilot",
+"name": "TORNVIKEN",
+"type": "îlot pour cuisine",
+"price": 299.0,
+"w": 72.0,
+"d": 52.0,
+"h": 90.0,
+"dims": {
+"largeur": 72.0,
+"profondeur": 52.0,
+"hauteur": 90.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/tornviken-ilot-pour-cuisine-blanc-casse-chene-00393371/",
+"slug": "tornviken-ilot-pour-cuisine-blanc-casse-chene-00393371"
+},
+{
+"cat": "sdb",
+"sub": "meuble-vasque",
+"name": "ENHET",
+"type": "meuble lavabo avec portes",
+"price": 75.0,
+"w": 60.0,
+"d": 31.6,
+"h": 60.0,
+"dims": {
+"profondeur": 31.6,
+"hauteur": 60.0,
+"largeur": 60.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/enhet-meuble-lavabo-avec-portes-blanc-60623053/",
+"slug": "enhet-meuble-lavabo-avec-portes-blanc-60623053"
+},
+{
+"cat": "sdb",
+"sub": "meuble-vasque",
+"name": "ENHET",
+"type": "meuble lavabo avec portes",
+"price": 80.0,
+"w": 60.0,
+"d": 41.6,
+"h": 60.0,
+"dims": {
+"profondeur": 41.6,
+"hauteur": 60.0,
+"largeur meuble lavabo": 60.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/enhet-meuble-lavabo-avec-portes-blanc-70623057/",
+"slug": "enhet-meuble-lavabo-avec-portes-blanc-70623057"
+},
+{
+"cat": "sdb",
+"sub": "meuble-vasque",
+"name": "HEMNES",
+"type": "meuble lavabo 2tir",
+"price": 249.0,
+"w": 80.0,
+"d": 47.0,
+"h": 83.0,
+"dims": {
+"largeur": 80.0,
+"profondeur": 47.0,
+"hauteur": 83.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-meuble-lavabo-2tir-blanc-20217664/",
+"slug": "hemnes-meuble-lavabo-2tir-blanc-20217664"
+},
+{
+"cat": "sdb",
+"sub": "meuble-vasque",
+"name": "HEMNES",
+"type": "meuble lavabo 2tir",
+"price": 199.0,
+"w": 60.0,
+"d": 47.0,
+"h": 83.0,
+"dims": {
+"largeur": 60.0,
+"profondeur": 47.0,
+"hauteur": 83.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-meuble-lavabo-2tir-blanc-50217667/",
+"slug": "hemnes-meuble-lavabo-2tir-blanc-50217667"
+},
+{
+"cat": "sdb",
+"sub": "miroir-sdb",
+"name": "ENHET",
+"type": "meuble à miroir avec porte",
+"price": 69.99,
+"w": 40.0,
+"d": 16.6,
+"h": 75.0,
+"dims": {
+"profondeur": 16.6,
+"hauteur": 75.0,
+"largeur": 40.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/enhet-meuble-a-miroir-avec-porte-blanc-30623040/",
+"slug": "enhet-meuble-a-miroir-avec-porte-blanc-30623040"
+},
+{
+"cat": "sdb",
+"sub": "miroir-sdb",
+"name": "HEMNES",
+"type": "meuble à miroir 1 porte",
+"price": 139.0,
+"w": 63.0,
+"d": 16.0,
+"h": 98.0,
+"dims": {
+"largeur": 63.0,
+"profondeur": 16.0,
+"hauteur": 98.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-meuble-a-miroir-1-porte-blanc-70217671/",
+"slug": "hemnes-meuble-a-miroir-1-porte-blanc-70217671"
+},
+{
+"cat": "sdb",
+"sub": "rangement-sdb",
+"name": "ENHET",
+"type": "colonne",
+"price": 89.0,
+"w": 30.0,
+"d": 30.0,
+"h": 180.0,
+"dims": {
+"largeur": 30.0,
+"profondeur": 30.0,
+"hauteur": 180.0
+},
+"color": "#3b3d3f",
+"url": "https://www.ikea.com/fr/fr/p/enhet-colonne-anthracite-20448947/",
+"slug": "enhet-colonne-anthracite-20448947"
+},
+{
+"cat": "sdb",
+"sub": "rangement-sdb",
+"name": "HEMNES",
+"type": "colonne avec porte miroir",
+"price": 239.0,
+"w": 49.0,
+"d": 31.0,
+"h": 200.0,
+"dims": {
+"largeur": 49.0,
+"profondeur": 31.0,
+"hauteur": 200.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hemnes-colonne-avec-porte-miroir-blanc-70217685/",
+"slug": "hemnes-colonne-avec-porte-miroir-blanc-70217685"
+},
+{
+"cat": "sdb",
+"sub": "rangement-sdb",
+"name": "VESKEN",
+"type": "étagère",
+"price": 9.99,
+"w": 36.7,
+"d": 23.3,
+"h": 100.6,
+"dims": {
+"largeur": 36.7,
+"profondeur": 23.3,
+"hauteur": 100.6,
+"distance entre tablettes": 30.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/vesken-etagere-blanc-40307866/",
+"slug": "vesken-etagere-blanc-40307866"
+},
+{
+"cat": "deco",
+"sub": "tapis",
+"name": "LOHALS",
+"type": "tapis tissé à plat",
+"price": 149.0,
+"w": 200.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 300.0,
+"largeur": 200.0,
+"epaisseur": 1300.0,
+"superficie": 600.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/lohals-tapis-tisse-a-plat-naturel-00277395/",
+"slug": "lohals-tapis-tisse-a-plat-naturel-00277395"
+},
+{
+"cat": "deco",
+"sub": "tapis",
+"name": "STOENSE",
+"type": "tapis, poils ras",
+"price": 89.99,
+"w": 170.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 240.0,
+"largeur": 170.0,
+"superficie": 408.0,
+"epaisseur": 1800.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/stoense-tapis-poils-ras-beige-10607668/",
+"slug": "stoense-tapis-poils-ras-beige-10607668"
+},
+{
+"cat": "deco",
+"sub": "tapis",
+"name": "TIPHEDE",
+"type": "tapis tissé à plat",
+"price": 9.99,
+"w": 120.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 180.0,
+"largeur": 120.0,
+"epaisseur": 200.0,
+"superficie": 216.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/tiphede-tapis-tisse-a-plat-naturel-noir-40456757/",
+"slug": "tiphede-tapis-tisse-a-plat-naturel-noir-40456757"
+},
+{
+"cat": "deco",
+"sub": "rideau",
+"name": "ANNAKAJSA",
+"type": "rideau assombrissant, 1 pièce",
+"price": 79.99,
+"w": 300.0,
+"d": null,
+"h": null,
+"dims": {
+"largeur/rideau": 300.0,
+"longueur": 250.0,
+"superficie": 750.0,
+"largeur": 300.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/annakajsa-rideau-assombrissant-1-piece-beige-ruflette-00636398/",
+"slug": "annakajsa-rideau-assombrissant-1-piece-beige-ruflette-00636398"
+},
+{
+"cat": "deco",
+"sub": "rideau",
+"name": "BYMOTT",
+"type": "rideaux, 2 pièces",
+"price": 7.99,
+"w": 120.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 250.0,
+"largeur": 120.0,
+"superficie": 300.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/bymott-rideaux-2-pieces-blanc-beige-raye-ruflette-40509968/",
+"slug": "bymott-rideaux-2-pieces-blanc-beige-raye-ruflette-40509968"
+},
+{
+"cat": "deco",
+"sub": "rideau",
+"name": "DYTÅG",
+"type": "rideaux, 2 pièces",
+"price": 85.0,
+"w": 145.0,
+"d": null,
+"h": null,
+"dims": {
+"largeur/rideau": 145.0,
+"longueur": 250.0,
+"superficie": 363.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/dytag-rideaux-2-pieces-beige-avec-oeillets-20607804/",
+"slug": "dytag-rideaux-2-pieces-beige-avec-oeillets-20607804"
+},
+{
+"cat": "deco",
+"sub": "rideau",
+"name": "LILL",
+"type": "rideaux filet, 2 pièces",
+"price": 3.99,
+"w": 280.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 250.0,
+"largeur": 280.0,
+"superficie": 700.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/lill-rideaux-filet-2-pieces-blanc-avec-ourlet-pour-tringle-90111980/",
+"slug": "lill-rideaux-filet-2-pieces-blanc-avec-ourlet-pour-tringle-90111980"
+},
+{
+"cat": "deco",
+"sub": "rideau",
+"name": "MAJGULL",
+"type": "rideaux assombrissants, 2 pièces",
+"price": 39.99,
+"w": 145.0,
+"d": null,
+"h": null,
+"dims": {
+"superficie": 363.0,
+"longueur": 250.0,
+"largeur": 145.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/majgull-rideaux-assombrissants-2-pieces-beige-jaune-avec-oeillets-90586025/",
+"slug": "majgull-rideaux-assombrissants-2-pieces-beige-jaune-avec-oeillets-90586025"
+},
+{
+"cat": "deco",
+"sub": "rideau",
+"name": "RITVA",
+"type": "rideaux+embrasses, 2 pcs",
+"price": 44.99,
+"w": 145.0,
+"d": null,
+"h": null,
+"dims": {
+"largeur": 145.0,
+"longueur": 250.0,
+"superficie": 363.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/ritva-rideaux-embrasses-2-pcs-blanc-avec-oeillets-50633613/",
+"slug": "ritva-rideaux-embrasses-2-pcs-blanc-avec-oeillets-50633613"
+},
+{
+"cat": "deco",
+"sub": "rideau",
+"name": "SANELA",
+"type": "rideaux, 2 pièces",
+"price": 65.0,
+"w": 39.6,
+"d": null,
+"h": 79.7,
+"dims": {
+"largeur": 39.6,
+"hauteur": 79.7,
+"epaisseur": 2.1,
+"superficie": 390.0,
+"longueur": 250.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/sanela-rideaux-2-pieces-beige-clair-avec-oeillets-80589878/",
+"slug": "sanela-rideaux-2-pieces-beige-clair-avec-oeillets-80589878"
+},
+{
+"cat": "deco",
+"sub": "rideau",
+"name": "VILBORG",
+"type": "rideaux assombrissants, 2 pièces",
+"price": 49.99,
+"w": 145.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 250.0,
+"largeur": 145.0,
+"superficie": 363.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/vilborg-rideaux-assombrissants-2-pieces-beige-avec-oeillets-80536154/",
+"slug": "vilborg-rideaux-assombrissants-2-pieces-beige-avec-oeillets-80536154"
+},
+{
+"cat": "deco",
+"sub": "suspension",
+"name": "HEKTAR",
+"type": "suspension",
+"price": 39.99,
+"w": 130.0,
+"d": 22.0,
+"h": 26.0,
+"dims": {
+"diamètre": 22.0,
+"hauteur d'abat-jour": 26.0,
+"longueur fil électrique": 130.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/hektar-suspension-gris-fonce-80390359/",
+"slug": "hektar-suspension-gris-fonce-80390359"
+},
+{
+"cat": "deco",
+"sub": "suspension",
+"name": "MISTERHULT",
+"type": "suspension",
+"price": 49.99,
+"w": 160.0,
+"d": null,
+"h": 40.0,
+"dims": {
+"hauteur": 40.0,
+"diam. abat-jour": 45.0,
+"longueur fil électrique": 160.0
+},
+"color": "#c9ad78",
+"url": "https://www.ikea.com/fr/fr/p/misterhult-suspension-bambou-fait-main-90441018/",
+"slug": "misterhult-suspension-bambou-fait-main-90441018"
+},
+{
+"cat": "deco",
+"sub": "suspension",
+"name": "NYMÅNE",
+"type": "suspension LED",
+"price": 79.99,
+"w": 140.0,
+"d": 38.0,
+"h": null,
+"dims": {
+"diamètre": 38.0,
+"longueur fil électrique": 140.0
+},
+"color": "#3b3d3f",
+"url": "https://www.ikea.com/fr/fr/p/nymane-suspension-led-sans-fil-a-variateur-dintensite-spectre-blanc-anthracite-90504044/",
+"slug": "nymane-suspension-led-sans-fil-a-variateur-dintensite-spectre-blanc-anthracite-90504044"
+},
+{
+"cat": "deco",
+"sub": "suspension",
+"name": "RANARP",
+"type": "suspension",
+"price": 39.99,
+"w": 160.0,
+"d": 38.0,
+"h": null,
+"dims": {
+"diamètre": 38.0,
+"longueur fil électrique": 160.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/ranarp-suspension-blanc-casse-20390970/",
+"slug": "ranarp-suspension-blanc-casse-20390970"
+},
+{
+"cat": "deco",
+"sub": "suspension",
+"name": "SOLKLINT",
+"type": "suspension",
+"price": 29.99,
+"w": 160.0,
+"d": null,
+"h": 32.0,
+"dims": {
+"diam. abat-jour": 22.0,
+"longueur fil électrique": 160.0,
+"hauteur totale": 32.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/solklint-suspension-pied-laiton-verre-gris-transparent-10430778/",
+"slug": "solklint-suspension-pied-laiton-verre-gris-transparent-10430778"
+},
+{
+"cat": "deco",
+"sub": "suspension",
+"name": "VARMBLIXT",
+"type": "suspension LED",
+"price": 149.0,
+"w": 46.0,
+"d": 46.0,
+"h": null,
+"dims": {
+"diamètre": 46.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/varmblixt-suspension-led-intensite-lumineuse-reglable-connecte-verre-blanc-spectre-blanc-30625223/",
+"slug": "varmblixt-suspension-led-intensite-lumineuse-reglable-connecte-verre-blanc-spectre-blanc-30625223"
+},
+{
+"cat": "deco",
+"sub": "lampadaire",
+"name": "HEKTAR",
+"type": "lampadaire avec 3 spots",
+"price": 49.99,
+"w": 280.0,
+"d": 30.0,
+"h": 176.0,
+"dims": {
+"hauteur": 176.0,
+"diamètre du pied": 30.0,
+"diam. abat-jour": 16.0,
+"longueur fil électrique": 280.0
+},
+"color": "#8a3a2e",
+"url": "https://www.ikea.com/fr/fr/p/hektar-lampadaire-avec-3-spots-brun-rouge-50577462/",
+"slug": "hektar-lampadaire-avec-3-spots-brun-rouge-50577462"
+},
+{
+"cat": "deco",
+"sub": "lampadaire",
+"name": "HEKTOGRAM",
+"type": "lampadaire",
+"price": 24.99,
+"w": 170.0,
+"d": 24.0,
+"h": 176.0,
+"dims": {
+"hauteur": 176.0,
+"diamètre du pied": 24.0,
+"diam. abat-jour": 22.0,
+"longueur fil électrique": 170.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/hektogram-lampadaire-couleur-argent-blanc-40477726/",
+"slug": "hektogram-lampadaire-couleur-argent-blanc-40477726"
+},
+{
+"cat": "deco",
+"sub": "lampadaire",
+"name": "LAUTERS",
+"type": "lampadaire",
+"price": 49.99,
+"w": 37.0,
+"d": 62.0,
+"h": 151.0,
+"dims": {
+"largeur abat-jour": 37.0,
+"haut. min.": 119.0,
+"hauteur max.": 151.0,
+"diamètre du pied": 62.0,
+"longueur fil électrique": 350.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/lauters-lampadaire-frene-blanc-30405042/",
+"slug": "lauters-lampadaire-frene-blanc-30405042"
+},
+{
+"cat": "deco",
+"sub": "lampadaire",
+"name": "NYMÅNE",
+"type": "lampadaire avec 3 spots",
+"price": 69.99,
+"w": 200.0,
+"d": 25.0,
+"h": 160.0,
+"dims": {
+"longueur fil électrique": 200.0,
+"hauteur": 160.0,
+"diamètre du pied": 25.0,
+"diam. abat-jour": 7.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/nymane-lampadaire-avec-3-spots-blanc-80455483/",
+"slug": "nymane-lampadaire-avec-3-spots-blanc-80455483"
+},
+{
+"cat": "deco",
+"sub": "lampadaire",
+"name": "TÅGARP",
+"type": "canapé 2 places",
+"price": 12.99,
+"w": 100.0,
+"d": 21.0,
+"h": 178.0,
+"dims": {
+"diamètre du pied": 21.0,
+"longueur fil électrique": 100.0,
+"hauteur": 178.0,
+"diam. abat-jour": 24.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/tagarp-lampadaire-liseuse-noir-blanc-40486387/",
+"slug": "tagarp-lampadaire-liseuse-noir-blanc-40486387"
+},
+{
+"cat": "deco",
+"sub": "lampadaire",
+"name": "VIDJA",
+"type": "lampadaire",
+"price": 49.99,
+"w": 198.0,
+"d": null,
+"h": 138.0,
+"dims": {
+"hauteur": 138.0,
+"diam. abat-jour": 19.0,
+"longueur fil électrique": 198.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/vidja-lampadaire-blanc-00309198/",
+"slug": "vidja-lampadaire-blanc-00309198"
+},
+{
+"cat": "deco",
+"sub": "lampe",
+"name": "FADO",
+"type": "lampe de table",
+"price": 19.99,
+"w": 180.0,
+"d": 25.0,
+"h": 24.0,
+"dims": {
+"hauteur": 24.0,
+"diamètre": 25.0,
+"longueur fil électrique": 180.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/fado-lampe-de-table-blanc-80096372/",
+"slug": "fado-lampe-de-table-blanc-80096372"
+},
+{
+"cat": "deco",
+"sub": "lampe",
+"name": "NYMÅNE",
+"type": "lampe de table",
+"price": 29.99,
+"w": 18.0,
+"d": 24.0,
+"h": 33.0,
+"dims": {
+"diamètre": 24.0,
+"hauteur totale": 33.0,
+"largeur pied": 18.0
+},
+"color": "#3b3d3f",
+"url": "https://www.ikea.com/fr/fr/p/nymane-lampe-de-table-anthracite-20593072/",
+"slug": "nymane-lampe-de-table-anthracite-20593072"
+},
+{
+"cat": "deco",
+"sub": "lampe",
+"name": "RANARP",
+"type": "lampe de bureau",
+"price": 49.99,
+"w": 150.0,
+"d": null,
+"h": 42.0,
+"dims": {
+"hauteur": 42.0,
+"diam. abat-jour": 19.0,
+"longueur fil électrique": 150.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/ranarp-lampe-de-bureau-blanc-casse-30231315/",
+"slug": "ranarp-lampe-de-bureau-blanc-casse-30231315"
+},
+{
+"cat": "deco",
+"sub": "lampe",
+"name": "SOLKLINT",
+"type": "lampe de table",
+"price": 29.99,
+"w": 16.0,
+"d": 14.0,
+"h": 28.0,
+"dims": {
+"largeur abat-jour": 16.0,
+"diamètre du pied": 14.0,
+"longueur fil électrique": 200.0,
+"hauteur totale": 28.0
+},
+"color": "#8d8e8c",
+"url": "https://www.ikea.com/fr/fr/p/solklint-lampe-de-table-pied-laiton-verre-gris-transparent-70464275/",
+"slug": "solklint-lampe-de-table-pied-laiton-verre-gris-transparent-70464275"
+},
+{
+"cat": "deco",
+"sub": "lampe",
+"name": "TERTIAL",
+"type": "lampe de bureau",
+"price": 9.99,
+"w": 12.0,
+"d": 11.0,
+"h": 13.0,
+"dims": {
+"largeur": 12.0,
+"profondeur": 11.0,
+"hauteur": 13.0,
+"capacité": 75000.0,
+"diam. abat-jour": 17.0,
+"longueur fil électrique": 150.0
+},
+"color": "#54565a",
+"url": "https://www.ikea.com/fr/fr/p/tertial-lampe-de-bureau-gris-fonce-50355395/",
+"slug": "tertial-lampe-de-bureau-gris-fonce-50355395"
+},
+{
+"cat": "deco",
+"sub": "lampe",
+"name": "VARMBLIXT",
+"type": "lampe de table/applique LED",
+"price": 49.99,
+"w": 190.0,
+"d": 30.0,
+"h": 12.0,
+"dims": {
+"longueur fil électrique": 190.0,
+"hauteur": 12.0,
+"diamètre": 30.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/varmblixt-lampe-de-table-applique-led-intensite-lumineuse-reglable-connecte-verre-blanc-spectre-blanc-colore-70612940/",
+"slug": "varmblixt-lampe-de-table-applique-led-intensite-lumineuse-reglable-connecte-verre-blanc-spectre-blanc-colore-70612940"
+},
+{
+"cat": "deco",
+"sub": "miroir",
+"name": "HOVET",
+"type": "miroir",
+"price": 149.0,
+"w": 78.0,
+"d": 6.0,
+"h": 196.0,
+"dims": {
+"largeur": 78.0,
+"hauteur": 196.0,
+"profondeur": 6.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/hovet-miroir-aluminium-50038213/",
+"slug": "hovet-miroir-aluminium-50038213"
+},
+{
+"cat": "deco",
+"sub": "miroir",
+"name": "IKORNNES",
+"type": "miroir de table",
+"price": 29.99,
+"w": 27.0,
+"d": null,
+"h": 40.0,
+"dims": {
+"largeur": 27.0,
+"hauteur": 40.0
+},
+"color": "#c7a67b",
+"url": "https://www.ikea.com/fr/fr/p/ikornnes-miroir-de-table-frene-00306920/",
+"slug": "ikornnes-miroir-de-table-frene-00306920"
+},
+{
+"cat": "deco",
+"sub": "miroir",
+"name": "LINDBYN",
+"type": "miroir",
+"price": 69.99,
+"w": 80.0,
+"d": null,
+"h": 80.0,
+"dims": {
+"hauteur": 80.0,
+"largeur": 80.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/lindbyn-miroir-couleur-or-00633936/",
+"slug": "lindbyn-miroir-couleur-or-00633936"
+},
+{
+"cat": "deco",
+"sub": "miroir",
+"name": "NISSEDAL",
+"type": "miroir",
+"price": 59.99,
+"w": 65.0,
+"d": null,
+"h": 150.0,
+"dims": {
+"width": 133.0,
+"length": 195.0,
+"area": 260.0,
+"pile length": 3400.0,
+"thickness": 700.0,
+"largeur": 65.0,
+"hauteur": 150.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/nissedal-miroir-blanc-10320317/",
+"slug": "nissedal-miroir-blanc-10320317"
+},
+{
+"cat": "deco",
+"sub": "miroir",
+"name": "SONGE",
+"type": "miroir",
+"price": 119.0,
+"w": 91.0,
+"d": null,
+"h": 130.0,
+"dims": {
+"largeur": 91.0,
+"hauteur": 130.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/songe-miroir-couleur-argent-10336950/",
+"slug": "songe-miroir-couleur-argent-10336950"
+},
+{
+"cat": "deco",
+"sub": "miroir",
+"name": "STOCKHOLM",
+"type": "miroir",
+"price": 69.99,
+"w": 60.0,
+"d": 10.0,
+"h": null,
+"dims": {
+"profondeur": 10.0,
+"diamètre": 60.0
+},
+"color": "#b8925f",
+"url": "https://www.ikea.com/fr/fr/p/stockholm-miroir-plaque-chene-50591585/",
+"slug": "stockholm-miroir-plaque-chene-50591585"
+},
+{
+"cat": "deco",
+"sub": "cadre",
+"name": "LOMVIKEN",
+"type": "cadre",
+"price": 9.99,
+"w": 33.5,
+"d": null,
+"h": 33.5,
+"dims": {
+"image sans passe-partout, largeur": 32.0,
+"image sans passe-partout, hauteur": 32.0,
+"image avec passe-partout, largeur": 20.0,
+"image avec passe-partout, hauteur": 20.0,
+"intérieur passe-partout, largeur": 19.0,
+"intérieur passe-partout, hauteur": 19.0,
+"largeur": 33.5,
+"hauteur structure": 33.5,
+"prof. structure": 2.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/lomviken-cadre-noir-00335852/",
+"slug": "lomviken-cadre-noir-00335852"
+},
+{
+"cat": "deco",
+"sub": "cadre",
+"name": "SILVERHÖJDEN",
+"type": "cadre",
+"price": 19.99,
+"w": 53.0,
+"d": null,
+"h": 73.0,
+"dims": {
+"image sans passe-partout, largeur": 50.0,
+"image sans passe-partout, hauteur": 70.0,
+"image avec passe-partout, largeur": 40.0,
+"image avec passe-partout, hauteur": 50.0,
+"intérieur passe-partout, largeur": 39.0,
+"intérieur passe-partout, hauteur": 49.0,
+"largeur": 53.0,
+"hauteur structure": 73.0,
+"prof. structure": 2.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/silverhoejden-cadre-couleur-or-10550011/",
+"slug": "silverhoejden-cadre-couleur-or-10550011"
+},
+{
+"cat": "deco",
+"sub": "plante",
+"name": "AGLAONEMA",
+"type": "plante naturelle",
+"price": 9.99,
+"w": 17.0,
+"d": 17.0,
+"h": 65.0,
+"dims": {
+"diamètre du pot": 17.0,
+"hauteur de la plante": 65.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/aglaonema-plante-naturelle-30500930/",
+"slug": "aglaonema-plante-naturelle-30500930"
+},
+{
+"cat": "deco",
+"sub": "plante",
+"name": "FEJKA",
+"type": "plante artificielle et supp mural",
+"price": 5.99,
+"w": null,
+"d": null,
+"h": null,
+"dims": {},
+"color": "#67745a",
+"url": "https://www.ikea.com/fr/fr/p/fejka-plante-artificielle-et-supp-mural-interieur-exterieur-vert-mauve-30548625/",
+"slug": "fejka-plante-artificielle-et-supp-mural-interieur-exterieur-vert-mauve-30548625"
+},
+{
+"cat": "deco",
+"sub": "plante",
+"name": "MONSTERA",
+"type": "plante naturelle",
+"price": 14.99,
+"w": 21.0,
+"d": 21.0,
+"h": 65.0,
+"dims": {
+"diamètre du pot": 21.0,
+"hauteur de la plante": 65.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/monstera-plante-naturelle-monstera-deliciosa-faux-philo-30349490/",
+"slug": "monstera-plante-naturelle-monstera-deliciosa-faux-philo-30349490"
+},
+{
+"cat": "deco",
+"sub": "plante",
+"name": "SANSEVIERIA",
+"type": "plante naturelle avec pot",
+"price": 3.99,
+"w": 6.0,
+"d": 6.0,
+"h": 20.0,
+"dims": {
+"diamètre du pot": 6.0,
+"hauteur de la plante": 20.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/sansevieria-plante-naturelle-avec-pot-sanseviere-cylindrique-coloris-assortis-30402034/",
+"slug": "sansevieria-plante-naturelle-avec-pot-sanseviere-cylindrique-coloris-assortis-30402034"
+},
+{
+"cat": "deco",
+"sub": "plante",
+"name": "SPATHIPHYLLUM",
+"type": "plante naturelle",
+"price": 9.99,
+"w": 17.0,
+"d": 17.0,
+"h": 70.0,
+"dims": {
+"diamètre du pot": 17.0,
+"hauteur de la plante": 70.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/spathiphyllum-plante-naturelle-16804078/",
+"slug": "spathiphyllum-plante-naturelle-16804078"
+},
+{
+"cat": "deco",
+"sub": "plante",
+"name": "STRELITZIA",
+"type": "plante naturelle",
+"price": 49.99,
+"w": 27.0,
+"d": 27.0,
+"h": 140.0,
+"dims": {
+"diamètre du pot": 27.0,
+"hauteur de la plante": 140.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/strelitzia-plante-naturelle-20466253/",
+"slug": "strelitzia-plante-naturelle-20466253"
+},
+{
+"cat": "deco",
+"sub": "plante",
+"name": "ZAMIOCULCAS",
+"type": "plante naturelle",
+"price": 14.99,
+"w": 17.0,
+"d": 17.0,
+"h": 55.0,
+"dims": {
+"diamètre du pot": 17.0,
+"hauteur de la plante": 55.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/zamioculcas-plante-naturelle-50598681/",
+"slug": "zamioculcas-plante-naturelle-50598681"
+},
+{
+"cat": "deco",
+"sub": "coussin",
+"name": "GURLI",
+"type": "housse de coussin",
+"price": 2.99,
+"w": 50.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 50.0,
+"largeur": 50.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/gurli-housse-de-coussin-blanc-00598725/",
+"slug": "gurli-housse-de-coussin-blanc-00598725"
+},
+{
+"cat": "deco",
+"sub": "coussin",
+"name": "SANELA",
+"type": "housse de coussin",
+"price": 6.99,
+"w": 50.0,
+"d": null,
+"h": null,
+"dims": {
+"longueur": 50.0,
+"largeur": 50.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/sanela-housse-de-coussin-beige-clair-50590897/",
+"slug": "sanela-housse-de-coussin-beige-clair-50590897"
+},
+{
+"cat": "deco",
+"sub": "vase",
+"name": "KONSTFULL",
+"type": "vase",
+"price": 22.99,
+"w": 16.0,
+"d": 16.0,
+"h": 26.0,
+"dims": {
+"diamètre": 16.0,
+"hauteur": 26.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/konstfull-vase-a-motifs-brun-80536031/",
+"slug": "konstfull-vase-a-motifs-brun-80536031"
+},
+{
+"cat": "entree",
+"sub": "rangement",
+"name": "BISSA",
+"type": "armoire à chaussures 2 casiers",
+"price": 49.99,
+"w": 49.0,
+"d": 28.0,
+"h": 22.0,
+"dims": {
+"hauteur": 22.0,
+"largeur": 49.0,
+"profondeur": 28.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/bissa-armoire-a-chaussures-2-casiers-blanc-70530256/",
+"slug": "bissa-armoire-a-chaussures-2-casiers-blanc-70530256"
+},
+{
+"cat": "entree",
+"sub": "rangement",
+"name": "BISSA",
+"type": "armoire à chaussures 2 casiers",
+"price": 49.99,
+"w": 49.0,
+"d": 28.0,
+"h": 93.0,
+"dims": {
+"largeur": 49.0,
+"profondeur": 28.0,
+"hauteur": 93.0
+},
+"color": "#b8925f",
+"url": "https://www.ikea.com/fr/fr/p/bissa-armoire-a-chaussures-2-casiers-motif-chene-70530218/",
+"slug": "bissa-armoire-a-chaussures-2-casiers-motif-chene-70530218"
+},
+{
+"cat": "entree",
+"sub": "rangement",
+"name": "MACKAPÄR",
+"type": "armoire à chaussures/rangement",
+"price": 99.99,
+"w": 80.0,
+"d": 35.0,
+"h": 102.0,
+"dims": {
+"largeur": 80.0,
+"profondeur": 35.0,
+"hauteur": 102.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/mackapaer-armoire-a-chaussures-rangement-blanc-50334751/",
+"slug": "mackapaer-armoire-a-chaussures-rangement-blanc-50334751"
+},
+{
+"cat": "entree",
+"sub": "rangement",
+"name": "MACKAPÄR",
+"type": "banc rangement av portes couliss",
+"price": 79.99,
+"w": 100.0,
+"d": 37.0,
+"h": 52.0,
+"dims": {
+"profondeur": 37.0,
+"hauteur": 52.0,
+"largeur": 100.0,
+"hauteur espace sous meuble": 15.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/mackapaer-banc-rangement-av-portes-couliss-blanc-20544487/",
+"slug": "mackapaer-banc-rangement-av-portes-couliss-blanc-20544487"
+},
+{
+"cat": "entree",
+"sub": "rangement",
+"name": "TJUSIG",
+"type": "banc avec rangement chaussures",
+"price": 69.99,
+"w": 108.0,
+"d": 34.0,
+"h": 50.0,
+"dims": {
+"largeur": 108.0,
+"profondeur": 34.0,
+"hauteur": 50.0,
+"hauteur espace sous meuble": 10.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/tjusig-banc-avec-rangement-chaussures-blanc-90178758/",
+"slug": "tjusig-banc-avec-rangement-chaussures-blanc-90178758"
+},
+{
+"cat": "entree",
+"sub": "rangement",
+"name": "TJUSIG",
+"type": "banc avec rangement chaussures",
+"price": 69.99,
+"w": 108.0,
+"d": 34.0,
+"h": 50.0,
+"dims": {
+"largeur": 108.0,
+"profondeur": 34.0,
+"hauteur": 50.0,
+"hauteur espace sous meuble": 10.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/tjusig-banc-avec-rangement-chaussures-noir-10178757/",
+"slug": "tjusig-banc-avec-rangement-chaussures-noir-10178757"
+},
+{
+"cat": "entree",
+"sub": "rangement",
+"name": "TRONES",
+"type": "armoire à chaussures/rangement",
+"price": 29.99,
+"w": 52.0,
+"d": 18.0,
+"h": 39.0,
+"dims": {
+"largeur": 52.0,
+"profondeur": 18.0,
+"hauteur": 39.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/trones-armoire-a-chaussures-rangement-blanc-00397307/",
+"slug": "trones-armoire-a-chaussures-rangement-blanc-00397307"
+},
+{
+"cat": "entree",
+"sub": "rangement",
+"name": "TRONES",
+"type": "armoire à chaussures/rangement",
+"price": 29.99,
+"w": 52.0,
+"d": 18.0,
+"h": 39.0,
+"dims": {
+"largeur": 52.0,
+"profondeur": 18.0,
+"hauteur": 39.0
+},
+"color": "#23221f",
+"url": "https://www.ikea.com/fr/fr/p/trones-armoire-a-chaussures-rangement-noir-80397313/",
+"slug": "trones-armoire-a-chaussures-rangement-noir-80397313"
+},
+{
+"cat": "enfant",
+"sub": "lit-enfant",
+"name": "BUSUNGE",
+"type": "lit extensible",
+"price": 229.0,
+"w": 90.0,
+"d": null,
+"h": 100.0,
+"dims": {
+"longueur min.": 138.0,
+"longueur max.": 209.0,
+"largeur": 90.0,
+"hauteur tête de lit": 100.0,
+"longueur matelas": 200.0,
+"largeur matelas": 80.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/busunge-lit-extensible-blanc-30305702/",
+"slug": "busunge-lit-extensible-blanc-30305702"
+},
+{
+"cat": "enfant",
+"sub": "lit-enfant",
+"name": "GULLIVER",
+"type": "lit bébé",
+"price": 149.0,
+"w": 66.0,
+"d": null,
+"h": 80.0,
+"dims": {
+"longueur": 124.0,
+"largeur": 66.0,
+"hauteur": 80.0,
+"largeur matelas": 60.0,
+"longueur matelas": 120.0,
+"hauteur libre sous lit enfant": 13.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/gulliver-lit-bebe-blanc-50248522/",
+"slug": "gulliver-lit-bebe-blanc-50248522"
+},
+{
+"cat": "enfant",
+"sub": "lit-enfant",
+"name": "KURA",
+"type": "lit réversible",
+"price": 189.0,
+"w": 99.0,
+"d": null,
+"h": 116.0,
+"dims": {
+"longueur": 209.0,
+"largeur": 99.0,
+"hauteur": 116.0,
+"hauteur sous le lit mezzanine": 83.0,
+"longueur matelas": 200.0,
+"largeur matelas": 90.0,
+"épaisseur max., matelas": 12.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/kura-lit-reversible-blanc-pin-80253809/",
+"slug": "kura-lit-reversible-blanc-pin-80253809"
+},
+{
+"cat": "enfant",
+"sub": "lit-enfant",
+"name": "MYLLRA",
+"type": "lit bébé avec tiroir",
+"price": 399.0,
+"w": 70.0,
+"d": 51.0,
+"h": 97.0,
+"dims": {
+"longueur": 124.0,
+"largeur": 70.0,
+"hauteur": 97.0,
+"longueur matelas": 120.0,
+"largeur matelas": 60.0,
+"hauteur libre sous lit enfant": 7.0,
+"distance entre mandrins": 5200.0,
+"largeur tiroir (intérieur)": 95.0,
+"profondeur tiroir (intérieur)": 51.0
+},
+"color": "#c9b89e",
+"url": "https://www.ikea.com/fr/fr/p/myllra-lit-bebe-avec-tiroir-beige-40597045/",
+"slug": "myllra-lit-bebe-avec-tiroir-beige-40597045"
+},
+{
+"cat": "enfant",
+"sub": "lit-enfant",
+"name": "SLÄKT",
+"type": "lit tiroir rangement",
+"price": 210.0,
+"w": 95.0,
+"d": 57.0,
+"h": 38.0,
+"dims": {
+"longueur": 201.0,
+"largeur": 95.0,
+"hauteur": 38.0,
+"largeur tiroir (intérieur)": 90.0,
+"profondeur tiroir (intérieur)": 57.0,
+"longueur matelas": 200.0,
+"largeur matelas": 90.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/slaekt-lit-tiroir-rangement-blanc-s99239451/",
+"slug": "slaekt-lit-tiroir-rangement-blanc-s99239451"
+},
+{
+"cat": "enfant",
+"sub": "lit-enfant",
+"name": "SMÅSTAD",
+"type": "lit mezzanine",
+"price": 608.0,
+"w": 90.0,
+"d": null,
+"h": 182.0,
+"dims": {
+"largeur matelas": 90.0,
+"longueur matelas": 200.0,
+"épaisseur max., matelas": 20.0,
+"hauteur": 182.0,
+"hauteur sous le lit mezzanine": 142.0,
+"long. couchage": 207.0,
+"larg. couchage": 104.0,
+"longueur table": 148.0,
+"largeur table": 60.0,
+"hauteur table": 73.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/smastad-lit-mezzanine-blanc-blanc-avec-bureau-avec-2-tablettes-s89520158/",
+"slug": "smastad-lit-mezzanine-blanc-blanc-avec-bureau-avec-2-tablettes-s89520158"
+},
+{
+"cat": "enfant",
+"sub": "lit-enfant",
+"name": "SNIGLAR",
+"type": "lit bébé",
+"price": 59.99,
+"w": 66.0,
+"d": null,
+"h": 80.0,
+"dims": {
+"longueur": 124.0,
+"largeur": 66.0,
+"hauteur": 80.0,
+"larg. couchage": 60.0,
+"long. couchage": 120.0,
+"hauteur libre sous lit enfant": 14.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/sniglar-lit-bebe-hetre-30248537/",
+"slug": "sniglar-lit-bebe-hetre-30248537"
+},
+{
+"cat": "enfant",
+"sub": "lit-enfant",
+"name": "SUNDVIK",
+"type": "lit bébé",
+"price": 199.0,
+"w": 67.0,
+"d": null,
+"h": 85.0,
+"dims": {
+"longueur": 125.0,
+"largeur": 67.0,
+"hauteur": 85.0,
+"larg. couchage": 60.0,
+"long. couchage": 120.0,
+"hauteur libre sous lit enfant": 18.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/sundvik-lit-bebe-blanc-00248567/",
+"slug": "sundvik-lit-bebe-blanc-00248567"
+},
+{
+"cat": "enfant",
+"sub": "rangement-enfant",
+"name": "FLISAT",
+"type": "bureau pour enfant",
+"price": 89.99,
+"w": 97.0,
+"d": 65.0,
+"h": 77.0,
+"dims": {
+"largeur": 97.0,
+"profondeur": 65.0,
+"haut. min.": 59.0,
+"hauteur max.": 77.0
+},
+"color": "#67745a",
+"url": "https://www.ikea.com/fr/fr/p/flisat-bureau-pour-enfant-hauteur-reglable-vert-30609181/",
+"slug": "flisat-bureau-pour-enfant-hauteur-reglable-vert-30609181"
+},
+{
+"cat": "enfant",
+"sub": "rangement-enfant",
+"name": "PLATSA",
+"type": "armoire 10 portes",
+"price": 758.0,
+"w": 360.0,
+"d": 42.0,
+"h": 133.0,
+"dims": {
+"largeur": 360.0,
+"profondeur": 42.0,
+"hauteur": 133.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/platsa-armoire-10-portes-blanc-fonnes-blanc-s59625213/",
+"slug": "platsa-armoire-10-portes-blanc-fonnes-blanc-s59625213"
+},
+{
+"cat": "enfant",
+"sub": "rangement-enfant",
+"name": "SMÅSTAD",
+"type": "armoire-penderie",
+"price": 162.0,
+"w": 60.0,
+"d": 42.0,
+"h": 181.0,
+"dims": {
+"profondeur": 42.0,
+"hauteur": 181.0,
+"largeur": 60.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/smastad-armoire-penderie-blanc-blanc-avec-2-tringles-a-vetements-s49390875/",
+"slug": "smastad-armoire-penderie-blanc-blanc-avec-2-tringles-a-vetements-s49390875"
+},
+{
+"cat": "enfant",
+"sub": "rangement-enfant",
+"name": "TROFAST",
+"type": "bureau av boîtes/plateaux rangement",
+"price": 144.98,
+"w": 124.0,
+"d": 44.0,
+"h": 52.0,
+"dims": {
+"largeur": 124.0,
+"profondeur": 44.0,
+"hauteur": 52.0
+},
+"color": "#ded8cc",
+"url": "https://www.ikea.com/fr/fr/p/trofast-bureau-av-boites-plateaux-rangement-pin-teinte-blanc-clair-blanc-blanc-s59613903/",
+"slug": "trofast-bureau-av-boites-plateaux-rangement-pin-teinte-blanc-clair-blanc-blanc-s59613903"
+},
+{
+"cat": "exterieur",
+"sub": "table-ext",
+"name": "ASKHOLMEN",
+"type": "table+2 chaises pliantes, extérieur",
+"price": 123.97,
+"w": 60.0,
+"d": 49.0,
+"h": 73.0,
+"dims": {
+"largeur table": 60.0,
+"longueur table": 62.0,
+"hauteur table": 73.0,
+"largeur chaise": 36.0,
+"profondeur chaise": 49.0,
+"hauteur chaise": 87.0
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/askholmen-table-2-chaises-pliantes-exterieur-brun-fonce-kuddarna-beige-gris-clair-s99575310/",
+"slug": "askholmen-table-2-chaises-pliantes-exterieur-brun-fonce-kuddarna-beige-gris-clair-s99575310"
+},
+{
+"cat": "exterieur",
+"sub": "table-ext",
+"name": "BONDHOLMEN",
+"type": "table+4 chaises accoud, extérieur",
+"price": 718.8,
+"w": null,
+"d": null,
+"h": null,
+"dims": {},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/bondholmen-table-4-chaises-accoud-exterieur-blanc-beige-froesoen-duvholmen-beige-s39549847/",
+"slug": "bondholmen-table-4-chaises-accoud-exterieur-blanc-beige-froesoen-duvholmen-beige-s39549847"
+},
+{
+"cat": "exterieur",
+"sub": "table-ext",
+"name": "GRILLSKÄR",
+"type": "barbecue au charbon av 2 tbl app",
+"price": 499.0,
+"w": 61.0,
+"d": 11.0,
+"h": 114.0,
+"dims": {
+"diamètre": 11.0,
+"longueur min.": 99.0,
+"longueur": 123.0,
+"longueur max.": 147.0,
+"largeur": 61.0,
+"hauteur": 114.0
+},
+"color": null,
+"url": "https://www.ikea.com/fr/fr/p/grillskaer-barbecue-au-charbon-av-2-tbl-app-acier-inoxydable-exterieur-s99495224/",
+"slug": "grillskaer-barbecue-au-charbon-av-2-tbl-app-acier-inoxydable-exterieur-s99495224"
+},
+{
+"cat": "exterieur",
+"sub": "table-ext",
+"name": "NÄMMARÖ",
+"type": "table + 2 chaises accoudoir, ext",
+"price": 199.97,
+"w": 63.0,
+"d": null,
+"h": 75.0,
+"dims": {
+"longueur": 75.0,
+"largeur": 63.0,
+"hauteur": 75.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/naemmaroe-table-2-chaises-accoudoir-ext-teinte-brun-clair-s19544577/",
+"slug": "naemmaroe-table-2-chaises-accoudoir-ext-teinte-brun-clair-s19544577"
+},
+{
+"cat": "exterieur",
+"sub": "chaise-ext",
+"name": "ASKHOLMEN",
+"type": "chaise avec accoudoirs, extérieur",
+"price": 49.99,
+"w": 59.0,
+"d": 56.0,
+"h": 82.0,
+"dims": {
+"largeur": 59.0,
+"profondeur": 56.0,
+"hauteur": 82.0,
+"larg. assise": 43.0,
+"prof. assise": 43.0,
+"haut. assise": 41.0
+},
+"color": "#6a4c35",
+"url": "https://www.ikea.com/fr/fr/p/askholmen-chaise-avec-accoudoirs-exterieur-brun-fonce-50535684/",
+"slug": "askholmen-chaise-avec-accoudoirs-exterieur-brun-fonce-50535684"
+},
+{
+"cat": "exterieur",
+"sub": "chaise-ext",
+"name": "BONDHOLMEN",
+"type": "canapé 2 places, extérieur",
+"price": 199.0,
+"w": 139.0,
+"d": 81.0,
+"h": 73.0,
+"dims": {
+"width": 79.0,
+"depth": 35.0,
+"height": 52.0,
+"free height under furniture": 24.0,
+"largeur": 139.0,
+"profondeur": 81.0,
+"hauteur": 73.0,
+"larg. assise": 124.0,
+"prof. assise": 62.0,
+"haut. assise": 30.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/bondholmen-canape-2-places-exterieur-blanc-beige-50558185/",
+"slug": "bondholmen-canape-2-places-exterieur-blanc-beige-50558185"
+},
+{
+"cat": "exterieur",
+"sub": "chaise-ext",
+"name": "NÄMMARÖ",
+"type": "banc avec coussin",
+"price": 109.99,
+"w": 120.0,
+"d": 40.0,
+"h": 45.0,
+"dims": {
+"largeur": 120.0,
+"profondeur": 40.0,
+"hauteur": 45.0
+},
+"color": "#b4b4b0",
+"url": "https://www.ikea.com/fr/fr/p/naemmaroe-banc-avec-coussin-teinte-brun-clair-kuddarna-beige-gris-clair-s49575303/",
+"slug": "naemmaroe-banc-avec-coussin-teinte-brun-clair-kuddarna-beige-gris-clair-s49575303"
+},
+{
+"cat": "exterieur",
+"sub": "chaise-ext",
+"name": "TORPARÖ",
+"type": "chaise avec accoudoirs, extérieur",
+"price": 39.99,
+"w": 310.0,
+"d": 95.0,
+"h": 71.0,
+"dims": {
+"hauteur": 71.0,
+"haut. assise": 46.0,
+"largeur gauche": 310.0,
+"largeur droite": 310.0,
+"prof. assise": 69.0,
+"profondeur": 95.0,
+"largeur accoudoir": 25.0,
+"larg. assise": 42.0,
+"largeur": 55.0
+},
+"color": "#eeece6",
+"url": "https://www.ikea.com/fr/fr/p/torparoe-chaise-avec-accoudoirs-exterieur-blanc-60595408/",
+"slug": "torparoe-chaise-avec-accoudoirs-exterieur-blanc-60595408"
+}
+]

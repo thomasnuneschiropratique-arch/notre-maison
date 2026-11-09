@@ -1,0 +1,659 @@
+// Éditeur de plan 2D : souris et tactile (pincer pour zoomer, deux doigts pour se déplacer).
+import { store, addNode, addWall, splitWall, uid } from './state.js';
+import { projectOnSegment, dist, itemCorners, wallCorners, polygonCentroid } from './geometry.js';
+import { getItem, OPENINGS } from './catalog.js';
+
+const INK = '#26231e', ACCENT = '#b5532f', SOFT = 'rgba(38,35,30,.5)';
+
+export class Plan2D {
+  tool = 'select'; view = { x: 0, y: 0, k: 0.9 }; pointers = new Map(); draft = null; drag = null; openingPreset = OPENINGS[0]; hover = null;
+  wallThickness = 20; bgImages = new Map();
+
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    new ResizeObserver(() => this.resize()).observe(canvas.parentElement);
+    canvas.addEventListener('pointerdown', (e) => this.down(e));
+    canvas.addEventListener('pointermove', (e) => this.move(e));
+    canvas.addEventListener('pointerup', (e) => this.up(e));
+    canvas.addEventListener('pointercancel', (e) => this.up(e));
+    canvas.addEventListener('dblclick', () => this.finishDraft());
+    canvas.addEventListener('wheel', (e) => { e.preventDefault(); this.zoomAt(e.offsetX, e.offsetY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+    window.addEventListener('keydown', (e) => this.key(e));
+    for (const ev of ['change', 'select', 'level', 'project']) store.addEventListener(ev, () => this.draw());
+    this.resize();
+  }
+
+  resize() {
+    const p = this.canvas.parentElement.getBoundingClientRect();
+    if (!p.width || !p.height) return;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    this.canvas.width = p.width * dpr; this.canvas.height = p.height * dpr;
+    this.canvas.style.width = `${p.width}px`; this.canvas.style.height = `${p.height}px`;
+    this.dpr = dpr; this.w = p.width; this.h = p.height;
+    if (!this.fitted) { this.fit(); }
+    this.draw();
+  }
+
+  fit() {
+    if (!store.project || !this.w) return;
+    const lv = store.level;
+    const pts = Object.values(lv.nodes);
+    if (!pts.length) { this.view = { x: this.w / 2, y: this.h / 2, k: 0.6 }; return; }
+    this.fitted = true;
+    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const k = Math.min((this.w - 90) / (x1 - x0 + 60), (this.h - 130) / (y1 - y0 + 60), 1.6);
+    this.view = { k, x: this.w / 2 - ((x0 + x1) / 2) * k, y: this.h / 2 - ((y0 + y1) / 2) * k };
+    this.draw();
+  }
+
+  toWorld(sx, sy) { return { x: (sx - this.view.x) / this.view.k, y: (sy - this.view.y) / this.view.k }; }
+  toScreen(p) { return { x: p.x * this.view.k + this.view.x, y: p.y * this.view.k + this.view.y }; }
+  zoomAt(sx, sy, f) {
+    const k = Math.max(0.12, Math.min(5, this.view.k * f));
+    const w = this.toWorld(sx, sy);
+    this.view.k = k; this.view.x = sx - w.x * k; this.view.y = sy - w.y * k;
+    this.draw();
+  }
+
+  setTool(t, preset) {
+    this.finishDraft();
+    this.tool = t;
+    if (preset) this.openingPreset = preset;
+    this.canvas.style.cursor = t === 'select' ? 'default' : 'crosshair';
+    store.emit('tool', t);
+    this.draw();
+  }
+
+  key(e) {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    if (e.key === 'Escape') { if (this.draft) this.finishDraft(); else { this.setTool('select'); store.select(null); } }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && this.canvas.offsetParent) { this.deleteSelection(); e.preventDefault(); }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.shiftKey ? store.redo() : store.undo(); e.preventDefault(); }
+  }
+
+  deleteSelection() {
+    const s = store.selection; if (!s) return;
+    store.mutate((p, lv) => {
+      if (s.type === 'item') lv.items = lv.items.filter((i) => i.id !== s.id);
+      if (s.type === 'wall') lv.walls = lv.walls.filter((w) => w.id !== s.id);
+      if (s.type === 'opening') { const w = lv.walls.find((x) => x.id === s.wallId); if (w) w.openings = w.openings.filter((o) => o.id !== s.id); }
+      if (s.type === 'node') { lv.walls = lv.walls.filter((w) => w.a !== s.id && w.b !== s.id); delete lv.nodes[s.id]; }
+      cleanOrphans(lv);
+    });
+    store.select(null);
+  }
+
+  // Aimantation : nœud existant, mur existant, alignement, puis grille.
+  snap(p, opts = {}) {
+    const lv = store.level;
+    const tol = 14 / this.view.k;
+    let best = null, bestD = tol;
+    for (const [id, n] of Object.entries(lv.nodes)) {
+      if (id === opts.ignore) continue;
+      const d = dist(n, p);
+      if (d < bestD) { best = { x: n.x, y: n.y, node: id }; bestD = d; }
+    }
+    if (best) return best;
+    for (const w of lv.walls) {
+      if (opts.ignore && (w.a === opts.ignore || w.b === opts.ignore)) continue;
+      const r = projectOnSegment(p, lv.nodes[w.a], lv.nodes[w.b]);
+      if (r.d < tol * 0.8 && r.t > 0.01 && r.t < 0.99) return { x: r.point.x, y: r.point.y, wall: w };
+    }
+    const g = opts.grid ?? 5;
+    let x = Math.round(p.x / g) * g, y = Math.round(p.y / g) * g, guide = null;
+    const from = opts.from;
+    if (from) {
+      if (Math.abs(p.x - from.x) < tol) { x = from.x; guide = 'v'; }
+      if (Math.abs(p.y - from.y) < tol) { y = from.y; guide = 'h'; }
+    }
+    if (!opts.noAlign) for (const n of Object.values(lv.nodes)) {
+      if (from && n === from) continue;
+      if (Math.abs(p.x - n.x) < tol * 0.6) x = n.x;
+      if (Math.abs(p.y - n.y) < tol * 0.6) y = n.y;
+    }
+    return { x, y, guide };
+  }
+
+  pos(e) { const r = this.canvas.getBoundingClientRect(); return { sx: e.clientX - r.left, sy: e.clientY - r.top }; }
+
+  down(e) {
+    this.canvas.setPointerCapture(e.pointerId);
+    const { sx, sy } = this.pos(e);
+    this.pointers.set(e.pointerId, { sx, sy });
+    if (this.pointers.size === 2) {
+      this.drag = null; this.pressMoved = true;
+      const [a, b] = [...this.pointers.values()];
+      this.pinch = { d: Math.hypot(a.sx - b.sx, a.sy - b.sy), cx: (a.sx + b.sx) / 2, cy: (a.sy + b.sy) / 2 };
+      return;
+    }
+    this.press = { sx, sy, t: performance.now() };
+    this.pressMoved = false;
+    const p = this.toWorld(sx, sy);
+    if (this.tool === 'select') this.beginSelectDrag(p, sx, sy);
+    else this.drag = { type: 'pan', vx: this.view.x, vy: this.view.y, sx, sy, passive: true };
+    if (this.tool === 'room') this.drag = { type: 'room', a: this.snap(p), b: this.snap(p) };
+    if (this.tool === 'measure') this.drag = { type: 'measure', a: this.snap(p), b: this.snap(p) };
+    this.draw();
+  }
+
+  hitTest(p) {
+    const lv = store.level, tol = 12 / this.view.k;
+    const sel = store.selection;
+    if (sel?.type === 'item') {
+      const it = lv.items.find((i) => i.id === sel.id);
+      const h = it && this.rotateHandle(it);
+      if (h && dist(p, h) < tol * 1.5) return { type: 'rotate', item: it };
+    }
+    for (const w of lv.walls) for (const o of w.openings) {
+      const a = lv.nodes[w.a], b = lv.nodes[w.b], L = dist(a, b);
+      const c = { x: a.x + ((b.x - a.x) * o.t) / L, y: a.y + ((b.y - a.y) * o.t) / L };
+      const r = projectOnSegment(p, a, b);
+      if (Math.abs(r.t * L - o.t) < o.width / 2 + 3 && r.d < w.thickness / 2 + tol * 0.5) return { type: 'opening', wall: w, opening: o, c };
+    }
+    for (const [id, n] of Object.entries(lv.nodes)) if (dist(n, p) < tol) return { type: 'node', id };
+    const sorted = [...lv.items].reverse();
+    for (const it of sorted) {
+      const def = getItem(it.cat); if (!def) continue;
+      const r = (-(it.rot || 0) * Math.PI) / 180;
+      const dx = p.x - it.x, dy = p.y - it.y;
+      const lx = dx * Math.cos(r) - dy * Math.sin(r), ly = dx * Math.sin(r) + dy * Math.cos(r);
+      if (Math.abs(lx) <= (it.w ?? def.w) / 2 && Math.abs(ly) <= (it.d ?? def.d) / 2) return { type: 'item', item: it };
+    }
+    for (const w of lv.walls) {
+      const r = projectOnSegment(p, lv.nodes[w.a], lv.nodes[w.b]);
+      if (r.d < Math.max(w.thickness / 2, tol * 0.6)) return { type: 'wall', wall: w, r };
+    }
+    const analysis = store.analysis();
+    for (let i = 0; i < analysis.rooms.length; i++) {
+      if (pointInPoly(p, analysis.rooms[i].poly)) return { type: 'room', room: lv.rooms[i] };
+    }
+    return null;
+  }
+
+  rotateHandle(it) {
+    const def = getItem(it.cat); if (!def) return null;
+    const r = ((it.rot || 0) * Math.PI) / 180, l = (it.d ?? def.d) / 2 + 26 / this.view.k;
+    return { x: it.x + Math.sin(r) * l, y: it.y - Math.cos(r) * l };
+  }
+
+  beginSelectDrag(p, sx, sy) {
+    const hit = this.hitTest(p);
+    if (!hit) { this.drag = { type: 'pan', vx: this.view.x, vy: this.view.y, sx, sy, deselect: true }; return; }
+    const lv = store.level;
+    if (hit.type === 'rotate') { this.drag = { type: 'rotate', item: hit.item, snapped: false }; return; }
+    if (hit.type === 'node') { store.select({ type: 'node', id: hit.id }); this.drag = { type: 'node', id: hit.id, start: { ...lv.nodes[hit.id] } }; return; }
+    if (hit.type === 'opening') { store.select({ type: 'opening', id: hit.opening.id, wallId: hit.wall.id }); this.drag = { type: 'opening', wall: hit.wall, opening: hit.opening }; return; }
+    if (hit.type === 'item') { store.select({ type: 'item', id: hit.item.id }); this.drag = { type: 'item', item: hit.item, ox: p.x - hit.item.x, oy: p.y - hit.item.y }; return; }
+    if (hit.type === 'wall') {
+      store.select({ type: 'wall', id: hit.wall.id });
+      const a = lv.nodes[hit.wall.a], b = lv.nodes[hit.wall.b];
+      this.drag = { type: 'wall', wall: hit.wall, a: { ...a }, b: { ...b }, p0: p };
+      return;
+    }
+    if (hit.type === 'room') { store.select({ type: 'room', id: hit.room.id }); this.drag = { type: 'pan', vx: this.view.x, vy: this.view.y, sx, sy }; }
+  }
+
+  beginOnce() { if (!this.drag.began) { store.snapshot(); this.drag.began = true; } }
+
+  move(e) {
+    const { sx, sy } = this.pos(e);
+    if (this.pointers.has(e.pointerId)) this.pointers.set(e.pointerId, { sx, sy });
+    if (this.pinch && this.pointers.size >= 2) {
+      const [a, b] = [...this.pointers.values()];
+      const d = Math.hypot(a.sx - b.sx, a.sy - b.sy), cx = (a.sx + b.sx) / 2, cy = (a.sy + b.sy) / 2;
+      this.view.x += cx - this.pinch.cx; this.view.y += cy - this.pinch.cy;
+      this.zoomAt(cx, cy, d / this.pinch.d);
+      this.pinch = { d, cx, cy };
+      return;
+    }
+    const p = this.toWorld(sx, sy);
+    if (this.press && Math.hypot(sx - this.press.sx, sy - this.press.sy) > 5) this.pressMoved = true;
+    if (this.tool === 'wall' && e.pointerType !== 'touch') {
+      this.hover = this.snap(p, { from: this.draft?.pts.at(-1) });
+      this.draw();
+    }
+    if (this.tool === 'wall' && e.pointerType === 'touch' && this.pointers.size === 1 && this.draft) {
+      this.hover = this.snap(p, { from: this.draft.pts.at(-1) });
+      this.draw();
+      return;
+    }
+    if (['door', 'opening'].includes(this.tool)) { this.hover = this.openingAt(p); this.draw(); }
+    const d = this.drag;
+    if (!d || !this.pressMoved) return;
+    const lv = store.level;
+    if (d.type === 'pan') { this.view.x = d.vx + sx - d.sx; this.view.y = d.vy + sy - d.sy; this.draw(); return; }
+    if (d.type === 'room' || d.type === 'measure') { d.b = this.snap(p, { from: d.a }); this.draw(); return; }
+    this.beginOnce();
+    if (d.type === 'node') {
+      const s = this.snap(p, { ignore: d.id, from: d.start });
+      lv.nodes[d.id].x = s.x; lv.nodes[d.id].y = s.y; d.snapNode = s.node;
+    } else if (d.type === 'wall') {
+      const dx = p.x - d.p0.x, dy = p.y - d.p0.y;
+      const L = dist(d.a, d.b), nx = -(d.b.y - d.a.y) / L, ny = (d.b.x - d.a.x) / L;
+      const m = Math.round((dx * nx + dy * ny) / 5) * 5;
+      Object.assign(lv.nodes[d.wall.a], { x: d.a.x + nx * m, y: d.a.y + ny * m });
+      Object.assign(lv.nodes[d.wall.b], { x: d.b.x + nx * m, y: d.b.y + ny * m });
+    } else if (d.type === 'opening') {
+      const a = lv.nodes[d.wall.a], b = lv.nodes[d.wall.b], L = dist(a, b);
+      const r = projectOnSegment(p, a, b);
+      d.opening.t = Math.round(Math.max(d.opening.width / 2 + 2, Math.min(L - d.opening.width / 2 - 2, r.t * L)));
+    } else if (d.type === 'item') {
+      this.moveItem(d.item, p.x - d.ox, p.y - d.oy);
+    } else if (d.type === 'rotate') {
+      let a = (Math.atan2(p.x - d.item.x, -(p.y - d.item.y)) * 180) / Math.PI;
+      a = Math.round(a / 15) * 15;
+      d.item.rot = (a + 360) % 360;
+    }
+    this.draw();
+    store.emit('live', { type: d.type });
+  }
+
+  /** Déplace un meuble ; s'il s'approche d'un mur, il s'y plaque et s'aligne. */
+  moveItem(item, x, y) {
+    const lv = store.level, def = getItem(item.cat);
+    const dd = (item.d ?? def.d) / 2;
+    let nx = Math.round(x), ny = Math.round(y);
+    for (const w of lv.walls) {
+      const a = lv.nodes[w.a], b = lv.nodes[w.b];
+      const r = projectOnSegment({ x: nx, y: ny }, a, b);
+      const need = w.thickness / 2 + dd;
+      if (r.t > 0.02 && r.t < 0.98 && r.d < need + 12 && r.d > need - 25) {
+        const vx = (nx - r.point.x) / (r.d || 1), vy = (ny - r.point.y) / (r.d || 1);
+        nx = r.point.x + vx * (need + 0.5); ny = r.point.y + vy * (need + 0.5);
+        if (def.wall) item.rot = ((Math.atan2(vx, -vy) * 180) / Math.PI + 180 + 360) % 360;
+        break;
+      }
+    }
+    item.x = nx; item.y = ny;
+    if (def.onSurface) {
+      const under = lv.items.find((o) => {
+        if (o === item) return false;
+        const od = getItem(o.cat); if (!od || od.wall || od.ceiling || od.onSurface) return false;
+        const r = (-(o.rot || 0) * Math.PI) / 180, dx = nx - o.x, dy = ny - o.y;
+        return Math.abs(dx * Math.cos(r) - dy * Math.sin(r)) <= (o.w ?? od.w) / 2 && Math.abs(dx * Math.sin(r) + dy * Math.cos(r)) <= (o.d ?? od.d) / 2;
+      });
+      item.z = under ? (under.h ?? getItem(under.cat).h) : 0;
+    }
+  }
+
+  up(e) {
+    this.pointers.delete(e.pointerId);
+    if (this.pointers.size < 2) this.pinch = null;
+    if (this.pointers.size) return;
+    const { sx, sy } = this.pos(e);
+    const p = this.toWorld(sx, sy);
+    const tap = !this.pressMoved;
+    const d = this.drag; this.drag = null;
+    const lv = store.level;
+    if (d?.type === 'room') { this.finishRoom(d); this.draw(); return; }
+    if (d?.type === 'measure') { this.measure = tap ? null : d; this.draw(); return; }
+    if (d?.began) {
+      if (d.type === 'node' && d.snapNode && d.snapNode !== d.id) mergeNodes(lv, d.id, d.snapNode);
+      store.commit({ rebuild: true });
+      return;
+    }
+    if (tap) {
+      if (d?.deselect) store.select(null);
+      if (this.tool === 'wall') this.wallClick(p);
+      if (this.tool === 'door' || this.tool === 'opening') this.placeOpening(p);
+    }
+    this.draw();
+  }
+
+  wallClick(p) {
+    const lv = store.level;
+    const from = this.draft?.pts.at(-1);
+    const s = this.snap(p, { from });
+    if (!this.draft) { this.draft = { pts: [s] }; this.draw(); return; }
+    const last = this.draft.pts.at(-1);
+    if (dist(s, last) < 5) { this.finishDraft(); return; }
+    store.snapshot();
+    this.addWallBetween(last, s);
+    this.draft.pts.push(s);
+    const closed = s.node && this.draft.pts.length > 2 && s.node === this.draft.pts[0].resolved;
+    store.commit();
+    if (closed) this.finishDraft();
+    void lv;
+  }
+
+  resolveEnd(s) {
+    const lv = store.level;
+    if (s.node) { s.resolved = s.node; return s.node; }
+    if (s.wall && lv.walls.includes(s.wall)) { s.resolved = splitWall(lv, s.wall, s.x, s.y); return s.resolved; }
+    s.resolved = addNode(lv, s.x, s.y);
+    return s.resolved;
+  }
+
+  addWallBetween(a, b) {
+    const lv = store.level;
+    const ia = a.resolved && lv.nodes[a.resolved] ? a.resolved : this.resolveEnd(a);
+    const ib = this.resolveEnd(b);
+    addWall(lv, ia, ib, this.wallThickness);
+  }
+
+  finishDraft() { if (this.draft) { this.draft = null; this.hover = null; this.draw(); } }
+
+  finishRoom(d) {
+    const x0 = Math.min(d.a.x, d.b.x), x1 = Math.max(d.a.x, d.b.x), y0 = Math.min(d.a.y, d.b.y), y1 = Math.max(d.a.y, d.b.y);
+    if (x1 - x0 < 30 || y1 - y0 < 30) return;
+    store.mutate((pr, lv) => {
+      const ids = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => addNode(lv, x, y));
+      ids.forEach((id, i) => addWall(lv, id, ids[(i + 1) % 4], this.wallThickness));
+    });
+  }
+
+  openingAt(p) {
+    const lv = store.level, tol = 40 / this.view.k;
+    let best = null;
+    for (const w of lv.walls) {
+      const a = lv.nodes[w.a], b = lv.nodes[w.b], L = dist(a, b);
+      const r = projectOnSegment(p, a, b);
+      if (r.d < tol && (!best || r.d < best.d) && L > this.openingPreset.width + 8) {
+        const t = Math.round(Math.max(this.openingPreset.width / 2 + 4, Math.min(L - this.openingPreset.width / 2 - 4, r.t * L)));
+        best = { wall: w, t, d: r.d };
+      }
+    }
+    return best;
+  }
+
+  placeOpening(p) {
+    const h = this.openingAt(p);
+    if (!h) { store.emit('toast', 'Touche un mur pour y placer cette ouverture.'); return; }
+    const preset = this.openingPreset;
+    const free = !h.wall.openings.some((o) => Math.abs(o.t - h.t) < (o.width + preset.width) / 2);
+    if (!free) { store.emit('toast', 'Il y a déjà une ouverture à cet endroit.'); return; }
+    const id = uid('o');
+    store.mutate(() => { h.wall.openings.push({ id, type: preset.type, name: preset.name, width: preset.width, height: preset.height, sill: preset.sill, t: h.t, open: preset.type === 'door' ? 20 : 0, glazed: preset.glazed }); });
+    store.select({ type: 'opening', id, wallId: h.wall.id });
+    this.setTool('select');
+  }
+
+  center() { return this.toWorld(this.w / 2, this.h / 2); }
+
+  // ——— Dessin ———
+  draw() {
+    if (!store.project || !this.w) return;
+    const c = this.ctx, lv = store.level, { k, x, y } = this.view;
+    c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    c.fillStyle = '#f7f4ee'; c.fillRect(0, 0, this.w, this.h);
+    this.drawBackground(lv);
+    this.drawGrid();
+    c.save(); c.translate(x, y); c.scale(k, k);
+    const analysis = store.analysis(lv);
+    const lower = store.project.levels[store.levelIndex - 1];
+    if (lower) this.drawGhost(lower);
+    this.drawRooms(lv, analysis);
+    for (const it of lv.items) this.drawItem(it);
+    this.drawWalls(lv, analysis);
+    this.drawDraft();
+    this.drawSelection(lv);
+    c.restore();
+    this.drawRoomLabels(lv, analysis);
+    this.drawDimensions(lv);
+    this.drawOverlayText();
+  }
+
+  drawBackground(lv) {
+    const bg = lv.background; if (!bg) return;
+    let img = this.bgImages.get(bg.src);
+    if (!img) { img = new Image(); img.onload = () => this.draw(); img.src = bg.src; this.bgImages.set(bg.src, img); }
+    if (!img.complete) return;
+    const c = this.ctx, p = this.toScreen({ x: bg.x, y: bg.y });
+    c.globalAlpha = bg.opacity ?? 0.5;
+    c.drawImage(img, p.x, p.y, img.width * bg.scale * this.view.k, img.height * bg.scale * this.view.k);
+    c.globalAlpha = 1;
+  }
+
+  drawGrid() {
+    const c = this.ctx, { k, x, y } = this.view;
+    const step = k > 0.5 ? 50 : k > 0.2 ? 100 : 500;
+    const major = step * (step === 50 ? 2 : 5);
+    c.lineWidth = 1;
+    const x0 = Math.floor(-x / k / step) * step, y0 = Math.floor(-y / k / step) * step;
+    for (let wx = x0; wx * k + x < this.w; wx += step) {
+      c.strokeStyle = wx % major === 0 ? 'rgba(38,35,30,.09)' : 'rgba(38,35,30,.04)';
+      c.beginPath(); c.moveTo(Math.round(wx * k + x) + 0.5, 0); c.lineTo(Math.round(wx * k + x) + 0.5, this.h); c.stroke();
+    }
+    for (let wy = y0; wy * k + y < this.h; wy += step) {
+      c.strokeStyle = wy % major === 0 ? 'rgba(38,35,30,.09)' : 'rgba(38,35,30,.04)';
+      c.beginPath(); c.moveTo(0, Math.round(wy * k + y) + 0.5); c.lineTo(this.w, Math.round(wy * k + y) + 0.5); c.stroke();
+    }
+  }
+
+  drawGhost(level) {
+    const c = this.ctx;
+    c.strokeStyle = 'rgba(38,35,30,.15)'; c.lineWidth = 12;
+    for (const w of level.walls) { const a = level.nodes[w.a], b = level.nodes[w.b]; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); }
+  }
+
+  drawRooms(lv, analysis) {
+    const c = this.ctx, sel = store.selection;
+    analysis.rooms.forEach((r, i) => {
+      const info = lv.rooms[i];
+      c.beginPath(); r.poly.forEach((p, j) => (j ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y))); c.closePath();
+      c.fillStyle = sel?.type === 'room' && sel.id === info?.id ? 'rgba(181,83,47,.14)' : '#fffdf8';
+      c.fill();
+    });
+  }
+
+  drawWalls(lv, analysis) {
+    const c = this.ctx, corners = wallCorners(lv, analysis), sel = store.selection;
+    for (const w of analysis.walls) {
+      const q = corners.get(w.id); if (!q) continue;
+      c.beginPath(); c.moveTo(q.aL.x, q.aL.y); c.lineTo(q.bL.x, q.bL.y); c.lineTo(q.bR.x, q.bR.y); c.lineTo(q.aR.x, q.aR.y); c.closePath();
+      c.fillStyle = sel?.type === 'wall' && sel.id === w.id ? ACCENT : INK;
+      c.fill();
+    }
+    for (const w of analysis.walls) for (const o of w.openings) this.drawOpening(lv, w, o);
+  }
+
+  drawOpening(lv, w, o, ghost) {
+    const c = this.ctx, a = lv.nodes[w.a], b = lv.nodes[w.b], L = dist(a, b);
+    const ux = (b.x - a.x) / L, uy = (b.y - a.y) / L, nx = -uy, ny = ux;
+    const cx = a.x + ux * o.t, cy = a.y + uy * o.t, hw = o.width / 2, ht = w.thickness / 2 + 0.5;
+    c.save(); c.translate(cx, cy); c.transform(ux, uy, nx, ny, 0, 0);
+    const selected = store.selection?.type === 'opening' && store.selection.id === o.id;
+    c.fillStyle = '#fffdf8'; c.fillRect(-hw, -ht, o.width, ht * 2);
+    const col = ghost ? ACCENT : selected ? ACCENT : INK;
+    c.strokeStyle = col; c.lineWidth = 1.6 / Math.max(this.view.k, 0.5);
+    if (o.type === 'door' || o.type === 'entry') {
+      const dirX = o.hinge === 'right' ? -1 : 1, dirY = o.flip ? -1 : 1;
+      const hx = -dirX * hw, hy = dirY * ht;
+      c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx, hy + dirY * o.width); c.stroke();
+      c.setLineDash([4, 4]);
+      c.beginPath(); c.arc(hx, hy, o.width, dirY > 0 ? (dirX > 0 ? Math.PI / 2 : Math.PI / 2) : -Math.PI / 2, dirY > 0 ? (dirX > 0 ? 0 : Math.PI) : (dirX > 0 ? 0 : Math.PI), (dirY > 0) === (dirX > 0)); c.stroke();
+      c.setLineDash([]);
+    } else if (o.type === 'sliding-door') {
+      c.strokeRect(-hw, -ht * 0.3, o.width, ht * 0.6);
+      c.beginPath(); c.moveTo(-hw, ht + 4); c.lineTo(hw * 1.8, ht + 4); c.stroke();
+    } else {
+      c.strokeRect(-hw, -ht, o.width, ht * 2);
+      c.beginPath(); c.moveTo(-hw, 0); c.lineTo(hw, 0); c.stroke();
+      c.beginPath(); c.moveTo(-hw, -ht * 0.4); c.lineTo(hw, -ht * 0.4); c.stroke();
+    }
+    c.restore();
+  }
+
+  drawItem(it) {
+    const def = getItem(it.cat); if (!def) return;
+    const c = this.ctx, w = it.w ?? def.w, d = it.d ?? def.d;
+    const selected = store.selection?.type === 'item' && store.selection.id === it.id;
+    c.save(); c.translate(it.x, it.y); c.rotate(((it.rot || 0) * Math.PI) / 180);
+    const col = it.color || def.color || '#d9d0c0';
+    c.fillStyle = col + (col.length === 7 ? 'cc' : ''); c.strokeStyle = selected ? ACCENT : 'rgba(38,35,30,.65)';
+    c.lineWidth = (selected ? 2.4 : 1) / Math.max(this.view.k, 0.4);
+    const round = def.model?.p?.round;
+    c.beginPath();
+    if (round) c.arc(0, 0, w / 2, 0, Math.PI * 2); else c.rect(-w / 2, -d / 2, w, d);
+    c.fill(); c.stroke();
+    this.drawGlyph(def, w, d);
+    c.restore();
+  }
+
+  drawGlyph(def, w, d) {
+    const c = this.ctx, t = def.model?.type, sub = def.sub;
+    c.strokeStyle = 'rgba(38,35,30,.5)'; c.lineWidth = 0.8 / Math.max(this.view.k, 0.4);
+    const L = (x0, y0, x1, y1) => { c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); };
+    if (t === 'bed') {
+      const n = w > 120 ? 2 : 1, pw = (w - 16) / n - 4;
+      for (let i = 0; i < n; i++) c.strokeRect(-w / 2 + 8 + i * (pw + 8), -d / 2 + 8, pw, 34);
+      L(-w / 2, -d / 2 + 62, w / 2, -d / 2 + 62);
+    } else if (t === 'sofa' || sub === 'canape') {
+      c.strokeRect(-w / 2 + 3, -d / 2 + 3, w - 6, d * 0.24);
+      const seats = def.model?.p?.seats || 3;
+      for (let i = 1; i < seats; i++) L(-w / 2 + (i * w) / seats, -d / 2 + d * 0.27, -w / 2 + (i * w) / seats, d / 2);
+    } else if (t === 'bathtub') {
+      c.beginPath(); c.roundRect(-w / 2 + 7, -d / 2 + 7, w - 14, d - 14, 18); c.stroke();
+    } else if (t === 'shower') {
+      L(-w / 2, -d / 2, w / 2, d / 2); L(w / 2, -d / 2, -w / 2, d / 2);
+    } else if (t === 'wc') {
+      c.beginPath(); c.ellipse(0, 7, w * 0.36, d * 0.34, 0, 0, Math.PI * 2); c.stroke();
+    } else if (t === 'sinkUnit' || t === 'vanity') {
+      c.beginPath(); c.roundRect(-w * 0.3, -d * 0.28, w * 0.6, d * 0.56, 6); c.stroke();
+    } else if (t === 'hob') {
+      for (const [x, y] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { c.beginPath(); c.arc((x * w) / 4, (y * d) / 4, Math.min(w, d) * 0.15, 0, Math.PI * 2); c.stroke(); }
+    } else if (t === 'stairs') {
+      const n = Math.round(d / 25);
+      for (let i = 1; i < n; i++) L(-w / 2, -d / 2 + (i * d) / n, w / 2, -d / 2 + (i * d) / n);
+      c.fillStyle = ACCENT; c.beginPath(); c.moveTo(0, -d / 2 + 6); c.lineTo(9, -d / 2 + 24); c.lineTo(-9, -d / 2 + 24); c.fill();
+    } else if (t === 'wardrobe') {
+      L(-w / 2, 0, w / 2, 0);
+      const n = def.model?.p?.doors || 2;
+      for (let i = 0; i < n; i++) L(-w / 2 + (i * w) / n, d / 2, -w / 2 + ((i + 0.5) * w) / n, d / 2 - 12);
+    } else if (sub === 'plante') {
+      for (let i = 0; i < 6; i++) { const a = (i * Math.PI) / 3; L(0, 0, (Math.cos(a) * w) / 2.2, (Math.sin(a) * d) / 2.2); }
+    }
+  }
+
+  drawDraft() {
+    const c = this.ctx, d = this.draft;
+    if (d) {
+      c.strokeStyle = ACCENT; c.lineWidth = this.wallThickness; c.globalAlpha = 0.5; c.lineCap = 'butt';
+      const pts = d.pts, h = this.hover;
+      c.beginPath(); c.moveTo(pts.at(-1).x, pts.at(-1).y);
+      if (h) { c.lineTo(h.x, h.y); c.stroke(); }
+      c.globalAlpha = 1;
+      if (h) {
+        c.fillStyle = ACCENT; c.beginPath(); c.arc(h.x, h.y, 5 / this.view.k, 0, 7); c.fill();
+      }
+    } else if (this.tool === 'wall' && this.hover) {
+      c.fillStyle = ACCENT; c.beginPath(); c.arc(this.hover.x, this.hover.y, 5 / this.view.k, 0, 7); c.fill();
+    }
+    if (this.drag?.type === 'room') {
+      const { a, b } = this.drag;
+      c.fillStyle = 'rgba(181,83,47,.16)'; c.strokeStyle = ACCENT; c.lineWidth = 2 / this.view.k;
+      c.fillRect(a.x, a.y, b.x - a.x, b.y - a.y); c.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
+    }
+    const m = this.drag?.type === 'measure' ? this.drag : this.measure;
+    if (m) {
+      c.strokeStyle = ACCENT; c.lineWidth = 2 / this.view.k; c.setLineDash([6 / this.view.k, 5 / this.view.k]);
+      c.beginPath(); c.moveTo(m.a.x, m.a.y); c.lineTo(m.b.x, m.b.y); c.stroke(); c.setLineDash([]);
+    }
+    if (['door', 'opening'].includes(this.tool) && this.hover?.wall) {
+      this.drawOpening(store.level, this.hover.wall, { ...this.openingPreset, t: this.hover.t }, true);
+    }
+  }
+
+  drawSelection(lv) {
+    const c = this.ctx, s = store.selection;
+    if (s?.type === 'item') {
+      const it = lv.items.find((i) => i.id === s.id), h = it && this.rotateHandle(it);
+      if (h) {
+        c.strokeStyle = ACCENT; c.lineWidth = 1.5 / this.view.k; c.beginPath(); c.moveTo(it.x, it.y); c.lineTo(h.x, h.y); c.stroke();
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(h.x, h.y, 9 / this.view.k, 0, 7); c.fill(); c.stroke();
+      }
+    }
+    if (s?.type === 'node' && lv.nodes[s.id]) {
+      const n = lv.nodes[s.id]; c.fillStyle = ACCENT; c.beginPath(); c.arc(n.x, n.y, 8 / this.view.k, 0, 7); c.fill();
+    }
+    if (this.tool === 'select' && this.view.k > 0.35) {
+      c.fillStyle = '#fffdf8'; c.strokeStyle = 'rgba(38,35,30,.5)'; c.lineWidth = 1 / this.view.k;
+      for (const n of Object.values(lv.nodes)) { c.beginPath(); c.arc(n.x, n.y, 3.6 / this.view.k, 0, 7); c.fill(); c.stroke(); }
+    }
+  }
+
+  drawRoomLabels(lv, analysis) {
+    const c = this.ctx;
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    analysis.rooms.forEach((r, i) => {
+      const info = lv.rooms[i]; if (!info) return;
+      const p = this.toScreen(r.center);
+      if (this.view.k < 0.22) return;
+      c.fillStyle = INK; c.font = '600 12.5px ui-sans-serif, -apple-system, system-ui, sans-serif';
+      c.fillText(info.name, p.x, p.y - 8);
+      c.fillStyle = SOFT; c.font = '11.5px ui-sans-serif, -apple-system, system-ui, sans-serif';
+      c.fillText(`${r.area.toFixed(1).replace('.', ',')} m²`, p.x, p.y + 8);
+    });
+  }
+
+  pill(text, x, y, color = ACCENT) {
+    const c = this.ctx;
+    c.font = '600 11.5px ui-sans-serif, -apple-system, system-ui, sans-serif';
+    const w = c.measureText(text).width + 12;
+    c.fillStyle = color; c.beginPath(); c.roundRect(x - w / 2, y - 10, w, 20, 10); c.fill();
+    c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, x, y + 0.5);
+  }
+
+  drawDimensions(lv) {
+    const c = this.ctx, s = store.selection;
+    if (this.view.k > 0.45) {
+      c.font = '10.5px ui-sans-serif, -apple-system, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      for (const w of lv.walls) {
+        const a = lv.nodes[w.a], b = lv.nodes[w.b], L = dist(a, b);
+        if (L < 60) continue;
+        const nx = -(b.y - a.y) / L, ny = (b.x - a.x) / L;
+        const mid = { x: (a.x + b.x) / 2 + nx * (w.thickness / 2 + 13 / this.view.k), y: (a.y + b.y) / 2 + ny * (w.thickness / 2 + 13 / this.view.k) };
+        const p = this.toScreen(mid);
+        let ang = Math.atan2(b.y - a.y, b.x - a.x); if (ang > Math.PI / 2 || ang <= -Math.PI / 2) ang += Math.PI;
+        c.save(); c.translate(p.x, p.y); c.rotate(ang);
+        c.fillStyle = 'rgba(38,35,30,.62)'; c.fillText(`${(L / 100).toFixed(2).replace('.', ',')}`, 0, 0); c.restore();
+      }
+    }
+    if (s?.type === 'wall') {
+      const w = lv.walls.find((x) => x.id === s.id);
+      if (w) { const a = lv.nodes[w.a], b = lv.nodes[w.b]; const p = this.toScreen({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }); this.pill(`${(dist(a, b) / 100).toFixed(2).replace('.', ',')} m`, p.x, p.y); }
+    }
+    if (this.draft && this.hover) {
+      const last = this.draft.pts.at(-1), p = this.toScreen({ x: (last.x + this.hover.x) / 2, y: (last.y + this.hover.y) / 2 });
+      this.pill(`${(dist(last, this.hover) / 100).toFixed(2).replace('.', ',')} m`, p.x, p.y - 22);
+    }
+    if (this.drag?.type === 'room') {
+      const { a, b } = this.drag, p = this.toScreen({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+      const W = Math.abs(a.x - b.x) / 100, H = Math.abs(a.y - b.y) / 100;
+      this.pill(`${W.toFixed(2).replace('.', ',')} × ${H.toFixed(2).replace('.', ',')} m · ${(W * H).toFixed(1).replace('.', ',')} m²`, p.x, p.y);
+    }
+    const m = this.drag?.type === 'measure' ? this.drag : this.measure;
+    if (m) { const p = this.toScreen({ x: (m.a.x + m.b.x) / 2, y: (m.a.y + m.b.y) / 2 }); this.pill(`${(dist(m.a, m.b) / 100).toFixed(2).replace('.', ',')} m`, p.x, p.y - 16); }
+    void polygonCentroid;
+  }
+
+  drawOverlayText() {
+    const lv = store.level;
+    if (Object.keys(lv.nodes).length) return;
+    const c = this.ctx;
+    c.fillStyle = SOFT; c.font = '15px ui-sans-serif, -apple-system, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('Commence par tracer une pièce avec l’outil « Pièce »', this.w / 2, this.h / 2);
+  }
+}
+
+function pointInPoly(p, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if ((a.y > p.y) !== (b.y > p.y) && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
+}
+
+function cleanOrphans(lv) {
+  const used = new Set(lv.walls.flatMap((w) => [w.a, w.b]));
+  for (const id of Object.keys(lv.nodes)) if (!used.has(id)) delete lv.nodes[id];
+}
+
+function mergeNodes(lv, from, to) {
+  for (const w of lv.walls) { if (w.a === from) w.a = to; if (w.b === from) w.b = to; }
+  lv.walls = lv.walls.filter((w) => w.a !== w.b);
+  delete lv.nodes[from];
+}
