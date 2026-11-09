@@ -93,7 +93,7 @@ function sofa(p) {
     B(g, cw - 0.03, seatH, cd - 0.02, mat, x, top - 0.02, z, 0.055);
     for (const lx of [-1, 1]) C(g, 0.022, 0.016, legH, legMat, x + lx * (cw / 2 - 0.08), 0, d / 2 - 0.08, 12);
   }
-  const accents = ['#c9764f', '#e8e0d0', '#59655a'];
+  const accents = ['#a8927a', '#e8e0d0', '#6d6a5c'];
   [-1, 1].forEach((sx, i) => {
     const m = B(g, 0.44, 0.44, 0.14, fabric(accents[i], 'velours'), sx * (inner / 2 - 0.28), top + seatH - 0.03, zCore - coreD / 2 + back + 0.21, 0.065);
     m.rotation.x = -0.28; m.rotation.z = sx * 0.1;
@@ -663,13 +663,13 @@ function classicStairs(p) {
 
 /** Volée droite américaine le long d'un mur : le dessous est fermé par un soubassement, on ne peut pas passer dessous. */
 function classicStraight(p) {
-  const g = new THREE.Group(), { w = 1.15, d = 4.6, h = 3.6 } = p, n = Math.round(h / 0.18), rise = h / n, run = d / n, walnut = walnutMat(), white = solid('#f1ece2', 0.5), open = w / 2 - 0.02;
+  const g = new THREE.Group(), { w = 1.15, d = 4.6, h = 3.6, side: railSide = 1 } = p, n = Math.round(h / 0.18), rise = h / n, run = d / n, walnut = walnutMat(), white = solid('#f1ece2', 0.5), open = railSide * (w / 2 - 0.02);
   for (let i = 0; i < n; i++) { const z = d / 2 - run * (i + 0.5); B(g, w, 0.045, run + 0.025, walnut, 0, rise * (i + 1) - 0.045, z, 0.008); B(g, w - 0.01, rise - 0.045, 0.02, white, 0, rise * i, z + run / 2 - 0.03); }
   // Soubassement plein côté hall, suivant la pente, avec moulures.
   const shape = new THREE.Shape(); shape.moveTo(-d / 2, 0); shape.lineTo(d / 2, 0); shape.lineTo(d / 2, 0.02); shape.lineTo(-d / 2, h - 0.02); shape.lineTo(-d / 2, 0);
   const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.04, bevelEnabled: false }); geo.rotateY(-Math.PI / 2); geo.translate(open + 0.02, 0, 0);
   const side = new THREE.Mesh(geo, white); side.castShadow = side.receiveShadow = true; g.add(side);
-  for (let i = 0; i < 4; i++) { const zc = -d / 2 + d * (i + 0.5) / 4, top = h * (0.5 - zc / d) - 0.55; if (top > 0.4) B(g, 0.012, top, d / 4 - 0.16, solid('#e4dccd', 0.5), open + 0.045, 0.14, zc, 0); }
+  for (let i = 0; i < 4; i++) { const zc = -d / 2 + d * (i + 0.5) / 4, top = h * (0.5 - zc / d) - 0.55; if (top > 0.4) B(g, 0.012, top, d / 4 - 0.16, solid('#e4dccd', 0.5), open + railSide * 0.045, 0.14, zc, 0); }
   const metal = blackMetal(), gl = glass();
   railRun(g, [open + 0.02, 0.02, d / 2], [open + 0.02, h, -d / 2], 0.95, 'classic', metal, gl);
   B(g, 0.12, 1.15, 0.12, white, open + 0.02, 0, d / 2 - 0.02, 0.012); B(g, 0.17, 0.06, 0.17, walnut, open + 0.02, 1.15, d / 2 - 0.02, 0.012);
@@ -858,7 +858,7 @@ function pool(p) {
   return g;
 }
 
-const stoneMat = () => texturedMaterial('rustic_stone_wall', 1.8, {});
+const stoneMat = () => texturedMaterial('rustic_stone_wall', 1.8, { tint: '#f1e4cf', gain: 1.35 });
 const walnutMat = () => texturedMaterial('american_walnut_veneer', 2, { tint: '#d7a877', gain: 1.15 });
 
 /** Cheminée monumentale : masse de pierre, panneau de noyer, foyer allumé. */
@@ -871,7 +871,7 @@ function fireplace(p) {
   B(g, fw, fh, 0.08, soot, 0, sill, -d / 2 + 0.06, 0); B(g, 0.03, fh, d - 0.1, soot, -fw / 2 + 0.02, sill, 0, 0); B(g, 0.03, fh, d - 0.1, soot, fw / 2 - 0.02, sill, 0, 0);
   B(g, fw + 0.36, 0.08, d + 0.14, solid('#23211f', 0.55), 0, sill - 0.08, 0.08, 0);
   B(g, fw + 0.2, 0.14, d + 0.05, solid('#1b1a1c', 0.6), 0, sill + fh, 0.03, 0);
-  const fire = emissive('#ff5a14', 2.1), glow = emissive('#ffb347', 2.4);
+  const fire = emissive('#e8430a', 1.1), glow = emissive('#ff9a2e', 1.3);
   for (let i = 0; i < 11; i++) { const x = -fw * 0.38 + (i * fw * 0.76) / 10; S(g, 0.075, fire, x, sill + 0.17, 0.08, 0.8, 2.3 + (i % 3) * 0.7, 0.8); if (i % 2) S(g, 0.045, glow, x, sill + 0.1, 0.13, 0.8, 1.8, 0.8); }
   B(g, fw * 0.8, 0.09, 0.2, solid('#2a1a12', 0.9), 0, sill, 0.1, 0.03);
   if (!outdoor && h > 3.2) { const pw = w * 0.56; B(g, pw, h - 1.9, 0.05, walnutMat(), 0, 1.75, d / 2 + 0.01); }
@@ -1030,7 +1030,7 @@ function branchVase(p) {
   const g = new THREE.Group(), { w = 0.45, h = 0.85 } = p, r = w * 0.32, rnd = brushRnd(Math.round(h * 991 + w * 53)), leaf = solid('#536b3c', 0.8), wood_ = solid('#4f3a28', 0.8), body = ceramic('#d9d2c4');
   S(g, r, body, 0, r * 1.05, 0, 1, 1.1, 1);
   C(g, r * 0.32, r * 0.4, r * 0.5, body, 0, r * 2.05, 0, 16);
-  for (let i = 0; i < 9; i++) { const a = rnd() * 6.28, lean = 0.1 + rnd() * 0.3, L = h * (0.55 + rnd() * 0.3), m = mesh(new THREE.CylinderGeometry(0.004, 0.006, L, 5), wood_, Math.cos(a) * L * lean * 0.5, r * 2.2 + L * 0.45, Math.sin(a) * L * lean * 0.5); m.rotation.z = -Math.cos(a) * lean; m.rotation.x = Math.sin(a) * lean; g.add(m); for (let k = 0; k < 5; k++) { const t = 0.45 + k * 0.12; S(g, 0.022 + rnd() * 0.018, leaf, Math.cos(a) * L * lean * t + rnd() * 0.05, r * 2.2 + L * t * 0.95, Math.sin(a) * L * lean * t + rnd() * 0.05, 1.5, 0.5, 1); } }
+  for (let i = 0; i < 9; i++) { const a = rnd() * 6.28, lean = 0.1 + rnd() * 0.3, L = h * (0.55 + rnd() * 0.3), m = mesh(new THREE.CylinderGeometry(0.004, 0.006, L, 5), wood_, Math.cos(a) * L * lean * 0.5, r * 2.2 + L * 0.45, Math.sin(a) * L * lean * 0.5); m.rotation.z = -Math.cos(a) * lean; m.rotation.x = Math.sin(a) * lean; g.add(m); for (let k = 0; k < 14; k++) { const t = 0.3 + k * 0.05, q = S(g, 0.012 + rnd() * 0.012, leaf, Math.cos(a) * L * lean * t + (rnd() - 0.5) * 0.09, r * 2.2 + L * t * 0.95 + (rnd() - 0.5) * 0.05, Math.sin(a) * L * lean * t + (rnd() - 0.5) * 0.09, 1.9, 0.35, 0.8); q.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3); } }
   return g;
 }
 
@@ -1055,32 +1055,35 @@ function domePendant(p) {
 }
 
 let marbleCache = null;
-/** Marbre clair veiné de brun, comme sur les photos de cuisine. */
+/** Marbre calacatta viola : grands blocs clairs cernés de veines lie-de-vin. */
 const marbleMat = () => {
   if (marbleCache) return marbleCache;
   const rnd = brushRnd(4441);
   const map = canvasMap(1024, 1024, (c, W, H) => {
-    c.fillStyle = '#efe9df'; c.fillRect(0, 0, W, H);
-    for (let i = 0; i < 46; i++) {
-      c.strokeStyle = ['#6d4a3a', '#9b7a68', '#b9aca0', '#3f2c26', '#c6b9ab'][Math.floor(rnd() * 5)]; c.globalAlpha = 0.25 + rnd() * 0.6; c.lineWidth = 0.8 + rnd() * rnd() * 9;
-      let x = rnd() * W, y = rnd() * H, a = rnd() * 6.28; c.beginPath(); c.moveTo(x, y);
-      for (let k = 0; k < 22; k++) { a += (rnd() - 0.5) * 1; x += Math.cos(a) * 38; y += Math.sin(a) * 38; c.lineTo(x, y); }
-      c.stroke();
+    c.fillStyle = '#f0e9e0'; c.fillRect(0, 0, W, H);
+    const pts = Array.from({ length: 34 }, () => [rnd() * W, rnd() * H]);
+    c.lineJoin = 'round';
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[j], d = Math.hypot(ax - bx, ay - by);
+      if (d > 260) continue;
+      c.strokeStyle = ['#4a2230', '#6c3440', '#2d1a22', '#8c6a68'][Math.floor(rnd() * 4)]; c.globalAlpha = 0.55 + rnd() * 0.4; c.lineWidth = 1 + rnd() * rnd() * 16;
+      c.beginPath(); c.moveTo(ax, ay); let x = ax, y = ay; for (let k = 1; k < 8; k++) { x = ax + ((bx - ax) * k) / 8 + (rnd() - 0.5) * 34; y = ay + ((by - ay) * k) / 8 + (rnd() - 0.5) * 34; c.lineTo(x, y); } c.lineTo(bx, by); c.stroke();
     }
     c.globalAlpha = 1;
   });
-  map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(0.55, 0.55);
-  marbleCache = new THREE.MeshStandardMaterial({ map, roughness: 0.22 });
+  map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(0.6, 0.6);
+  marbleCache = new THREE.MeshStandardMaterial({ map, roughness: 0.2 });
   return marbleCache;
 };
 const brassBar = (g, x, y, z, len, vertical) => B(g, vertical ? 0.018 : len, vertical ? len : 0.018, 0.022, brass(), x, y, z);
 
 /** Linéaire de cuisine sur mesure : noyer sombre, plan en marbre, poignées laiton. */
 function cabinetRun(p) {
-  const g = new THREE.Group(), { w = 4, d = 0.62, h = 0.92, upper, gap = 0 } = p, wd = walnutMat(), n = Math.max(1, Math.round(w / 0.6)), ew = w / n;
+  const g = new THREE.Group(), { w = 4, d = 0.62, h = 0.92, upper, gap = 0, splash } = p, wd = walnutMat(), n = Math.max(1, Math.round(w / 0.6)), ew = w / n;
   B(g, w, 0.1, d - 0.08, solid('#17130f', 0.8), 0, 0, -0.04);
   for (let i = 0; i < n; i++) { const x = -w / 2 + (i + 0.5) * ew; B(g, ew - 0.008, h - 0.14, d - 0.03, wd, x, 0.1, 0); B(g, ew - 0.13, h - 0.3, 0.012, wd, x, 0.17, d / 2 - 0.008); brassBar(g, x, h - 0.2, d / 2 + 0.008, 0.2); }
   B(g, w + 0.03, 0.05, d + 0.04, marbleMat(), 0, h - 0.04, 0, 0.012);
+  if (splash) B(g, w, 0.72, 0.03, marbleMat(), 0, h + 0.01, -d / 2 + 0.02);
   if (upper) {
     B(g, w, 1.46 - 0.92, 0.02, marbleMat(), 0, h + 0.01, -d / 2 + 0.01);
     const uh = 0.92, left = (w - gap) / 2;
@@ -1104,17 +1107,68 @@ function marbleIsland(p) {
   B(g, w - 0.1, h - 0.06, d - 0.32, wd, 0, 0, -0.1);
   for (let i = 0; i < n; i++) { const x = -w / 2 + 0.05 + (i + 0.5) * ((w - 0.1) / n); B(g, (w - 0.1) / n - 0.1, h - 0.3, 0.012, wd, x, 0.12, -0.1 - (d - 0.32) / 2 - 0.004); brassBar(g, x, h - 0.2, -0.1 - (d - 0.32) / 2 - 0.016, 0.2); }
   B(g, w + 0.05, 0.07, d, marbleMat(), 0, h - 0.07, 0, 0.02);
-  B(g, 0.45, 0.012, 0.36, chrome(), -w * 0.22, h, -0.1); const tap = mesh(new THREE.TorusGeometry(0.1, 0.012, 8, 20, Math.PI), brass(), -w * 0.22, h + 0.2, -0.32); g.add(tap); C(g, 0.012, 0.012, 0.2, brass(), -w * 0.22 + 0.1, h, -0.32, 8);
+  B(g, 0.5, 0.012, 0.38, solid('#2a2a2c', 0.35, 0.4), -w * 0.22, h, -0.1, 0); const tap = mesh(new THREE.TorusGeometry(0.1, 0.012, 8, 20, Math.PI), brass(), -w * 0.22, h + 0.2, -0.32); g.add(tap); C(g, 0.012, 0.012, 0.2, brass(), -w * 0.22 + 0.1, h, -0.32, 8);
   return g;
 }
 
-/** Piano de cuisson noir et laiton avec sa hotte habillée. */
+/** Piano de cuisson noir et laiton, crédence de marbre et hotte en plâtre. */
 function rangeHood(p) {
-  const g = new THREE.Group(), { w = 1.2, d = 0.65, h = 2.7 } = p, wd = walnutMat(), dark = solid('#16161a', 0.4, 0.3);
+  const g = new THREE.Group(), { w = 1.3, d = 0.65, h = 2.9 } = p, plaster = solid('#e9e2d4', 0.92), dark = solid('#17171b', 0.4, 0.3);
   B(g, w, 0.9, d, dark, 0, 0.02, 0, 0.012); B(g, w * 0.86, 0.46, 0.02, solid('#0d0d10', 0.25, 0.4), 0, 0.14, d / 2); brassBar(g, 0, 0.66, d / 2 + 0.03, w * 0.8);
   for (let i = 0; i < 6; i++) C(g, 0.022, 0.022, 0.03, brass(), -w * 0.34 + i * w * 0.136, 0.77, d / 2 + 0.02, 12).rotation.x = Math.PI / 2;
   B(g, w + 0.02, 0.03, d, solid('#101013', 0.3, 0.3), 0, 0.92, 0);
-  B(g, w + 0.24, h - 1.72, d * 0.7, wd, 0, 1.72, -d * 0.15); B(g, w + 0.32, 0.1, d * 0.8, wd, 0, 1.68, -d * 0.1); B(g, w + 0.28, 0.022, 0.012, brass(), 0, 1.74, d * 0.3);
+  B(g, w + 0.5, 0.72, 0.03, marbleMat(), 0, 0.95, -d / 2 + 0.02);
+  B(g, w + 0.42, 0.42, d * 0.92, plaster, 0, 1.72, -d * 0.04, 0.02);
+  const s = new THREE.Shape(); s.moveTo(-(w + 0.42) / 2, 0); s.lineTo((w + 0.42) / 2, 0); s.bezierCurveTo((w + 0.42) / 2, 0.35, w * 0.3, 0.42, w * 0.3, h - 2.14); s.lineTo(-w * 0.3, h - 2.14); s.bezierCurveTo(-w * 0.3, 0.42, -(w + 0.42) / 2, 0.35, -(w + 0.42) / 2, 0);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: d * 0.72, bevelEnabled: false, curveSegments: 16 }); geo.translate(0, 2.14, -d / 2 + 0.03);
+  const m = new THREE.Mesh(geo, plaster); m.castShadow = m.receiveShadow = true; g.add(m);
+  return g;
+}
+
+/** Table ronde sur pied en plâtre, comme dans les grands halls. */
+function pedestalTable(p) {
+  const g = new THREE.Group(), { w = 1.4, h = 0.8 } = p, plaster = solid('#ece6da', 0.9);
+  C(g, w * 0.26, w * 0.34, h - 0.08, plaster, 0, 0, 0, 40); C(g, w / 2, w / 2, 0.08, plaster, 0, h - 0.08, 0, 56);
+  return g;
+}
+
+/** Grande jarre en terre cuite et brassée de fleurs. */
+function urnBouquet(p) {
+  const g = new THREE.Group(), { w = 0.5, h = 1.1 } = p, clay = solid('#a8714c', 0.85), rnd = brushRnd(8123), r = w * 0.42, bloom = solid('#f3ede0', 0.8), green = solid('#8b9a58', 0.8), stem = solid('#5a4632', 0.8);
+  S(g, r, clay, 0, r * 1.15, 0, 1, 1.25, 1); C(g, r * 0.5, r * 0.6, r * 0.32, clay, 0, r * 2.2, 0, 24);
+  for (let i = 0; i < 10; i++) S(g, r * 0.3, green, Math.cos(i * 0.63) * r * 0.5, r * 2.55, Math.sin(i * 0.63) * r * 0.5);
+  for (let i = 0; i < 12; i++) { const a = rnd() * 6.28, lean = 0.25 + rnd() * 0.5, L = h * (0.4 + rnd() * 0.25), bx = Math.cos(a) * L * lean, bz = Math.sin(a) * L * lean, m = mesh(new THREE.CylinderGeometry(0.005, 0.008, L, 5), stem, bx / 2, r * 2.5 + L * 0.45, bz / 2); m.rotation.z = -Math.cos(a) * lean; m.rotation.x = Math.sin(a) * lean; g.add(m); for (let k = 0; k < 8; k++) { const t = 0.45 + k * 0.08; S(g, 0.03 + rnd() * 0.03, bloom, bx * t + (rnd() - 0.5) * 0.1, r * 2.5 + L * 0.9 * t + (rnd() - 0.5) * 0.08, bz * t + (rnd() - 0.5) * 0.1); } }
+  return g;
+}
+
+/** Lanterne de cuisine en verre et laiton. */
+function lantern(p) {
+  const g = new THREE.Group(), { w = 0.42, h = 1.1 } = p, metal = brass(), hw = w / 2, body = 0.62;
+  for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { B(g, 0.016, body, 0.016, metal, x * hw, 0, z * hw); }
+  B(g, w + 0.03, 0.02, w + 0.03, metal, 0, 0, 0); const cap = C(g, 0.03, hw * 1.45, 0.16, metal, 0, body, 0, 4); cap.rotation.y = Math.PI / 4;
+  const pane = glass(); B(g, w, body, 0.004, pane, 0, 0, hw); B(g, w, body, 0.004, pane, 0, 0, -hw); B(g, 0.004, body, w, pane, hw, 0, 0); B(g, 0.004, body, w, pane, -hw, 0, 0);
+  S(g, 0.05, emissive('#ffe2b8', 3.5), 0, body * 0.5, 0); C(g, 0.006, 0.006, Math.max(0.1, h - body - 0.16), metal, 0, body + 0.16, 0, 6);
+  return g;
+}
+
+/** Vasque monobloc en marbre, suspendue. */
+function marbleBlockVanity(p) {
+  const g = new THREE.Group(), { w = 1.3, d = 0.48, h = 0.88 } = p;
+  B(g, w, 0.42, d, marbleMat(), 0, h - 0.42, 0, 0.004); B(g, w * 0.5, 0.012, d * 0.55, solid('#e7dfd5', 0.2), 0, h, 0.02);
+  B(g, 0.03, 0.2, 0.03, solid('#16161a', 0.3, 0.5), 0, h, -d / 2 + 0.05); B(g, 0.02, 0.02, 0.15, solid('#16161a', 0.3, 0.5), 0, h + 0.2, -d / 2 + 0.11);
+  return g;
+}
+
+/** Buffet en noyer à portes cintrées et poignées laiton. */
+function walnutSideboard(p) {
+  const g = new THREE.Group(), { w = 2.1, d = 0.48, h = 0.84 } = p, wd = walnutMat(), n = Math.max(2, Math.round(w / 0.5)), ew = (w - 0.06) / n, dark = solid('#2c1d13', 0.7);
+  B(g, w, h - 0.1, d, wd, 0, 0.1, 0, 0.006); B(g, w + 0.04, 0.035, d + 0.03, wd, 0, h, 0, 0.008); B(g, w - 0.04, 0.1, d - 0.06, dark, 0, 0, 0);
+  for (let i = 0; i < n; i++) {
+    const x = -w / 2 + 0.03 + ew * (i + 0.5), pw = ew - 0.07, ph = h - 0.34, sh = new THREE.Shape(), r = pw / 2;
+    sh.moveTo(-r, 0); sh.lineTo(r, 0); sh.lineTo(r, ph - r); sh.absarc(0, ph - r, r, 0, Math.PI, false); sh.lineTo(-r, 0);
+    const m = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: false, curveSegments: 16 }), dark); m.position.set(x, 0.2, d / 2 - 0.004); g.add(m);
+    B(g, 0.012, 0.09, 0.02, brass(), x + (i % 2 ? -1 : 1) * (ew / 2 - 0.03), 0.42, d / 2 + 0.008);
+  }
   return g;
 }
 
@@ -1187,6 +1241,7 @@ export const PROC = {
   kitchenBase, kitchenWall, kitchenTall, oven, sinkUnit, hob, hood, fridge, dishwasher, washer, worktop, island,
   bathtub, shower, vanity, wc, towelRadiator, mirrorWall, mirrorCabinet, rug, curtain, pendant, floorLamp, tableLamp, picture,
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
+  walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
   bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine,
 };
