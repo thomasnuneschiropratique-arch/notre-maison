@@ -5,9 +5,12 @@ import { allItems, getItem, CATEGORIES, subLabel, purchaseLinks, OPENINGS, setCu
 import { ensureTerrain, commitTerrain, shapeTerrain, seatHouse, flattenAround, applyBrush, heightAt, TERRAIN_SHAPES, SLOPE_DEFAULT, DIRECTIONS, BRUSHES, ENVIRONMENTS } from './terrain.js';
 import { FLOORS, PAINTS, WALL_FINISHES, FACADES, ROOFS, GROUNDS, materialInfo, buyLinks } from './materials-data.js';
 import { TEMPLATES } from './templates.js';
-import { runChecks } from './advice.js';
+import { runChecks, surfaces } from './advice.js';
 import { fullBudget, budgetSettings, GAMMES, MODES, MARKET, BUDGET_SOURCES } from './budget.js';
-import { dist } from './geometry.js';
+import { dist, analyzeLevel } from './geometry.js';
+import { parcelOf, parcelArea, checkParcel, setbackOf, metres } from './parcel.js';
+import { tourSeen, startTour } from './tour.js';
+import { sync, connect, disconnect, queuePush, removeShared, knownCode, knownName, isEnabled } from './sync.js';
 import { isGroup, newGroup, isEmptyGroup, addLevel, addHouse, addGarden, addSameSpot, stats as groupStats, moveBy, rotate as rotateGroup, duplicate as duplicateGroup } from './group.js';
 
 const ICONS = {
@@ -101,7 +104,7 @@ async function customThumb(def, img) {
 }
 
 const narrow = () => matchMedia('(max-width: 820px)').matches;
-const TABS = [['catalog', 'Meubles'], ['style', 'Style'], ['terrain', 'Terrain'], ['budget', 'Budget'], ['advice', 'Conseils'], ['photos', 'Photos'], ['projects', 'Projets']];
+const TABS = [['catalog', 'Meubles'], ['style', 'Style'], ['terrain', 'Terrain'], ['budget', 'Budget'], ['shopping', 'Achats'], ['advice', 'Conseils'], ['photos', 'Photos'], ['projects', 'Projets']];
 const ui = { view: 'plan', tab: 'catalog', cat: 'anna', sub: null, q: '', sort: 'pop', detail: null, panelOpen: !narrow(), summer: true };
 
 function toast(t) {
@@ -159,7 +162,7 @@ function syncChrome() {
   document.querySelectorAll('#viewSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === ui.view));
   document.querySelectorAll('#bottomnav button').forEach((b) => {
     const n = b.dataset.n;
-    const on = ui.panelOpen ? (n === ui.tab || (n === 'more' && ['style', 'terrain', 'advice', 'photos', 'projects', 'more'].includes(ui.tab))) : n === ui.view;
+    const on = ui.panelOpen ? (n === ui.tab || (n === 'more' && ['style', 'terrain', 'shopping', 'advice', 'photos', 'projects', 'more'].includes(ui.tab))) : n === ui.view;
     b.classList.toggle('on', on);
   });
   document.querySelectorAll('#rail button').forEach((b) => b.classList.toggle('on', b.dataset.t === plan.tool || (b.dataset.t === 'door' && plan.tool === 'opening')));
@@ -242,7 +245,7 @@ $('#openPop').onclick = (e) => {
   plan.setTool('opening', OPENINGS[Number(b.dataset.i)]);
   $('#openPop').classList.add('hidden');
 };
-const HINTS = { wall: 'Touche pour poser chaque angle. Double-touche pour finir.', room: 'Fais glisser pour tracer une pièce rectangulaire.', opening: 'Touche un mur pour y placer l’ouverture.', measure: 'Fais glisser entre deux points.' };
+const HINTS = { parcel: 'Touche chaque coin du terrain, puis le premier pour fermer.', roof: 'Fais glisser sur la partie à couvrir.', wall: 'Touche pour poser chaque angle. Double-touche pour finir.', room: 'Fais glisser pour tracer une pièce rectangulaire.', opening: 'Touche un mur pour y placer l’ouverture.', measure: 'Fais glisser entre deux points.' };
 store.addEventListener('tool', (e) => {
   const h = $('#hint'), txt = HINTS[e.detail];
   h.classList.toggle('hidden', !txt && e.detail !== 'zone');
@@ -359,7 +362,7 @@ function render() {
   $('#tabs').innerHTML = TABS.map(([k, l]) => `<button data-k="${k}" class="${ui.tab === k && !sel && !ui.detail ? 'on' : ''}">${l}</button>`).join('');
   if (sel) renderSelection(body, sel);
   else if (ui.detail) renderDetail(body, ui.detail);
-  else ({ catalog: renderCatalog, style: renderStyle, terrain: renderTerrain, budget: renderBudget, advice: renderAdvice, photos: renderPhotos, projects: renderProjects, more: renderMore }[ui.tab] || renderCatalog)(body);
+  else ({ catalog: renderCatalog, style: renderStyle, terrain: renderTerrain, budget: renderBudget, shopping: renderShopping, advice: renderAdvice, photos: renderPhotos, projects: renderProjects, more: renderMore }[ui.tab] || renderCatalog)(body);
   syncChrome();
 }
 $('#tabs').onclick = (e) => { const k = e.target.dataset.k; if (k) openTab(k); };
@@ -746,6 +749,15 @@ function renderStyle(body) {
     <div class="field"><label>Forme</label><select id="roofT">${[['gable', '2 pans'], ['hip', '4 pans'], ['mono', 'Monopente'], ['flat', 'Toit-terrasse'], ['none', 'Aucune']].map(([k, l]) => `<option value="${k}" ${p.roof.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     <div class="field"><label>Pente (°)</label><input type="number" id="pitch" min="5" max="60" value="${p.roof.pitch}"/></div>
     <div class="field"><label>Débord (cm)</label><input type="number" id="ov" value="${p.roof.overhang}"/></div>
+    <h3 class="s">Toits supplémentaires</h3>
+    <div id="roofs">${(p.roofs || []).map((z, i) => `<div class="card2" data-z="${i}"><div class="head"><span>Toit ${i + 1} · ${esc(p.levels.find((l) => l.id === z.level)?.name || '')}</span><button class="iconbtn" data-del aria-label="Supprimer ce toit">${icon('trash')}</button></div>
+      <div class="field"><label>Forme</label><select data-f="type">${[['gable', '2 pans'], ['hip', '4 pans'], ['mono', 'Monopente'], ['flat', 'Toit-terrasse']].map(([k, l]) => `<option value="${k}" ${z.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label>Faîtage</label><select data-f="ridge">${[['auto', 'Automatique'], ['x', 'Horizontal sur le plan'], ['y', 'Vertical sur le plan']].map(([k, l]) => `<option value="${k}" ${z.ridge === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label>Pente (°)</label><input type="number" data-f="pitch" min="5" max="60" value="${z.pitch}"/></div>
+      <div class="field"><label>Débord (cm)</label><input type="number" data-f="overhang" value="${z.overhang}"/></div>
+      <div class="field"><label>Murs dessous (cm)</label><input type="number" data-f="wallH" min="0" placeholder="Hauteur du niveau" value="${z.wallH || ''}"/></div></div>`).join('')}</div>
+    <div class="btnrow"><button class="btn block" id="addRoof">+ Dessiner un toit sur le plan</button></div>
+    <p class="muted small" style="margin-top:6px">Pour un garage, une avancée ou la partie du bas qui dépasse de l’étage. Indique une hauteur de murs plus faible pour un volume plus bas. Si plusieurs toits couvrent toute la maison, règle la forme du toit principal sur « Aucune ».</p>
     ${swatchRow(ROOFS, p.style.roof, 'roof')}<div class="matname">${esc(materialInfo(p.style.roof)?.name)}</div>
     <div class="field"><label>Menuiseries</label><input type="color" id="joi" value="${p.style.joinery}" style="height:36px;padding:2px"/></div>
     <h3 class="s">Terrain</h3>${swatchRow(GROUNDS, p.site.ground, 'ground')}
@@ -768,6 +780,18 @@ function renderStyle(body) {
     if (k === 'facade') p.style.facade = m; if (k === 'roof') p.style.roof = m; if (k === 'ground') p.site.ground = m;
   }); render(); }; });
   const bind = (id, fn) => { const el = $(`#${id}`, body); if (el) el.onchange = (e) => { live(() => fn(e.target.value)); if (id === 'lvn') fillLevels(); }; };
+  $('#addRoof', body).onclick = () => { plan.setTool('roof'); setView('plan'); if (narrow()) setPanel(false); };
+  $('#roofs', body).onchange = (e) => {
+    const f = e.target.dataset.f, z = p.roofs[Number(e.target.closest('[data-z]').dataset.z)];
+    if (f && z) live(() => { z[f] = ['type', 'ridge'].includes(f) ? e.target.value : Number(e.target.value) || 0; });
+  };
+  $('#roofs', body).onclick = (e) => {
+    if (!e.target.closest('[data-del]')) return;
+    const i = Number(e.target.closest('[data-z]').dataset.z);
+    store.mutate(() => p.roofs.splice(i, 1));
+    render();
+    toast({ text: 'Toit retiré.', undo: true });
+  };
   bind('roofT', (v) => { p.roof.type = v; }); bind('pitch', (v) => { p.roof.pitch = Number(v); }); bind('ov', (v) => { p.roof.overhang = Number(v); });
   bind('joi', (v) => { p.style.joinery = v; }); bind('lat', (v) => { p.site.lat = Number(v); }); bind('lon', (v) => { p.site.lon = Number(v); }); bind('north', (v) => { p.site.north = Number(v); });
   bind('lvn', (v) => { lv.name = v; }); bind('lvh', (v) => { lv.height = Number(v); });
@@ -840,10 +864,189 @@ store.brushStroke = {
   end() { if (!this.m) return; this.m = null; commitTerrain(store.project); store.commit(); },
 };
 
+function parcelBlock(p) {
+  const info = checkParcel(p);
+  if (!info) return `<h3 class="s">Ma parcelle</h3>
+    <p class="muted small">Trace les limites de ton terrain pour vérifier les distances avec les voisins.</p>
+    <div class="dims"><div><label>Largeur (m)</label><input type="number" id="pw" value="25"/></div><div><label>Profondeur (m)</label><input type="number" id="pd" value="30"/></div><div><label>&nbsp;</label><button class="btn block" id="prect">Rectangle</button></div></div>
+    <div class="btnrow"><button class="btn pri block" id="pdraw">Dessiner sur le plan, coin par coin</button></div>`;
+  return `<h3 class="s">Ma parcelle</h3>
+    <div class="price">${Math.round(info.area).toLocaleString('fr-FR')} m²</div>
+    <div class="field"><label>Distance aux limites (m)</label><input type="number" step="0.5" min="0" id="pset" placeholder="${metres(setbackOf(p))}" value="${Number.isFinite(p.site.parcel.setback) ? p.site.parcel.setback / 100 : ''}"/></div>
+    <div class="note">${info.outside ? '<b>Un mur sort de la parcelle.</b> ' : ''}${info.issues.length ? `<b>${info.issues.length} limite${info.issues.length > 1 ? 's' : ''} trop proche${info.issues.length > 1 ? 's' : ''}</b>, en rouge sur le plan. ` : info.outside ? '' : 'Les distances sont respectées. '}Par défaut : la moitié de la hauteur de la maison, 3 m au moins. C’est la règle générale, sans PLU : celui de ta commune prime et peut autoriser de construire en limite.</div>
+    <div class="btnrow"><button class="btn" id="pedit">Déplacer les coins</button><button class="btn danger" id="pclear">Effacer</button></div>`;
+}
+
+function bindParcel(body, p, redo) {
+  const go = () => { setView('plan'); if (narrow()) setPanel(false); };
+  const on = (id, fn) => { const el = $(`#${id}`, body); if (el) el.onclick = fn; };
+  on('pdraw', () => { plan.setTool('parcel'); go(); });
+  on('pedit', () => { plan.setTool('parcel'); plan.fitted = false; plan.fit(); go(); });
+  on('pclear', () => { live(() => { delete p.site.parcel; }); redo(); toast({ text: 'Parcelle effacée.', undo: true }); });
+  on('prect', () => {
+    const W = Number($('#pw', body).value) * 100, D = Number($('#pd', body).value) * 100;
+    if (!(W >= 300 && D >= 300)) { toast('Indique au moins 3 m de chaque côté.'); return; }
+    const n = Object.values(store.level.nodes), xs = n.map((q) => q.x), ys = n.map((q) => q.y);
+    const cx = n.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0, cy = n.length ? (Math.min(...ys) + Math.max(...ys)) / 2 : 0;
+    const x0 = Math.round((cx - W / 2) / 5) * 5, y0 = Math.round((cy - D / 2) / 5) * 5;
+    live(() => { p.site.parcel = { pts: [{ x: x0, y: y0 }, { x: x0 + W, y: y0 }, { x: x0 + W, y: y0 + D }, { x: x0, y: y0 + D }] }; });
+    plan.fitted = false; plan.fit();
+    redo();
+  });
+  const set = $('#pset', body);
+  if (set) set.onchange = (e) => { live(() => { const v = e.target.value; if (v === '') delete p.site.parcel.setback; else p.site.parcel.setback = Number(v) * 100; }); redo(); };
+}
+
+// ——— Liste d'achats ———
+function shoppingData() {
+  const shops = new Map();
+  for (const l of fullBudget(store).items) {
+    if (!(l.price > 0) || l.def.cat === 'structure') continue;
+    const name = l.def.brand === 'Générique' ? 'À choisir (modèles types)' : l.def.brand;
+    if (!shops.has(name)) shops.set(name, new Map());
+    const list = shops.get(name), k = l.def.id;
+    if (!list.has(k)) list.set(k, { def: l.def, its: [], rooms: new Set(), total: 0 });
+    const row = list.get(k);
+    row.its.push(l.it); row.rooms.add(l.room); row.total += l.price;
+  }
+  return [...shops].map(([name, list]) => { const rows = [...list.values()]; return { name, rows, total: rows.reduce((t, r) => t + r.total, 0), left: rows.reduce((t, r) => t + r.total * (r.its.filter((i) => !i.bought).length / r.its.length), 0) }; }).sort((a, b) => b.total - a.total);
+}
+
+function shoppingText(shops) {
+  return shops.map((g) => `${g.name} (${euro(g.left)} restants)\n${g.rows.filter((r) => r.its.some((i) => !i.bought)).map((r) => `- ${r.its.length > 1 ? `${r.its.length} × ` : ''}${r.def.name} : ${euro(r.total)}${r.def.url ? ` ${r.def.url}` : ''}`).join('\n')}`).join('\n\n');
+}
+
+function renderShopping(body) {
+  const shops = shoppingData(), total = shops.reduce((t, g) => t + g.total, 0), left = shops.reduce((t, g) => t + g.left, 0);
+  ui.shopAll ??= true;
+  body.innerHTML = `<h2 class="t">Liste d’achats</h2>
+    <div class="price">${euro(left)} <span class="muted small">restent à acheter sur ${euro(total)}</span></div>
+    ${shops.length ? `<div class="chips wrap" id="shopF"><button class="chip ${ui.shopAll ? 'on' : ''}" data-all="1">Tout</button><button class="chip ${ui.shopAll ? '' : 'on'}" data-all="0">À acheter</button></div>
+    <div class="btnrow"><button class="btn block" id="shopShare">${icon('copy')}Envoyer la liste</button></div>
+    ${shops.map((g) => `<div class="shop"><h4><span>${esc(g.name)}</span><span>${euro(g.total)}</span></h4>${g.rows.filter((r) => ui.shopAll || r.its.some((i) => !i.bought)).map((r) => { const done = r.its.every((i) => i.bought), link = purchaseLinks(r.def)[0]; return `<label class="shopline ${done ? 'done' : ''}"><input type="checkbox" data-id="${esc(r.def.id)}" ${done ? 'checked' : ''}/><span class="nm">${r.its.length > 1 ? `${r.its.length} × ` : ''}${esc(r.def.name)}<small>${esc([...r.rooms].join(', '))} · ${r.def.approx ? '≈ ' : ''}${euro(r.total)}</small></span>${link ? `<a href="${esc(link.url)}" target="_blank" rel="noopener">Voir</a>` : '<span></span>'}</label>`; }).join('')}</div>`).join('')}
+    <div class="note">Prix relevés à titre indicatif : vérifie-les avant d’acheter. Une case cochée compte comme « déjà acheté » dans le budget.</div>` : '<p class="muted" style="margin-top:12px">Place des meubles sur le plan : ils apparaîtront ici, magasin par magasin.</p>'}`;
+  const f = $('#shopF', body);
+  if (!f) return;
+  f.onclick = (e) => { const a = e.target.dataset.all; if (a !== undefined) { ui.shopAll = a === '1'; render(); } };
+  body.querySelectorAll('input[data-id]').forEach((c) => { c.onchange = () => {
+    const t = $('#pbody').scrollTop;
+    live(() => { store.project.levels.forEach((l) => l.items.forEach((it) => { if (it.cat === c.dataset.id) it.bought = c.checked; })); });
+    render(); $('#pbody').scrollTop = t;
+  }; });
+  $('#shopShare', body).onclick = async () => {
+    const text = `Notre Maison : liste d’achats\n\n${shoppingText(shops)}`;
+    if (navigator.share) { try { await navigator.share({ text }); return; } catch { /* partage annulé */ } }
+    try { await navigator.clipboard.writeText(text); toast('Liste copiée.'); } catch { toast('Copie impossible sur cet appareil.'); }
+  };
+}
+
+// ——— Comparer deux versions ———
+function projectFacts(p) {
+  setCustom(p.custom);
+  const st = { project: p, analysis: (l) => analyzeLevel(l) };
+  try {
+    const b = fullBudget(st), s = surfaces(st);
+    const rooms = p.levels.flatMap((l) => l.rooms);
+    const glass = p.levels.flatMap((l) => l.walls.flatMap((w) => w.openings)).filter((o) => !isDoorType(o.type)).reduce((t, o) => t + (o.width * o.height) / 10000, 0);
+    const furn = b.items.reduce((t, l) => t + l.price, 0);
+    return [['Surface habitable', s.habitable, 'm²'], ['Pièces', rooms.length, ''], ['Chambres', rooms.filter((r) => ['chambre', 'parentale', 'enfant'].includes(r.type)).length, ''], ['Niveaux', p.levels.length, ''], ['Surface vitrée', glass, 'm²'], ['Meubles et déco', furn, '€'], ['Construction au m²', b.perM2, '€'], ['Budget total', b.total, '€']];
+  } finally { setCustom(store.project.custom); }
+}
+
+function drawMini(canvas, project) {
+  const dpr = Math.min(devicePixelRatio || 1, 2), r = canvas.getBoundingClientRect();
+  canvas.width = r.width * dpr; canvas.height = r.height * dpr;
+  const c = canvas.getContext('2d'), level = project.levels[project.entry || 0], pts = Object.values(level.nodes);
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (!pts.length) return;
+  const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const k = Math.min((r.width - 20) / (x1 - x0 || 1), (r.height - 20) / (y1 - y0 || 1));
+  const X = (x) => r.width / 2 + (x - (x0 + x1) / 2) * k, Y = (y) => r.height / 2 + (y - (y0 + y1) / 2) * k;
+  const a = analyzeLevel(level);
+  c.fillStyle = '#fff';
+  for (const room of a.rooms) { c.beginPath(); room.poly.forEach((q, i) => (i ? c.lineTo(X(q.x), Y(q.y)) : c.moveTo(X(q.x), Y(q.y)))); c.closePath(); c.fill(); }
+  c.strokeStyle = '#26231e'; c.lineCap = 'square';
+  for (const w of a.walls) { c.lineWidth = Math.max(1.5, w.thickness * k); c.beginPath(); c.moveTo(X(level.nodes[w.a].x), Y(level.nodes[w.a].y)); c.lineTo(X(level.nodes[w.b].x), Y(level.nodes[w.b].y)); c.stroke(); }
+  c.fillStyle = '#26231e'; c.font = '600 10.5px ui-sans-serif, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  a.rooms.forEach((room, i) => { if (level.rooms[i] && room.grossArea * 10000 * k * k > 2600) c.fillText(level.rooms[i].name, X(room.center.x), Y(room.center.y)); });
+}
+
+async function compareDialog() {
+  await store.save();
+  const list = (await dbAll('projects')).map((x) => x.value).sort((a, b) => b.updated - a.updated);
+  if (list.length < 2) { toast('Crée d’abord une deuxième version.'); return; }
+  const m = document.createElement('div'); m.className = 'modal';
+  const opts = (sel) => list.map((p) => `<option value="${esc(p.id)}" ${p.id === sel ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+  const other = list.find((p) => p.id !== store.project.id).id;
+  m.innerHTML = `<div class="box wide"><h2 class="t">Comparer deux versions</h2>
+    <div class="cmp"><div><select id="cA">${opts(store.project.id)}</select><canvas id="pA"></canvas></div><div><select id="cB">${opts(other)}</select><canvas id="pB"></canvas></div></div>
+    <div id="cT"></div><div class="btnrow"><button class="btn pri block" id="cX">Fermer</button></div></div>`;
+  document.body.append(m);
+  const fmt = (v, u) => (u === '€' ? euro(v) : `${u === 'm²' ? v.toFixed(1).replace('.', ',') : Math.round(v)}${u ? ` ${u}` : ''}`);
+  const show = () => {
+    const A = list.find((p) => p.id === $('#cA', m).value), B = list.find((p) => p.id === $('#cB', m).value);
+    drawMini($('#pA', m), A); drawMini($('#pB', m), B);
+    const fa = projectFacts(A), fb = projectFacts(B);
+    $('#cT', m).innerHTML = `<table class="cmptable"><tr><th></th><th>Gauche</th><th>Droite</th><th>Écart</th></tr>${fa.map(([l, v, u], i) => { const d = fb[i][1] - v; return `<tr><td>${esc(l)}</td><td>${fmt(v, u)}</td><td>${fmt(fb[i][1], u)}</td><td>${Math.abs(d) < 0.05 ? '=' : `${d > 0 ? '+' : '−'} ${fmt(Math.abs(d), u)}`}</td></tr>`; }).join('')}</table>`;
+  };
+  $('#cA', m).onchange = show; $('#cB', m).onchange = show;
+  $('#cX', m).onclick = () => m.remove();
+  show();
+}
+
+async function shareFile(file) {
+  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: file.name }); return; } catch { /* partage annulé */ } }
+  downloadBlob(file, file.name);
+}
+
+// ——— Partage entre téléphones ———
+const syncHooks = {
+  reload(p) { setCustom(p.custom); store.load(p); fillLevels(); render(); },
+  listChanged() { if (ui.tab === 'projects' && !store.selection) render(); },
+  async deletedCurrent() {
+    const others = (await dbAll('projects')).filter((x) => x.key !== store.project.id).map((x) => x.value).sort((a, b) => b.updated - a.updated);
+    await dbDel('projects', store.project.id);
+    openProject(others[0] || TEMPLATES[0].make());
+    render();
+    toast('Ce projet a été supprimé sur l’autre appareil.');
+  },
+};
+const SYNC_LABEL = { off: 'Non partagé', connecting: 'Connexion…', sending: 'Envoi…', ok: 'Partagé, à jour', error: 'Problème de partage' };
+store.addEventListener('sync', () => {
+  const el = $('#syncState');
+  if (el) { el.className = `syncstate ${sync.state}`; el.lastElementChild.textContent = sync.detail || SYNC_LABEL[sync.state]; }
+});
+
+function syncBlock() {
+  if (sync.state !== 'off' && sync.col) return `<div class="syncstate ${sync.state}" id="syncState"><i></i><span>${esc(sync.detail || SYNC_LABEL[sync.state])}</span></div>
+    <p class="muted small">Tous tes projets sont communs avec les appareils connectés au même foyer. La dernière modification enregistrée l’emporte : évitez de changer la même maison au même moment.</p>
+    <div class="btnrow"><button class="btn" id="syncOff">Arrêter sur cet appareil</button></div>`;
+  return `<p class="muted small">Le même code du foyer que dans Table de saison, sur chaque téléphone. Tes projets deviennent communs, et chaque changement arrive chez l’autre.</p>
+    ${sync.state === 'error' ? `<div class="syncstate error" id="syncState"><i></i><span>${esc(sync.detail || '')}</span></div>` : '<div id="syncState" hidden><i></i><span></span></div>'}
+    <div class="field wide"><label>Code du foyer</label><input id="syncCode" autocomplete="off" autocapitalize="none" value="${esc(knownCode())}"/></div>
+    <div class="field wide"><label>Ton prénom</label><input id="syncName" autocomplete="off" value="${esc(knownName())}"/></div>
+    <div class="btnrow"><button class="btn pri block" id="syncOn">Activer le partage</button></div>`;
+}
+
+function bindSync(body) {
+  const on = $('#syncOn', body), off = $('#syncOff', body);
+  if (off) off.onclick = () => { disconnect(); render(); toast('Partage arrêté sur cet appareil. Tes projets restent ici.'); };
+  if (on) on.onclick = async () => {
+    const code = $('#syncCode', body).value.trim(), name = $('#syncName', body).value.trim();
+    if (!code || !name) { toast('Indique le code du foyer et ton prénom.'); return; }
+    on.disabled = true; on.textContent = 'Connexion…';
+    await store.save();
+    const ok = await connect(code, name, syncHooks);
+    render();
+    if (ok) toast('Partage activé.');
+  };
+}
+
 function renderTerrain(body) {
   const p = store.project, slopeKinds = Object.keys(SLOPE_DEFAULT), cur = p.site.env || 'campagne';
   body.innerHTML = `
     <h2 class="t">Terrain et paysage</h2>
+    ${parcelBlock(p)}
     <h3 class="s">Paysage autour</h3>
     <div class="chips wrap" id="envs">${ENVIRONMENTS.map((e) => `<button class="chip ${e.id === cur ? 'on' : ''}" data-e="${e.id}">${esc(e.name)}</button>`).join('')}</div>
     <h3 class="s">Forme du terrain</h3>
@@ -865,6 +1068,7 @@ function renderTerrain(body) {
     <div class="field wide"><label>Ambiance</label><select id="tsky">${[['auto', 'Selon l’heure'], ['matin', 'Matin'], ['midi', 'Plein soleil'], ['soir', 'Coucher de soleil'], ['couvert', 'Couvert'], ['nuit', 'Nuit']].map(([k, l]) => `<option value="${k}" ${k === ui.sky ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
     <div class="note">Sur une pente, le mur s’adapte seul et un niveau en dessous sort du terrain du côté bas. Ajoute-le depuis le menu des niveaux, en haut.</div>`;
   const redo = () => { const t = $('#pbody').scrollTop; render(); $('#pbody').scrollTop = t; };
+  bindParcel(body, p, redo);
   $('#envs', body).onclick = (e) => { const k = e.target.dataset.e; if (k) { live(() => { p.site.env = k; if (k === 'neige') p.site.ground = 'neige'; }); redo(); } };
   $('#shapes', body).onclick = (e) => { const k = e.target.dataset.k; if (k) { ui.tShape = k; if (SLOPE_DEFAULT[k]) ui.tPct = SLOPE_DEFAULT[k]; redo(); } };
   $('#tdir', body).onchange = (e) => { ui.tDir = Number(e.target.value); };
@@ -963,12 +1167,26 @@ async function renderProjects(body) {
   const list = (await dbAll('projects')).map((x) => x.value).sort((a, b) => b.updated - a.updated);
   body.innerHTML = `<h2 class="t">Projets</h2><p class="muted small">Crée plusieurs versions pour comparer vos idées.</p><div style="margin-top:10px">${list.map((p) => `<div class="proj ${p.id === store.project.id ? 'on' : ''}"><button class="m" data-open="${p.id}"><b>${esc(p.name)}</b><div class="muted small">Modifié le ${new Date(p.updated).toLocaleDateString('fr-FR')}</div></button><button class="iconbtn" data-copy="${p.id}" title="Dupliquer">${icon('copy')}</button><button class="iconbtn" data-del="${p.id}" title="Supprimer">${icon('trash')}</button></div>`).join('')}</div>
   <div class="btnrow"><button class="btn pri block" id="new">Nouveau projet</button></div>
+  <div class="btnrow"><button class="btn" id="cmp">Comparer deux versions</button><button class="btn" id="pdf">Plan coté en PDF</button></div>
+  <h3 class="s">Partager entre vos téléphones</h3>
+  ${syncBlock()}
   <h3 class="s">Passer d'un appareil à l'autre</h3>
   <p class="muted small">Envoie le fichier du projet à ton autre appareil, puis ouvre-le ici.</p>
   <div class="btnrow"><button class="btn" id="exp">Envoyer ce projet</button><label class="btn">Ouvrir un fichier<input type="file" id="imp" accept=".json,.maison,application/json" hidden/></label></div>
   <div class="field wide" style="margin-top:12px"><label>Nom</label><input id="pname" value="${esc(store.project.name)}"/></div>
+  <div class="btnrow"><button class="btn block" id="tourAgain">Revoir la visite guidée</button></div>
   <h3 class="s">Crédits</h3><p class="muted small">Modèles scannés, ciels et matières : Poly Haven (CC0). Prix et dimensions : fiches produits publiques. Les marques citées appartiennent à leurs propriétaires ; aucun partenariat.</p>`;
   $('#new', body).onclick = templatePicker;
+  $('#cmp', body).onclick = compareDialog;
+  $('#pdf', body).onclick = async () => {
+    await store.save();
+    const { planPdf } = await import('./planpdf.js');
+    const blob = planPdf(store.project);
+    if (!blob) { toast('Trace d’abord des murs.'); return; }
+    await shareFile(new File([blob], `${store.project.name} - plan.pdf`, { type: 'application/pdf' }));
+  };
+  $('#tourAgain', body).onclick = () => { if (narrow()) setPanel(false); startTour(); };
+  bindSync(body);
   $('#pname', body).onchange = (e) => { live(() => { store.project.name = e.target.value; }); fillLevels(); };
   $('#exp', body).onclick = async () => {
     const name = `${store.project.name}.maison.json`;
@@ -989,13 +1207,13 @@ async function renderProjects(body) {
   body.onclick = async (e) => {
     const o = e.target.closest('[data-open]'), c = e.target.closest('[data-copy]'), d = e.target.closest('[data-del]');
     if (o) { await store.save(); openProject(await dbGet('projects', o.dataset.open)); render(); }
-    if (c) { await store.save(); const p = await dbGet('projects', c.dataset.copy); const n = { ...p, id: uid('P'), name: `${p.name} (version 2)`, updated: Date.now() }; await dbPut('projects', n.id, n); render(); }
-    if (d && d.dataset.del !== store.project.id && confirm('Supprimer définitivement ce projet ?')) { await dbDel('projects', d.dataset.del); render(); }
+    if (c) { await store.save(); const p = await dbGet('projects', c.dataset.copy); const n = { ...p, id: uid('P'), name: `${p.name} (version 2)`, updated: Date.now() }; await dbPut('projects', n.id, n); queuePush(n.id); render(); }
+    if (d && d.dataset.del !== store.project.id && confirm('Supprimer définitivement ce projet ?')) { await dbDel('projects', d.dataset.del); removeShared(d.dataset.del); render(); }
   };
 }
 
 function renderMore(body) {
-  body.innerHTML = `<h2 class="t">Plus</h2>${[['terrain', 'Terrain et paysage', 'Pente, relief, environnement, sol'], ['style', 'Style de la maison', 'Façade, toiture, plan importé'], ['advice', 'Conseils', 'Règles et confort'], ['photos', 'Photos', 'Images photoréalistes'], ['projects', 'Projets', 'Versions, passer d’un appareil à l’autre']].map(([k, a, b]) => `<button class="tpl" data-k="${k}"><b>${a}</b><span class="muted small">${b}</span></button>`).join('')}`;
+  body.innerHTML = `<h2 class="t">Plus</h2>${[['shopping', 'Liste d’achats', 'Tous les meubles, magasin par magasin'], ['terrain', 'Terrain et paysage', 'Parcelle, pente, relief, environnement'], ['style', 'Style de la maison', 'Façade, toiture, plan importé'], ['advice', 'Conseils', 'Règles et confort'], ['photos', 'Photos', 'Images photoréalistes'], ['projects', 'Projets', 'Versions, comparaison, plan PDF, partage']].map(([k, a, b]) => `<button class="tpl" data-k="${k}"><b>${a}</b><span class="muted small">${b}</span></button>`).join('')}`;
   body.querySelectorAll('[data-k]').forEach((b) => { b.onclick = () => openTab(b.dataset.k); });
 }
 
@@ -1062,7 +1280,15 @@ store.addEventListener('change', () => {
   if (['budget', 'advice'].includes(ui.tab) && !store.selection && !$('#pbody').contains(document.activeElement)) { const t = $('#pbody').scrollTop; render(); $('#pbody').scrollTop = t; }
   $('#saved').textContent = 'Enregistrement…';
 });
-store.addEventListener('saved', () => { $('#saved').textContent = 'Enregistré'; });
+store.addEventListener('saved', () => { $('#saved').textContent = 'Enregistré'; queuePush(store.project.id); });
+store.addEventListener('roof-added', () => { ui.tab = 'style'; ui.detail = null; setPanel(true); render(); toast('Toit ajouté : règle sa forme ici.'); });
+store.addEventListener('parcel-set', () => { ui.tab = 'terrain'; ui.detail = null; setPanel(true); render(); });
+// La surface de la parcelle alimente le budget, tant qu'on ne la modifie pas à la main.
+store.addEventListener('change', () => {
+  const p = store.project, m = parcelOf(p); if (!m) return;
+  const a = Math.round(parcelArea(m));
+  if (m.area !== a) { m.area = a; p.budget = { ...p.budget, terrainArea: a }; }
+});
 store.addEventListener('project', fillLevels);
 store.addEventListener('level', () => { fillLevels(); render(); });
 
@@ -1083,6 +1309,8 @@ store.addEventListener('level', () => { fillLevels(); render(); });
   document.getElementById('splash')?.remove();
   // Évite que l'appareil efface le projet en cas de manque de place.
   navigator.storage?.persist?.().catch(() => {});
+  if (isEnabled()) connect(knownCode(), knownName(), syncHooks);
+  if (!tourSeen()) setTimeout(() => { if (!document.querySelector('.modal')) startTour(); }, 700);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
   // Prépare la 3D en arrière-plan une fois l'app affichée, sauf en mode économie de données.
   if (!navigator.connection?.saveData) (window.requestIdleCallback || setTimeout)(() => import('./view3d.js').catch(() => {}), { timeout: 4000 });

@@ -296,9 +296,13 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
   root.add(walls, floors, ceilings);
 
   const wallOpts = { ...opts, slabAbove: project.levels[index + 1] ? level.slab : 0 };
+  // Un toit supplémentaire peut couvrir une partie plus basse : garage, appentis.
+  const zones = (project.roofs || []).filter((z) => z.level === level.id && z.wallH > 0 && z.wallH < level.height);
+  const inZone = (p, z) => p.x >= z.x0 - 1 && p.x <= z.x1 + 1 && p.y >= z.y0 - 1 && p.y <= z.y1 + 1;
+  const lowZone = (w) => zones.find((z) => inZone(level.nodes[w.a], z) && inZone(level.nodes[w.b], z) && ['L', 'R'].every((s) => { const i = analysis.sideRoom.get(`${w.id}:${s}`); return i === undefined || inZone(analysis.rooms[i].center, z); }));
   for (const w of analysis.walls) {
     const c = corners.get(w.id);
-    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, H, project, wallOpts);
+    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, Math.min(H, lowZone(w)?.wallH ?? H), project, wallOpts);
   }
   if (opts.groundAt && index <= (project.entry || 0)) buildFoundation(walls, level, index, project, analysis, corners, baseY, opts);
 
@@ -319,7 +323,7 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
     const insideCeil = ceilingVoids.filter((v) => opts.inside(v[0], r.poly));
     const cg = flipped(floorGeometry(r.poly, insideCeil));
     const c = new THREE.Mesh(cg, getMaterial(info.ceiling || 'paint_blanc'));
-    c.position.y = baseY + level.height * M;
+    c.position.y = baseY + (zones.find((z) => inZone(r.center, z))?.wallH ?? level.height) * M;
     c.castShadow = true; c.receiveShadow = true;
     c.userData = { kind: 'ceiling', roomId: info.id };
     ceilings.add(c);
@@ -367,11 +371,11 @@ function footprintBounds(level) {
 }
 
 /** Toiture calée sur l'emprise du dernier niveau (terrasse, 1 pan, 2 pans ou 4 pans). */
-export function buildRoof(project, level, baseY) {
+export function buildRoof(project, level, baseY, zone) {
   const g = new THREE.Group();
   g.name = 'roof';
-  const b = footprintBounds(level);
-  const { roof } = project;
+  const b = zone || footprintBounds(level);
+  const roof = zone || project.roof;
   if (!b || roof.type === 'none') return g;
   const maxT = Math.max(...level.walls.map((w) => w.thickness), 20) / 2;
   const facade = getMaterial(project.style.facade);

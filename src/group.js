@@ -140,6 +140,7 @@ export function capture(project, sel) {
       items: level.items.filter((it) => t.items.has(it.id)).map((it) => ({ it, x: it.x, y: it.y, rot: it.rot || 0 })),
       half: level.walls.filter((w) => t.nodes.has(w.a) !== t.nodes.has(w.b) && w.openings.length).map((w) => ({ w, aMoved: t.nodes.has(w.a), L0: dist(level.nodes[w.a], level.nodes[w.b]), ts: w.openings.map((o) => o.t) })),
       bg: whole && level.background ? { x: level.background.x, y: level.background.y } : null,
+      roofs: box ? (project.roofs || []).filter((r) => r.level === level.id && (r.x0 + r.x1) / 2 >= box.x0 && (r.x0 + r.x1) / 2 <= box.x1 && (r.y0 + r.y1) / 2 >= box.y0 && (r.y0 + r.y1) / 2 <= box.y1).map((r) => ({ r, x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1 })) : [],
     });
   }
   return { project, sel, levels, house, box, top0, alt0: project.site.altitude || 0, detach: sel.detach };
@@ -152,6 +153,10 @@ export function apply(session, fn, turn = 0) {
     for (const n of L.nodes) Object.assign(lv.nodes[n.id], fn(n));
     for (const i of L.items) { Object.assign(i.it, fn(i)); if (turn) i.it.rot = (((i.rot + turn) % 360) + 360) % 360; }
     if (L.bg && !turn) Object.assign(lv.background, fn(L.bg));
+    for (const z of L.roofs) {
+      const a = fn({ x: z.x0, y: z.y0 }), b = fn({ x: z.x1, y: z.y1 });
+      Object.assign(z.r, { x0: Math.min(a.x, b.x), x1: Math.max(a.x, b.x), y0: Math.min(a.y, b.y), y1: Math.max(a.y, b.y) });
+    }
     // Sur un mur qui s'allonge, une fenêtre garde sa distance à l'extrémité qui ne bouge pas.
     for (const h of L.half) {
       const L1 = dist(lv.nodes[h.w.a], lv.nodes[h.w.b]);
@@ -265,6 +270,7 @@ export function duplicate(project, sel) {
       copy.items.add(id);
     }
     for (const r of seeds) level.rooms.push({ ...r, id: uid('r'), x: r.x + dx });
+    for (const r of (project.roofs || []).filter((z) => z.level === level.id && (z.x0 + z.x1) / 2 >= box.x0 && (z.x0 + z.x1) / 2 <= box.x1)) project.roofs.push({ ...r, id: uid('z'), x0: r.x0 + dx, x1: r.x1 + dx });
   }
   return out;
 }

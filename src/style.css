@@ -202,6 +202,37 @@ h3.s { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color:
 .selbar button { padding: 8px 8px; border-radius: 9px; font-size: 12.5px; font-weight: 600; min-height: 36px; }
 .selbar button.pri { background: var(--accent); color: #fff; }
 .selecting .sunbar { display: none; }
+.tour { position: fixed; inset: 0; z-index: 90; }
+.tourhole { position: absolute; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(30,27,22,.62); transition: all .22s ease; pointer-events: none; }
+.tourbox { position: absolute; width: min(320px, calc(100vw - 20px)); background: var(--card); border-radius: 16px; padding: 15px 16px 12px; box-shadow: 0 12px 34px rgba(0,0,0,.28); }
+.tourbox small { color: var(--soft); }
+.tourbox h3 { font-size: 17px; margin: 2px 0 5px; }
+.tourbox p { font-size: 14px; line-height: 1.42; color: var(--ink); margin: 0; }
+.touracts { display: flex; justify-content: space-between; margin-top: 12px; }
+.touracts button { padding: 8px 14px; border-radius: 10px; font-weight: 600; min-height: 38px; }
+.touracts .skip { color: var(--soft); }
+.touracts .next { background: var(--accent); color: #fff; }
+.shop { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 10px; }
+.shop h4 { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; margin: 0 0 6px; }
+.shopline { display: grid; grid-template-columns: 24px 1fr auto; gap: 8px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.shopline input { width: 20px; height: 20px; }
+.shopline.done .nm { text-decoration: line-through; color: var(--soft); }
+.shopline small { display: block; color: var(--soft); }
+.shopline a { color: var(--accent); font-weight: 600; }
+.card2 { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 4px 12px 10px; margin-top: 8px; }
+.card2 .head { display: flex; justify-content: space-between; align-items: center; padding-top: 6px; font-weight: 600; }
+.modal .box.wide { width: min(860px, 100%); }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.cmp canvas { width: 100%; aspect-ratio: 4 / 3; background: #fbf8f2; border: 1px solid var(--line); border-radius: 10px; display: block; }
+.cmp select { width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); margin-bottom: 6px; }
+.cmptable { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.cmptable td, .cmptable th { padding: 7px 4px; border-top: 1px solid var(--line); text-align: right; font-weight: 500; }
+.cmptable td:first-child, .cmptable th:first-child { text-align: left; color: var(--soft); }
+.cmptable td:last-child { font-weight: 650; }
+.syncstate { display: flex; align-items: center; gap: 7px; font-size: 13px; margin: 6px 0; }
+.syncstate i { width: 9px; height: 9px; border-radius: 50%; background: #9c9587; }
+.syncstate.ok i { background: #4c8a3f; }
+.syncstate.error i { background: #c0392b; }
 .loadpill { position: absolute; left: 50%; top: 58px; transform: translateX(-50%); z-index: 6; display: flex; align-items: center; gap: 8px; background: rgba(26,24,20,.8); color: #fff; font-size: 12.5px; padding: 6px 13px; border-radius: 16px; white-space: nowrap; }
 .loadpill i { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

@@ -2,6 +2,7 @@
 import { getItem, isDoorType } from './catalog.js';
 import { terrainOf, heightAt, levelBase } from './terrain.js';
 import { itemCorners, pointInPolygon, dist } from './geometry.js';
+import { checkParcel, metres } from './parcel.js';
 
 const round1 = (n) => n.toFixed(1).replace('.', ',');
 
@@ -82,6 +83,13 @@ export function runChecks(store) {
       if (g > base + (o.sill + o.height) * 0.01 - 0.05) add('warn', `${lv.name} : ouverture enterrée`, 'Le terrain recouvre cette ouverture. Déplace-la, creuse le terrain ou monte la maison.');
     }
   });
+
+  const parcel = checkParcel(project);
+  if (parcel) {
+    if (parcel.outside) add('warn', 'La maison sort de la parcelle', 'Au moins un mur est en dehors des limites que tu as tracées.');
+    parcel.issues.forEach((c) => add('warn', `Limite ${c.edge + 1} : trop près`, `${metres(Math.max(0, c.d))} entre la maison et cette limite, pour ${metres(parcel.need)} demandés. Construire pile en limite est souvent permis : vérifie le PLU.`));
+    if (!parcel.outside && !parcel.issues.length) add('ok', 'Distances aux limites respectées', `Au moins ${metres(parcel.need)} de chaque côté. Le PLU de la commune peut imposer d’autres règles : il prime sur ce calcul.`);
+  }
 
   const rooms = project.levels.flatMap((l) => l.rooms);
   if (rooms.length === 0) add('info', 'Plan vide', 'Trace une première pièce pour obtenir des conseils.');

@@ -185,6 +185,20 @@ export class View3D {
   groundY(x, y) { return heightAt(terrainOf(store.project), x, y); }
 
   /** Pièces au contact du sol : la terre ne doit pas les traverser. */
+  /** Limites de la parcelle, posées sur le relief. */
+  drawParcel(p) {
+    if (this.parcelLine) { this.scene.remove(this.parcelLine); this.parcelLine.geometry.dispose(); this.parcelLine = null; }
+    const pts = p.site.parcel?.pts; if (!pts || pts.length < 3) return;
+    const v = [];
+    pts.forEach((a, i) => {
+      const b = pts[(i + 1) % pts.length], n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 100));
+      for (let k = 0; k <= n; k++) { const x = a.x + ((b.x - a.x) * k) / n, y = a.y + ((b.y - a.y) * k) / n; v.push(x * M, this.groundY(x, y) + 0.12, y * M); }
+    });
+    const g = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    this.parcelLine = new THREE.Line(g, new THREE.LineBasicMaterial({ color: '#f06a2a' }));
+    this.scene.add(this.parcelLine);
+  }
+
   footprints() {
     const p = store.project, e = p.entry || 0;
     return p.levels.slice(0, e + 1).flatMap((lv) => store.analysis(lv).rooms.map((r) => r.poly.map((q) => ({ x: q.x, y: q.y }))));
@@ -222,6 +236,11 @@ export class View3D {
     const roof = buildRoof(p, tl, this.baseOf(top) + tl.height * M);
     this.house.add(roof);
     this.roof = roof;
+    for (const z of p.roofs || []) {
+      const i = p.levels.findIndex((l) => l.id === z.level);
+      if (i >= 0) this.house.add(buildRoof(p, p.levels[i], this.baseOf(i) + (z.wallH > 0 ? Math.min(z.wallH, p.levels[i].height) : p.levels[i].height) * M, z));
+    }
+    this.drawParcel(p);
     this.wallGroups = [];
     this.house.traverse((o) => { if (o.userData.kind === 'wallGroup') this.wallGroups.push(o); });
 

@@ -3,6 +3,7 @@ import { store, addNode, addWall, splitWall, uid } from './state.js';
 import { projectOnSegment, dist, itemCorners, wallCorners, polygonCentroid } from './geometry.js';
 import { getItem, OPENINGS } from './catalog.js';
 import { terrainOf, T_N } from './terrain.js';
+import { parcelOf, checkParcel, insetPolygon, metres } from './parcel.js';
 import { isGroup, newGroup, isEmptyGroup, addRect, toggleItem, toggleNodes, toggleRoom, bounds, capture, apply, finish, clampMove, remove } from './group.js';
 
 const INK = '#26231e', ACCENT = '#b5532f', SOFT = 'rgba(38,35,30,.5)';
@@ -42,7 +43,7 @@ export class Plan2D {
   fit() {
     if (!store.project || !this.w) return;
     const lv = store.level;
-    const pts = Object.values(lv.nodes);
+    const pts = [...Object.values(lv.nodes), ...(parcelOf(store.project)?.pts || [])];
     if (!pts.length) { this.view = { x: this.w / 2, y: this.h / 2, k: 0.6 }; return; }
     this.fitted = true;
     const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
@@ -63,6 +64,8 @@ export class Plan2D {
 
   setTool(t, preset) {
     this.finishDraft();
+    if (this.tool === 'parcel' && this.parcelDraft?.length >= 3) this.closeParcel();
+    this.parcelDraft = null;
     this.tool = t;
     if (preset) this.openingPreset = preset;
     this.canvas.style.cursor = t === 'select' ? 'default' : 'crosshair';
@@ -151,6 +154,8 @@ export class Plan2D {
     else if (this.tool === 'select') { if (this.overGroup(p)) this.drag = { type: 'group', p0: p }; else this.beginSelectDrag(p, sx, sy); }
     else this.drag = { type: 'pan', vx: this.view.x, vy: this.view.y, sx, sy, passive: true };
     if (this.tool === 'room') this.drag = { type: 'room', a: this.snap(p), b: this.snap(p) };
+    if (this.tool === 'roof') this.drag = { type: 'roofZone', a: this.snap(p), b: this.snap(p) };
+    if (this.tool === 'parcel') { const i = this.parcelCorner(p); if (i >= 0) this.drag = { type: 'parcelPt', i }; }
     if (this.tool === 'measure') this.drag = { type: 'measure', a: this.snap(p), b: this.snap(p) };
     this.draw();
   }
@@ -282,7 +287,7 @@ export class Plan2D {
     if (!d || !this.pressMoved) return;
     const lv = store.level;
     if (d.type === 'pan') { this.view.x = d.vx + sx - d.sx; this.view.y = d.vy + sy - d.sy; this.draw(); return; }
-    if (d.type === 'room' || d.type === 'measure') { d.b = this.snap(p, { from: d.a }); this.draw(); return; }
+    if (d.type === 'room' || d.type === 'roofZone' || d.type === 'measure') { d.b = this.snap(p, { from: d.a }); this.draw(); return; }
     if (d.type === 'zone') { d.b = p; this.draw(); return; }
     this.beginOnce();
     if (d.type === 'group') {
@@ -305,6 +310,8 @@ export class Plan2D {
       d.opening.t = Math.round(Math.max(d.opening.width / 2 + 2, Math.min(L - d.opening.width / 2 - 2, r.t * L)));
     } else if (d.type === 'item') {
       this.moveItem(d.item, p.x - d.ox, p.y - d.oy);
+    } else if (d.type === 'parcelPt') {
+      store.project.site.parcel.pts[d.i] = { x: Math.round(p.x / 5) * 5, y: Math.round(p.y / 5) * 5 };
     } else if (d.type === 'rotate') {
       let a = (Math.atan2(p.x - d.item.x, -(p.y - d.item.y)) * 180) / Math.PI;
       a = Math.round(a / 15) * 15;
@@ -353,6 +360,7 @@ export class Plan2D {
     const lv = store.level;
     if (d?.type === 'brush') { store.brushStroke.end(); return; }
     if (d?.type === 'room') { this.finishRoom(d); this.draw(); return; }
+    if (d?.type === 'roofZone') { this.finishRoof(d); this.draw(); return; }
     if (d?.type === 'measure') { this.measure = tap ? null : d; this.draw(); return; }
     if (d?.type === 'zone') { if (tap) this.zoneTap(p, d.add); else this.finishZone(d); this.draw(); return; }
     if (d?.began) {
@@ -375,9 +383,46 @@ export class Plan2D {
       if (d?.deselect) store.select(null);
       if (d?.tapHit) store.select(selectionOf(d.tapHit));
       if (this.tool === 'wall') this.wallClick(p);
+      if (this.tool === 'parcel') this.parcelTap(p);
       if (this.tool === 'door' || this.tool === 'opening') this.placeOpening(p);
     }
     this.draw();
+  }
+
+  // ——— Toits supplémentaires et parcelle ———
+  finishRoof(d) {
+    const x0 = Math.min(d.a.x, d.b.x), x1 = Math.max(d.a.x, d.b.x), y0 = Math.min(d.a.y, d.b.y), y1 = Math.max(d.a.y, d.b.y);
+    if (x1 - x0 < 60 || y1 - y0 < 60) { store.emit('toast', 'Fais glisser pour couvrir la partie à couvrir.'); return; }
+    store.mutate((pr, lv) => { (pr.roofs ||= []).push({ id: uid('z'), level: lv.id, x0, y0, x1, y1, type: 'gable', pitch: pr.roof.pitch || 30, overhang: 30, ridge: 'auto', wallH: 0 }); });
+    this.setTool('select');
+    store.emit('roof-added');
+  }
+
+  parcelCorner(p) {
+    const m = parcelOf(store.project); if (!m) return -1;
+    const tol = (this.touch ? 24 : 12) / this.view.k;
+    return m.pts.findIndex((q) => dist(q, p) < tol);
+  }
+
+  parcelTap(p) {
+    const m = parcelOf(store.project), q = { x: Math.round(p.x / 5) * 5, y: Math.round(p.y / 5) * 5 }, tol = (this.touch ? 24 : 12) / this.view.k;
+    if (m) {
+      if (this.parcelCorner(p) >= 0) return;
+      const i = m.pts.findIndex((a, j) => projectOnSegment(p, a, m.pts[(j + 1) % m.pts.length]).d < tol);
+      if (i >= 0) store.mutate((pr) => pr.site.parcel.pts.splice(i + 1, 0, q));
+      return;
+    }
+    this.parcelDraft ||= [];
+    if (this.parcelDraft.length >= 3 && dist(p, this.parcelDraft[0]) < tol) { this.closeParcel(); this.setTool('select'); return; }
+    this.parcelDraft.push(q);
+    this.draw();
+  }
+
+  closeParcel() {
+    const pts = this.parcelDraft;
+    this.parcelDraft = null;
+    store.mutate((pr) => { pr.site.parcel = { ...pr.site.parcel, pts }; });
+    store.emit('parcel-set');
   }
 
   wallClick(p) {
@@ -484,6 +529,7 @@ export class Plan2D {
     this.drawGrid();
     c.save(); c.translate(x, y); c.scale(k, k);
     this.drawContours();
+    this.drawParcel();
     const analysis = store.analysis(lv);
     const lower = store.project.levels[store.levelIndex - 1], upper = store.project.levels[store.levelIndex + 1];
     if (lower) this.drawGhost(lower);
@@ -492,6 +538,7 @@ export class Plan2D {
     for (const it of lv.items) this.drawItem(it);
     this.drawWalls(lv, analysis);
     if (lower) for (const it of lower.items) if (getItem(it.cat)?.sub === 'escalier') this.drawStairBelow(it);
+    this.drawRoofZones(lv);
     this.drawDraft();
     this.drawSelection(lv);
     if (store.brush && this.brushPos) { c.strokeStyle = ACCENT; c.lineWidth = 2 / k; c.setLineDash([8 / k, 6 / k]); c.beginPath(); c.arc(this.brushPos.x, this.brushPos.y, store.brush.radius * 100, 0, 7); c.stroke(); c.setLineDash([]); }
@@ -510,6 +557,32 @@ export class Plan2D {
     c.globalAlpha = bg.opacity ?? 0.5;
     c.drawImage(img, p.x, p.y, img.width * bg.scale * this.view.k, img.height * bg.scale * this.view.k);
     c.globalAlpha = 1;
+  }
+
+  drawParcel() {
+    const c = this.ctx, k = this.view.k, m = parcelOf(store.project), d = this.parcelDraft;
+    if (d?.length) {
+      c.strokeStyle = ACCENT; c.fillStyle = ACCENT; c.lineWidth = 2 / k; c.setLineDash([]);
+      c.beginPath(); d.forEach((p, i) => (i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y))); c.stroke();
+      d.forEach((p) => { c.beginPath(); c.arc(p.x, p.y, 6 / k, 0, 7); c.fill(); });
+    }
+    if (!m) return;
+    const path = (pts) => { c.beginPath(); pts.forEach((p, i) => (i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y))); c.closePath(); };
+    path(m.pts); c.fillStyle = 'rgba(122,150,86,.07)'; c.fill();
+    c.strokeStyle = '#3f6b33'; c.lineWidth = 2.2 / k; c.setLineDash([12 / k, 6 / k]); c.stroke();
+    const info = checkParcel(store.project);
+    path(insetPolygon(m.pts, info.need)); c.strokeStyle = 'rgba(181,83,47,.75)'; c.lineWidth = 1.2 / k; c.setLineDash([5 / k, 5 / k]); c.stroke(); c.setLineDash([]);
+    c.strokeStyle = '#c0392b'; c.lineWidth = 2 / k;
+    for (const q of info.issues) { c.beginPath(); c.moveTo(q.from.x, q.from.y); c.lineTo(q.to.x, q.to.y); c.stroke(); }
+    if (this.tool === 'parcel') { c.fillStyle = '#3f6b33'; for (const p of m.pts) { c.beginPath(); c.arc(p.x, p.y, 7 / k, 0, 7); c.fill(); } }
+  }
+
+  drawRoofZones(lv) {
+    const c = this.ctx, k = this.view.k;
+    if (this.drag?.type === 'roofZone') { const { a, b } = this.drag; c.fillStyle = 'rgba(122,70,40,.16)'; c.fillRect(a.x, a.y, b.x - a.x, b.y - a.y); }
+    c.strokeStyle = 'rgba(122,70,40,.8)'; c.lineWidth = 1.4 / k; c.setLineDash([9 / k, 4 / k]);
+    for (const z of store.project.roofs || []) if (z.level === lv.id) c.strokeRect(z.x0, z.y0, z.x1 - z.x0, z.y1 - z.y0);
+    c.setLineDash([]);
   }
 
   /** Courbes de niveau : une ligne par mètre de dénivelé, plus marquée tous les 5 m. */
@@ -792,6 +865,16 @@ export class Plan2D {
     if (s?.type === 'wall') {
       const w = lv.walls.find((x) => x.id === s.id);
       if (w) { const a = lv.nodes[w.a], b = lv.nodes[w.b]; const p = this.toScreen({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }); this.pill(`${(dist(a, b) / 100).toFixed(2).replace('.', ',')} m`, p.x, p.y); }
+    }
+    const parcel = checkParcel(store.project);
+    if (parcel && this.view.k > 0.08) {
+      const pts = store.project.site.parcel.pts;
+      c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '600 11px ui-sans-serif, -apple-system, system-ui, sans-serif';
+      pts.forEach((a, i) => {
+        const b = pts[(i + 1) % pts.length], p = this.toScreen({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+        this.pill(`${i + 1} · ${metres(dist(a, b))}`, p.x, p.y, '#3f6b33');
+      });
+      for (const q of parcel.issues) { const p = this.toScreen({ x: (q.from.x + q.to.x) / 2, y: (q.from.y + q.to.y) / 2 }); this.pill(metres(Math.max(0, q.d)), p.x, p.y, '#c0392b'); }
     }
     if (this.drag?.type === 'group' && this.drag.delta) {
       const { dx, dy } = this.drag.delta, b = bounds(store.project, store.selection);
