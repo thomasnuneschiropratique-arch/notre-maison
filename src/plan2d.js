@@ -21,7 +21,14 @@ export class Plan2D {
     canvas.addEventListener('pointerup', (e) => this.up(e));
     canvas.addEventListener('pointercancel', (e) => this.up(e));
     canvas.addEventListener('dblclick', () => this.finishDraft());
-    canvas.addEventListener('wheel', (e) => { e.preventDefault(); this.zoomAt(e.offsetX, e.offsetY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+    // Pavé tactile : deux doigts déplacent le plan, pincer zoome. Molette : zoom.
+    let padSeen = false;
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.deltaX !== 0) padSeen = true;
+      if (padSeen && !e.ctrlKey) { this.view.x -= e.deltaX; this.view.y -= e.deltaY; this.draw(); return; }
+      this.zoomAt(e.offsetX, e.offsetY, Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)));
+    }, { passive: false });
     window.addEventListener('keydown', (e) => this.key(e));
     for (const ev of ['change', 'select', 'level', 'project']) store.addEventListener(ev, () => this.draw());
     store.addEventListener('terrain-live', () => { this.contourSrc = null; this.draw(); });

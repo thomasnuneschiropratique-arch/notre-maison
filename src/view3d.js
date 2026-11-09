@@ -70,7 +70,7 @@ const stubMat = new THREE.MeshStandardMaterial({ color: '#d8d2c6', roughness: 0.
 export class View3D {
   mode = 'orbit'; preset = 'dollhouse'; itemObjs = new Map(); gltfCache = new Map(); envs = new Map(); active = false; needsRender = true;
   env = { hour: 15, day: 172, sky: 'auto', exposure: 1, lamps: true, walls: 'auto' };
-  move = { f: 0, s: 0 }; photo = null;
+  move = { f: 0, s: 0, t: 0 }; photo = null;
 
   constructor(canvas) {
     this.canvas = canvas;
@@ -97,7 +97,7 @@ export class View3D {
     this.camera.position.set(14, 13, 16);
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = true; this.controls.dampingFactor = 0.08;
-    this.controls.maxPolarAngle = Math.PI * 0.495; this.controls.minDistance = 1.2; this.controls.maxDistance = 90;
+    this.controls.maxPolarAngle = Math.PI * 0.495; this.controls.minDistance = 1.2; this.controls.maxDistance = 220; this.controls.zoomToCursor = true; this.controls.rotateSpeed = 0.85; this.controls.panSpeed = 1.1;
     this.controls.addEventListener('change', () => this.onCameraMove());
 
     this.house = new THREE.Group(); this.items = new THREE.Group(); this.lampLights = new THREE.Group();
@@ -610,13 +610,14 @@ export class View3D {
   }
 
   bindWalkKeys() {
-    const map = { z: ['f', 1], w: ['f', 1], s: ['f', -1], q: ['s', -1], a: ['s', -1], d: ['s', 1], arrowup: ['f', 1], arrowdown: ['f', -1], arrowleft: ['s', -1], arrowright: ['s', 1] };
+    const map = { z: ['f', 1], w: ['f', 1], s: ['f', -1], q: ['s', -1], a: ['s', -1], d: ['s', 1], arrowup: ['f', 1], arrowdown: ['f', -1], arrowleft: ['t', 1], arrowright: ['t', -1] };
     const on = (e, v) => {
       if (['INPUT', 'TEXTAREA'].includes(e.target.tagName) || this.mode !== 'walk') return;
       const m = map[e.key.toLowerCase()];
       if (m) { this.move[m[0]] = v ? m[1] : 0; e.preventDefault(); }
     };
-    addEventListener('keydown', (e) => on(e, true));
+    addEventListener('keydown', (e) => { if (e.key === 'Shift') this.run = true; on(e, true); });
+    addEventListener('keyup', (e) => { if (e.key === 'Shift') this.run = false; });
     addEventListener('keyup', (e) => on(e, false));
   }
 
@@ -628,7 +629,7 @@ export class View3D {
         const def = getItem(it.cat); if (def?.sub !== 'escalier') continue;
         const r = (-(it.rot || 0) * Math.PI) / 180, dx = x - it.x, dy = y - it.y, lx = dx * Math.cos(r) - dy * Math.sin(r), ly = dx * Math.sin(r) + dy * Math.cos(r);
         const w = (it.w ?? def.w) / 2, d = (it.d ?? def.d) / 2;
-        if (Math.abs(lx) <= w && Math.abs(ly) <= d) return { t: (d - ly) / (2 * d), level };
+        if (Math.abs(lx) <= w && Math.abs(ly) <= d) return { t: def.model?.p?.shape === 'U' ? (lx < 0 ? (0.5 * (d - ly)) / (2 * d) : 0.5 + (0.5 * (ly + d)) / (2 * d)) : (d - ly) / (2 * d), level };
       }
       return null;
     };
@@ -648,9 +649,10 @@ export class View3D {
 
   stepWalk(dt) {
     this.updateWalkHeight(dt);
-    const { f, s } = this.move;
+    const { f, s, t: turn } = this.move;
+    if (turn) { this.yaw += turn * 1.7 * dt; this.applyLook(); }
     if (!f && !s) return;
-    const sp = 2.1 * dt;
+    const sp = (this.run ? 4.4 : 2.4) * dt;
     const dx = (Math.sin(this.yaw) * -f + Math.cos(this.yaw) * s) * sp;
     const dz = (Math.cos(this.yaw) * -f - Math.sin(this.yaw) * s) * sp;
     const from = { x: this.camera.position.x / M, y: this.camera.position.z / M };
@@ -688,7 +690,8 @@ export class View3D {
         if (p0) { this.controls.enabled = false; c.setPointerCapture(e.pointerId); press = { brush: true }; store.brushStroke.begin(p0); }
         return;
       }
-      press = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId };
+      if (locked()) { this.move.f = 1; press = { x: e.clientX, y: e.clientY, moved: true, id: e.pointerId, lockedWalk: true }; return; }
+      press = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId, touch: e.pointerType === 'touch', mouse: e.pointerType === 'mouse' };
       if (this.mode === 'walk') { press.yaw = this.yaw; press.pitch = this.pitch; c.setPointerCapture(e.pointerId); return; }
       const sel = store.selection;
       if (sel?.type === 'item') {
@@ -706,13 +709,31 @@ export class View3D {
         }
       }
     });
+    // Souris ou pavé : un clic en mode Visite et le regard suit le pointeur, sans appuyer. Échap rend la main.
+    const locked = () => document.pointerLockElement === c;
+    // Si le navigateur refuse de capturer le pointeur, le regard suit quand même ses mouvements.
+    this.hoverLook = false;
+    this.lockLook = () => {
+      if (this.hoverLook) { this.hoverLook = false; store.emit('toast', 'Regard libre arrêté. Clique pour le reprendre.'); return; }
+      const fallback = () => { if (!locked() && this.mode === 'walk') this.hoverLook = true; };
+      try { const q = c.requestPointerLock?.(); if (q?.catch) q.catch(fallback); setTimeout(fallback, 350); } catch { fallback(); }
+    };
+    addEventListener('keydown', (e) => { if (e.key === 'Escape') this.hoverLook = false; });
+    document.addEventListener('pointerlockchange', () => { store.emit('walk-lock', locked()); if (!locked()) this.move.f = 0; });
     c.addEventListener('pointermove', (e) => {
+      if ((locked() || (this.hoverLook && e.pointerType === 'mouse' && !press)) && this.mode === 'walk') {
+        this.yaw -= e.movementX * 0.0024;
+        this.pitch = Math.max(-1.3, Math.min(1.3, this.pitch - e.movementY * 0.0024));
+        this.applyLook();
+        return;
+      }
       if (!press) return;
       if (press.brush) { const q = terrainPoint(e); if (q) store.brushStroke.at(q); return; }
       if (Math.hypot(e.clientX - press.x, e.clientY - press.y) > 5) press.moved = true;
       if (this.mode === 'walk' && press.yaw !== undefined) {
-        this.yaw = press.yaw - (e.clientX - press.x) * 0.0042;
-        this.pitch = Math.max(-1.3, Math.min(1.3, press.pitch - (e.clientY - press.y) * 0.0042));
+        const k = press.touch ? 0.0068 : 0.0042;
+        this.yaw = press.yaw - (e.clientX - press.x) * k;
+        this.pitch = Math.max(-1.3, Math.min(1.3, press.pitch - (e.clientY - press.y) * k));
         this.applyLook();
         return;
       }
@@ -725,13 +746,35 @@ export class View3D {
     });
     const end = (e) => {
       if (!press) return;
+      if (press.lockedWalk) { this.move.f = 0; press = null; return; }
       this.controls.enabled = this.mode === 'orbit';
       if (press.brush) { press = null; store.brushStroke.end(); return; }
+      if (this.mode === 'walk' && press.mouse && !press.moved && !locked()) { press = null; this.lockLook(); return; }
       if (press.began) store.commit({ rebuild: false });
       else if (!press.moved) this.tap(e);
       press = null;
     };
     c.addEventListener('pointerup', end);
+    // Pavé tactile : deux doigts pour tourner, pincer pour zoomer. Molette classique : zoom.
+    let padSeen = false;
+    c.addEventListener('wheel', (e) => {
+      if (e.deltaX !== 0) padSeen = true;
+      if (this.mode === 'walk') {
+        e.preventDefault(); e.stopImmediatePropagation();
+        this.yaw -= e.deltaX * 0.003;
+        this.pitch = Math.max(-1.3, Math.min(1.3, this.pitch - e.deltaY * 0.003));
+        this.applyLook();
+        return;
+      }
+      if (e.ctrlKey || !padSeen) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      const off = this.camera.position.clone().sub(this.controls.target), sph = new THREE.Spherical().setFromVector3(off);
+      sph.theta -= e.deltaX * 0.0045;
+      sph.phi = Math.max(0.08, Math.min(this.controls.maxPolarAngle, sph.phi - e.deltaY * 0.0045));
+      this.camera.position.copy(this.controls.target).add(off.setFromSpherical(sph));
+      this.camera.lookAt(this.controls.target);
+      this.controls.update(); this.invalidate();
+    }, { passive: false, capture: true });
     c.addEventListener('pointercancel', () => { if (press?.brush) store.brushStroke.end(); press = null; this.controls.enabled = this.mode === 'orbit'; });
   }
 

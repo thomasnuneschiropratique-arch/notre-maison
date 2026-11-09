@@ -633,7 +633,43 @@ function picture(p) {
 }
 
 // ——— Structure et extérieur ———
+/** Grand escalier américain en U : marches noyer, contremarches blanches, balustres tournés. */
+function classicStairs(p) {
+  const g = new THREE.Group(), { w = 3.8, d = 4.6, h = 3.3 } = p, n = Math.round(h / 0.175), rise = h / n, f = Math.min(1.35, w / 2 - 0.2);
+  const walnut = walnutMat(), white = solid('#f1ece2', 0.5), nA = Math.floor((n - 1) / 2), nB = n - 1 - nA, land = 1.35, lenA = d - land, runA = lenA / nA, runB = lenA / nB;
+  const xA = -w / 2 + f / 2, xB = w / 2 - f / 2;
+  const step = (x, z, sx, sz, i, depthAxis) => {
+    B(g, sx, 0.045, sz, walnut, x, rise * (i + 1) - 0.045, z, 0.008);
+    if (depthAxis > 0) B(g, sx, rise, 0.02, white, x, rise * i, z + sz / 2 - 0.01); else B(g, sx, rise, 0.02, white, x, rise * i, z - sz / 2 + 0.01);
+  };
+  for (let i = 0; i < nA; i++) step(xA, d / 2 - runA * (i + 0.5), f, runA + 0.02, i, 1);
+  B(g, w, 0.05, land, walnut, 0, rise * (nA + 1) - 0.05, -d / 2 + land / 2, 0.008);
+  for (let i = 0; i < nB; i++) step(xB, -d / 2 + land + runB * (i + 0.5), f, runB + 0.02, nA + 1 + i, -1);
+  // Limons et dessous blancs.
+  const slope = (x, z0, z1, y0, y1, sx) => { const len = Math.hypot(z1 - z0, y1 - y0), s = B(g, sx, 0.3, len, white, x, 0, (z0 + z1) / 2, 0); s.position.y = (y0 + y1) / 2 - 0.15; s.rotation.x = Math.atan2(y1 - y0, z0 - z1) * (z1 < z0 ? 1 : 1); return s; };
+  slope(xA + f / 2 + 0.03, d / 2, -d / 2 + land, 0, rise * nA, 0.06); slope(xA - f / 2 - 0.03, d / 2, -d / 2 + land, 0, rise * nA, 0.06);
+  slope(xB - f / 2 - 0.03, -d / 2 + land, d / 2, rise * (nA + 1), h, 0.06); slope(xB + f / 2 + 0.03, -d / 2 + land, d / 2, rise * (nA + 1), h, 0.06);
+  const soffit = (x, z0, z1, y0, y1) => { const len = Math.hypot(z1 - z0, y1 - y0), m = B(g, f + 0.08, 0.03, len, white, x, 0, (z0 + z1) / 2, 0); m.position.y = (y0 + y1) / 2 - 0.26; m.rotation.x = Math.atan2(y1 - y0, z0 - z1); };
+  soffit(xA, d / 2, -d / 2 + land, 0, rise * nA); soffit(xB, -d / 2 + land, d / 2, rise * (nA + 1), h);
+  B(g, w, 0.25, land, white, 0, rise * (nA + 1) - 0.3, -d / 2 + land / 2, 0);
+  const metal = blackMetal(), gl = glass(), R = (a, b2) => railRun(g, a, b2, 0.95, 'classic', metal, gl);
+  R([xA + f / 2 + 0.03, 0, d / 2], [xA + f / 2 + 0.03, rise * nA, -d / 2 + land]);
+  R([xB - f / 2 - 0.03, rise * (nA + 1), -d / 2 + land], [xB - f / 2 - 0.03, h, d / 2]);
+  R([xA + f / 2 + 0.03, rise * (nA + 1), -d / 2 + land], [xB - f / 2 - 0.03, rise * (nA + 1), -d / 2 + land]);
+  for (const [x, y, z] of [[xA + f / 2 + 0.03, 0, d / 2], [xA + f / 2 + 0.03, rise * nA, -d / 2 + land], [xB - f / 2 - 0.03, rise * (nA + 1), -d / 2 + land], [xB - f / 2 - 0.03, h, d / 2]]) { B(g, 0.11, 1.12, 0.11, white, x, y, z, 0.01); B(g, 0.15, 0.05, 0.15, walnut, x, y + 1.12, z, 0.01); }
+  return g;
+}
+
 function railRun(g, a, b, h, kind, metal, gl) {
+  if (kind === 'classic') {
+    const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], len = Math.hypot(dx, dy, dz), flat = Math.hypot(dx, dz);
+    if (len < 0.02) return;
+    const white = solid('#f1ece2', 0.5), hand = B(g, 0.075, 0.06, len, walnutMat(), (a[0] + b[0]) / 2, 0, (a[2] + b[2]) / 2, 0.02);
+    hand.position.y = (a[1] + b[1]) / 2 + h; hand.rotation.order = 'YXZ'; hand.rotation.y = Math.atan2(dx, dz); hand.rotation.x = -Math.atan2(dy, flat);
+    const n = Math.max(1, Math.round(len / 0.13));
+    for (let i = 0; i <= n; i++) { const t = i / n, x = a[0] + dx * t, y = a[1] + dy * t, z = a[2] + dz * t; C(g, 0.016, 0.022, h, white, x, y, z, 8); }
+    return;
+  }
   // Portion de garde-corps entre deux points (x, y, z).
   const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], len = Math.hypot(dx, dy, dz), flat = Math.hypot(dx, dz);
   if (len < 0.02) return;
@@ -648,7 +684,8 @@ function railRun(g, a, b, h, kind, metal, gl) {
 /** Escaliers : droit, quart tournant, en U, colimaçon ; bois, métal, béton ; toujours à la bonne hauteur. */
 function stairs(p) {
   const g = new THREE.Group();
-  const { w = 0.9, d = 3, h = 2.8, finish, shape = 'straight', open: openRiser, rail = 'metal', stone, noRail, metal: allMetal } = p;
+  const { w = 0.9, d = 3, h = 2.8, finish, shape = 'straight', open: openRiser, rail = 'metal', stone, noRail, metal: allMetal, classic } = p;
+  if (classic) return classicStairs(p);
   const metal = blackMetal(), gl = glass();
   const tread = stone ? solid('#b9b5ab', 0.85) : allMetal ? metal : finish;
   const n = Math.max(3, Math.round(h / 0.18)), rise = h / n, th = stone ? 0.14 : 0.04;

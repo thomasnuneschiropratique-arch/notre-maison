@@ -272,7 +272,7 @@ function setPreset(p) {
   $('#viewLayer').classList.toggle('walking', walk);
   if (walk) {
     fillWalkRooms();
-    if (!ui.walkHint) { ui.walkHint = true; toast(touch ? 'Joystick pour marcher, glisse pour regarder, touche le sol pour t’y rendre.' : 'Z Q S D ou flèches pour marcher, glisse pour regarder, clique le sol pour t’y rendre.'); }
+    if (!ui.walkHint) { ui.walkHint = true; toast(touch ? 'Le pad avance et tourne d’un seul doigt. Glisse ailleurs pour regarder, touche le sol pour t’y rendre.' : 'Clique une fois : le regard suit ta souris ou ton pavé. Maintiens le clic ou Z pour avancer, Maj pour courir, Échap pour reprendre la main.'); }
   }
 }
 function fillWalkRooms() {
@@ -297,11 +297,11 @@ const joyMove = (e) => {
   const d = Math.hypot(dx, dy), max = 38;
   if (d > max) { dx = (dx / d) * max; dy = (dy / d) * max; }
   knob.style.transform = `translate(${dx}px,${dy}px)`;
-  view.move.f = -dy / max; view.move.s = dx / max;
+  view.move.f = -dy / max; view.move.t = -dx / max;
 };
 joy.addEventListener('pointerdown', (e) => { joy.setPointerCapture(e.pointerId); joyMove(e); });
 joy.addEventListener('pointermove', (e) => { if (joy.hasPointerCapture(e.pointerId)) joyMove(e); });
-const joyEnd = () => { knob.style.transform = ''; view.move.f = view.move.s = 0; };
+const joyEnd = () => { knob.style.transform = ''; view.move.f = view.move.t = 0; };
 joy.addEventListener('pointerup', joyEnd); joy.addEventListener('pointercancel', joyEnd);
 
 // ——— Mode photo ———

@@ -237,6 +237,8 @@ const GENERIC = [
   G('structure', 'escalier', 'Escalier béton', 100, 320, 280, 5500, P('stairs', { stone: true }), BTP, { query: 'escalier béton sur mesure' }),
   G('structure', 'escalier', 'Escalier garde-corps verre', 100, 320, 280, 6900, P('stairs', { woodKind: 'chene', open: true, rail: 'glass' }), BTP, { query: 'escalier garde-corps verre' }),
   G('structure', 'escalier', 'Escalier quart tournant', 190, 300, 280, 3500, P('stairs', { woodKind: 'chene', shape: 'L' }), BTP, { query: 'escalier quart tournant' }),
+  G('structure', 'escalier', 'Grand escalier américain en U', 380, 460, 330, 14500, P('stairs', { shape: 'U', classic: true }), BTP, { query: 'escalier bois traditionnel balustres sur mesure', label: 'Sur mesure' }),
+  G('structure', 'garde-corps', 'Garde-corps bois classique', 200, 8, 100, 600, P('railing', { rail: 'classic' }), BTP, { query: 'garde corps bois balustres' }),
   G('structure', 'escalier', 'Escalier en U', 200, 260, 280, 4800, P('stairs', { woodKind: 'chene', shape: 'U' }), BTP, { query: 'escalier deux quarts tournants' }),
   G('structure', 'escalier', 'Colimaçon 1,60 m', 160, 160, 280, 2900, P('stairs', { woodKind: 'chene', shape: 'spiral' }), BTP, { query: 'escalier colimaçon 160' }),
   G('structure', 'escalier', 'Colimaçon compact 1,20 m', 120, 120, 280, 1900, P('stairs', { shape: 'spiral', metal: true }), BTP, { query: 'escalier colimaçon 120 métal' }),
