@@ -12,6 +12,14 @@
   <title>Notre Maison</title>
 </head>
 <body>
+  <div id="splash" style="position:fixed;inset:0;z-index:99;display:grid;place-items:center;background:#f7f4ee;color:#26231e;text-align:center;font-family:Georgia,serif">
+    <div>
+      <div style="font-size:30px;font-weight:600">Notre <em style="color:#b5532f">Maison</em></div>
+      <div id="splashMsg" style="font:14px/1.4 -apple-system,system-ui,sans-serif;color:#6f695f;margin-top:10px">Ouverture de votre projet…</div>
+      <button id="splashRetry" hidden onclick="location.reload()" style="margin-top:14px;padding:10px 18px;border:0;border-radius:11px;background:#b5532f;color:#fff;font:600 14px -apple-system,system-ui,sans-serif">Réessayer</button>
+    </div>
+  </div>
+  <script>setTimeout(function(){var m=document.getElementById('splashMsg');if(m){m.textContent='Le chargement est long, la connexion semble lente.';document.getElementById('splashRetry').hidden=false}},12000)</script>
   <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
 </body>

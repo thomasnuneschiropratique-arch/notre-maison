@@ -2,6 +2,7 @@
 import { store, addNode, addWall, splitWall, uid } from './state.js';
 import { projectOnSegment, dist, itemCorners, wallCorners, polygonCentroid } from './geometry.js';
 import { getItem, OPENINGS } from './catalog.js';
+import { terrainOf, T_N } from './terrain.js';
 
 const INK = '#26231e', ACCENT = '#b5532f', SOFT = 'rgba(38,35,30,.5)';
 
@@ -21,6 +22,8 @@ export class Plan2D {
     canvas.addEventListener('wheel', (e) => { e.preventDefault(); this.zoomAt(e.offsetX, e.offsetY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
     window.addEventListener('keydown', (e) => this.key(e));
     for (const ev of ['change', 'select', 'level', 'project']) store.addEventListener(ev, () => this.draw());
+    store.addEventListener('terrain-live', () => { this.contourSrc = null; this.draw(); });
+    canvas.addEventListener('pointerleave', () => { if (store.brush) { this.brushPos = null; this.draw(); } });
     this.resize();
   }
 
@@ -32,7 +35,7 @@ export class Plan2D {
     this.canvas.style.width = `${p.width}px`; this.canvas.style.height = `${p.height}px`;
     this.dpr = dpr; this.w = p.width; this.h = p.height;
     if (!this.fitted) { this.fit(); }
-    this.draw();
+    this.paint();
   }
 
   fit() {
@@ -69,8 +72,9 @@ export class Plan2D {
   key(e) {
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
     if (e.key === 'Escape') { if (this.draft) this.finishDraft(); else { this.setTool('select'); store.select(null); } }
-    if ((e.key === 'Delete' || e.key === 'Backspace') && this.canvas.offsetParent) { this.deleteSelection(); e.preventDefault(); }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && store.selection) { this.deleteSelection(); e.preventDefault(); }
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.shiftKey ? store.redo() : store.undo(); e.preventDefault(); }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') { store.redo(); e.preventDefault(); }
   }
 
   deleteSelection() {
@@ -83,6 +87,7 @@ export class Plan2D {
       cleanOrphans(lv);
     });
     store.select(null);
+    store.emit('toast', { text: 'Supprimé.', undo: true });
   }
 
   // Aimantation : nœud existant, mur existant, alignement, puis grille.
@@ -123,6 +128,7 @@ export class Plan2D {
     const { sx, sy } = this.pos(e);
     this.pointers.set(e.pointerId, { sx, sy });
     if (this.pointers.size === 2) {
+      if (this.drag?.type === 'brush') store.brushStroke.end();
       this.drag = null; this.pressMoved = true;
       const [a, b] = [...this.pointers.values()];
       this.pinch = { d: Math.hypot(a.sx - b.sx, a.sy - b.sy), cx: (a.sx + b.sx) / 2, cy: (a.sy + b.sy) / 2 };
@@ -131,6 +137,8 @@ export class Plan2D {
     this.press = { sx, sy, t: performance.now() };
     this.pressMoved = false;
     const p = this.toWorld(sx, sy);
+    if (store.brush) { this.drag = { type: 'brush' }; this.brushPos = p; store.brushStroke.begin(p); this.draw(); return; }
+    this.touch = e.pointerType === 'touch';
     if (this.tool === 'select') this.beginSelectDrag(p, sx, sy);
     else this.drag = { type: 'pan', vx: this.view.x, vy: this.view.y, sx, sy, passive: true };
     if (this.tool === 'room') this.drag = { type: 'room', a: this.snap(p), b: this.snap(p) };
@@ -139,7 +147,7 @@ export class Plan2D {
   }
 
   hitTest(p) {
-    const lv = store.level, tol = 12 / this.view.k;
+    const lv = store.level, tol = (this.touch ? 20 : 12) / this.view.k;
     const sel = store.selection;
     if (sel?.type === 'item') {
       const it = lv.items.find((i) => i.id === sel.id);
@@ -153,6 +161,12 @@ export class Plan2D {
       if (Math.abs(r.t * L - o.t) < o.width / 2 + 3 && r.d < w.thickness / 2 + tol * 0.5) return { type: 'opening', wall: w, opening: o, c };
     }
     for (const [id, n] of Object.entries(lv.nodes)) if (dist(n, p) < tol) return { type: 'node', id };
+    const below = store.project.levels[store.levelIndex - 1];
+    for (const it of below?.items || []) {
+      const def = getItem(it.cat); if (def?.sub !== 'escalier') continue;
+      const r = (-(it.rot || 0) * Math.PI) / 180, dx = p.x - it.x, dy = p.y - it.y;
+      if (Math.abs(dx * Math.cos(r) - dy * Math.sin(r)) <= (it.w ?? def.w) / 2 && Math.abs(dx * Math.sin(r) + dy * Math.cos(r)) <= (it.d ?? def.d) / 2) return { type: 'stairBelow', item: it };
+    }
     const sorted = [...lv.items].reverse();
     for (const it of sorted) {
       const def = getItem(it.cat); if (!def) continue;
@@ -182,7 +196,10 @@ export class Plan2D {
     const hit = this.hitTest(p);
     if (!hit) { this.drag = { type: 'pan', vx: this.view.x, vy: this.view.y, sx, sy, deselect: true }; return; }
     const lv = store.level;
+    if (hit.type === 'stairBelow') { store.setLevel(store.levelIndex - 1); store.select({ type: 'item', id: hit.item.id }); store.emit('toast', 'Niveau du bas : c’est ici que l’escalier se déplace.'); return; }
     if (hit.type === 'rotate') { this.drag = { type: 'rotate', item: hit.item, snapped: false }; return; }
+    // Au doigt, un élément doit d'abord être sélectionné : déplacer la vue ne bouge jamais un mur par erreur.
+    if (hit.type === 'room' || (this.touch && !isSelected(hit))) { this.drag = { type: 'pan', vx: this.view.x, vy: this.view.y, sx, sy, tapHit: hit }; return; }
     if (hit.type === 'node') { store.select({ type: 'node', id: hit.id }); this.drag = { type: 'node', id: hit.id, start: { ...lv.nodes[hit.id] } }; return; }
     if (hit.type === 'opening') { store.select({ type: 'opening', id: hit.opening.id, wallId: hit.wall.id }); this.drag = { type: 'opening', wall: hit.wall, opening: hit.opening }; return; }
     if (hit.type === 'item') { store.select({ type: 'item', id: hit.item.id }); this.drag = { type: 'item', item: hit.item, ox: p.x - hit.item.x, oy: p.y - hit.item.y }; return; }
@@ -192,7 +209,6 @@ export class Plan2D {
       this.drag = { type: 'wall', wall: hit.wall, a: { ...a }, b: { ...b }, p0: p };
       return;
     }
-    if (hit.type === 'room') { store.select({ type: 'room', id: hit.room.id }); this.drag = { type: 'pan', vx: this.view.x, vy: this.view.y, sx, sy }; }
   }
 
   beginOnce() { if (!this.drag.began) { store.snapshot(); this.drag.began = true; } }
@@ -209,6 +225,7 @@ export class Plan2D {
       return;
     }
     const p = this.toWorld(sx, sy);
+    if (store.brush) { this.brushPos = p; if (this.drag?.type === 'brush') store.brushStroke.at(p); else this.draw(); return; }
     if (this.press && Math.hypot(sx - this.press.sx, sy - this.press.sy) > 5) this.pressMoved = true;
     if (this.tool === 'wall' && e.pointerType !== 'touch') {
       this.hover = this.snap(p, { from: this.draft?.pts.at(-1) });
@@ -287,6 +304,7 @@ export class Plan2D {
     const tap = !this.pressMoved;
     const d = this.drag; this.drag = null;
     const lv = store.level;
+    if (d?.type === 'brush') { store.brushStroke.end(); return; }
     if (d?.type === 'room') { this.finishRoom(d); this.draw(); return; }
     if (d?.type === 'measure') { this.measure = tap ? null : d; this.draw(); return; }
     if (d?.began) {
@@ -296,6 +314,7 @@ export class Plan2D {
     }
     if (tap) {
       if (d?.deselect) store.select(null);
+      if (d?.tapHit) store.select(selectionOf(d.tapHit));
       if (this.tool === 'wall') this.wallClick(p);
       if (this.tool === 'door' || this.tool === 'opening') this.placeOpening(p);
     }
@@ -350,22 +369,40 @@ export class Plan2D {
     for (const w of lv.walls) {
       const a = lv.nodes[w.a], b = lv.nodes[w.b], L = dist(a, b);
       const r = projectOnSegment(p, a, b);
-      if (r.d < tol && (!best || r.d < best.d) && L > this.openingPreset.width + 8) {
-        const t = Math.round(Math.max(this.openingPreset.width / 2 + 4, Math.min(L - this.openingPreset.width / 2 - 4, r.t * L)));
-        best = { wall: w, t, d: r.d };
+      if (r.d < tol && (!best || r.d < best.d)) {
+        const hw = this.openingPreset.width / 2;
+        best = { wall: w, L, t: Math.round(L > 2 * hw + 8 ? Math.max(hw + 4, Math.min(L - hw - 4, r.t * L)) : L / 2), d: r.d, fits: L > 2 * hw + 8 };
       }
     }
     return best;
   }
 
+  /** Position libre la plus proche sur le mur, ou null. */
+  freeSpot(wall, L, wanted, width, others) {
+    const hw = width / 2, min = hw + 4, max = L - hw - 4;
+    const ok = (t) => t >= min && t <= max && !others.some((o) => Math.abs(o.t - t) < (o.width + width) / 2 + 3);
+    const cand = [wanted, min, max, ...others.flatMap((o) => [o.t - (o.width + width) / 2 - 4, o.t + (o.width + width) / 2 + 4])].filter(ok);
+    if (!cand.length) return null;
+    return Math.round(cand.reduce((b, t) => (Math.abs(t - wanted) < Math.abs(b - wanted) ? t : b)));
+  }
+
   placeOpening(p) {
     const h = this.openingAt(p);
     if (!h) { store.emit('toast', 'Touche un mur pour y placer cette ouverture.'); return; }
-    const preset = this.openingPreset;
-    const free = !h.wall.openings.some((o) => Math.abs(o.t - h.t) < (o.width + preset.width) / 2);
-    if (!free) { store.emit('toast', 'Il y a déjà une ouverture à cet endroit.'); return; }
+    const preset = this.openingPreset, lv = store.level;
+    const m = (v) => (v / 100).toFixed(2).replace('.', ',');
+    if (!h.fits) { store.emit('toast', `Ce mur fait ${m(h.L)} m : trop court pour ${m(preset.width)} m. Choisis un mur plus long ou allonge-le.`); return; }
+    let t = this.freeSpot(h.wall, h.L, h.t, preset.width, h.wall.openings), replaced = [];
+    if (t === null) {
+      // Plus de place : la nouvelle ouverture remplace celles qui la gênent.
+      replaced = h.wall.openings.filter((o) => Math.abs(o.t - h.t) < (o.width + preset.width) / 2 + 3);
+      t = this.freeSpot(h.wall, h.L, h.t, preset.width, h.wall.openings.filter((o) => !replaced.includes(o)));
+      if (t === null) { store.emit('toast', 'Pas assez de place sur ce mur, même en retirant l’ouverture touchée.'); return; }
+    }
     const id = uid('o');
-    store.mutate(() => { h.wall.openings.push({ id, type: preset.type, name: preset.name, width: preset.width, height: preset.height, sill: preset.sill, t: h.t, open: preset.type === 'door' ? 20 : 0, glazed: preset.glazed }); });
+    const height = preset.full ? Math.max(preset.height, lv.height - 8) : Math.min(preset.height, lv.height - preset.sill);
+    store.mutate(() => { h.wall.openings = h.wall.openings.filter((o) => !replaced.includes(o)); h.wall.openings.push({ id, type: preset.type, name: preset.name, width: preset.width, height, sill: preset.sill, t, open: preset.type === 'door' ? 20 : 0, glazed: preset.glazed, leaves: preset.leaves }); });
+    if (replaced.length) store.emit('toast', { text: 'L’ouverture a remplacé celle qui gênait.', undo: true });
     store.select({ type: 'opening', id, wallId: h.wall.id });
     this.setTool('select');
   }
@@ -373,7 +410,13 @@ export class Plan2D {
   center() { return this.toWorld(this.w / 2, this.h / 2); }
 
   // ——— Dessin ———
+  /** Regroupe les demandes : au plus un dessin par image. */
   draw() {
+    if (this.raf) return;
+    this.raf = requestAnimationFrame(() => { this.raf = 0; this.paint(); });
+  }
+
+  paint() {
     if (!store.project || !this.w) return;
     const c = this.ctx, lv = store.level, { k, x, y } = this.view;
     c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
@@ -381,14 +424,18 @@ export class Plan2D {
     this.drawBackground(lv);
     this.drawGrid();
     c.save(); c.translate(x, y); c.scale(k, k);
+    this.drawContours();
     const analysis = store.analysis(lv);
-    const lower = store.project.levels[store.levelIndex - 1];
+    const lower = store.project.levels[store.levelIndex - 1], upper = store.project.levels[store.levelIndex + 1];
     if (lower) this.drawGhost(lower);
+    if (upper) this.drawGhost(upper);
     this.drawRooms(lv, analysis);
     for (const it of lv.items) this.drawItem(it);
     this.drawWalls(lv, analysis);
+    if (lower) for (const it of lower.items) if (getItem(it.cat)?.sub === 'escalier') this.drawStairBelow(it);
     this.drawDraft();
     this.drawSelection(lv);
+    if (store.brush && this.brushPos) { c.strokeStyle = ACCENT; c.lineWidth = 2 / k; c.setLineDash([8 / k, 6 / k]); c.beginPath(); c.arc(this.brushPos.x, this.brushPos.y, store.brush.radius * 100, 0, 7); c.stroke(); c.setLineDash([]); }
     c.restore();
     this.drawRoomLabels(lv, analysis);
     this.drawDimensions(lv);
@@ -404,6 +451,43 @@ export class Plan2D {
     c.globalAlpha = bg.opacity ?? 0.5;
     c.drawImage(img, p.x, p.y, img.width * bg.scale * this.view.k, img.height * bg.scale * this.view.k);
     c.globalAlpha = 1;
+  }
+
+  /** Courbes de niveau : une ligne par mètre de dénivelé, plus marquée tous les 5 m. */
+  drawContours() {
+    const m = terrainOf(store.project); if (!m) return;
+    const c = this.ctx;
+    if (this.contourSrc !== m.src || !this.contours) {
+      this.contourSrc = m.src;
+      const thin = new Path2D(), bold = new Path2D(), half = (T_N - 1) / 2, h = m.h;
+      const X = (i) => (i - half) * 100 + m.cx, Y = (j) => (j - half) * 100 + m.cy;
+      for (let j = 0; j < T_N - 1; j++) for (let i = 0; i < T_N - 1; i++) {
+        const a = h[j * T_N + i], b = h[j * T_N + i + 1], e = h[(j + 1) * T_N + i + 1], d = h[(j + 1) * T_N + i];
+        const lo = Math.ceil(Math.min(a, b, e, d) / 100), hi = Math.floor(Math.max(a, b, e, d) / 100);
+        for (let v = lo; v <= hi; v++) {
+          const L = v * 100, pts = [];
+          const edge = (p, q, x0, y0, x1, y1) => { if ((p < L) !== (q < L)) { const t = (L - p) / (q - p); pts.push([x0 + (x1 - x0) * t, y0 + (y1 - y0) * t]); } };
+          edge(a, b, X(i), Y(j), X(i + 1), Y(j)); edge(b, e, X(i + 1), Y(j), X(i + 1), Y(j + 1)); edge(e, d, X(i + 1), Y(j + 1), X(i), Y(j + 1)); edge(d, a, X(i), Y(j + 1), X(i), Y(j));
+          if (pts.length >= 2) { const P = v % 5 === 0 ? bold : thin; P.moveTo(pts[0][0], pts[0][1]); P.lineTo(pts[1][0], pts[1][1]); if (pts.length === 4) { P.moveTo(pts[2][0], pts[2][1]); P.lineTo(pts[3][0], pts[3][1]); } }
+        }
+      }
+      this.contours = { thin, bold };
+    }
+    const k = this.view.k;
+    c.strokeStyle = 'rgba(122,98,64,.28)'; c.lineWidth = 0.8 / k; c.stroke(this.contours.thin);
+    c.strokeStyle = 'rgba(122,98,64,.5)'; c.lineWidth = 1.5 / k; c.stroke(this.contours.bold);
+  }
+
+  /** Rappelle sur le plan du haut l'escalier qui descend. */
+  drawStairBelow(it) {
+    const def = getItem(it.cat), c = this.ctx, w = it.w ?? def.w, d = it.d ?? def.d, k = this.view.k;
+    c.save(); c.translate(it.x, it.y); c.rotate(((it.rot || 0) * Math.PI) / 180);
+    c.fillStyle = 'rgba(181,83,47,.1)'; c.strokeStyle = ACCENT; c.lineWidth = 1.2 / k; c.setLineDash([6 / k, 4 / k]);
+    c.fillRect(-w / 2, -d / 2, w, d); c.strokeRect(-w / 2, -d / 2, w, d); c.setLineDash([]);
+    if (!def.model?.p?.shape || def.model.p.shape === 'straight') { const n = Math.round(d / 25); c.beginPath(); for (let i = 1; i < n; i++) { c.moveTo(-w / 2, -d / 2 + (i * d) / n); c.lineTo(w / 2, -d / 2 + (i * d) / n); } c.stroke(); }
+    c.restore();
+    const p = this.toScreen(it);
+    void p;
   }
 
   drawGrid() {
@@ -458,7 +542,15 @@ export class Plan2D {
     c.fillStyle = '#fffdf8'; c.fillRect(-hw, -ht, o.width, ht * 2);
     const col = ghost ? ACCENT : selected ? ACCENT : INK;
     c.strokeStyle = col; c.lineWidth = 1.6 / Math.max(this.view.k, 0.5);
-    if (o.type === 'door' || o.type === 'entry') {
+    if (o.type === 'passage') {
+      c.setLineDash([3, 4]); c.beginPath(); c.moveTo(-hw, -ht); c.lineTo(hw, -ht); c.moveTo(-hw, ht); c.lineTo(hw, ht); c.stroke(); c.setLineDash([]);
+    } else if (o.type === 'garage') {
+      c.setLineDash([8, 5]); c.strokeRect(-hw, -ht * 0.5, o.width, ht); c.setLineDash([]);
+    } else if (o.type === 'double' || (o.type === 'entry' && o.leaves === 2)) {
+      for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * hw, ht); c.lineTo(s * hw, ht + hw); c.stroke(); c.setLineDash([4, 4]); c.beginPath(); c.arc(s * hw, ht, hw, s > 0 ? Math.PI : 0, Math.PI / 2, s > 0); c.stroke(); c.setLineDash([]); }
+    } else if (o.type === 'pocket') {
+      c.strokeRect(-hw, -ht * 0.25, o.width, ht * 0.5);
+    } else if (o.type === 'door' || o.type === 'entry') {
       const dirX = o.hinge === 'right' ? -1 : 1, dirY = o.flip ? -1 : 1;
       const hx = -dirX * hw, hy = dirY * ht;
       c.beginPath(); c.moveTo(hx, hy); c.lineTo(hx, hy + dirY * o.width); c.stroke();
@@ -484,7 +576,9 @@ export class Plan2D {
     const col = it.color || def.color || '#d9d0c0';
     c.fillStyle = col + (col.length === 7 ? 'cc' : ''); c.strokeStyle = selected ? ACCENT : 'rgba(38,35,30,.65)';
     c.lineWidth = (selected ? 2.4 : 1) / Math.max(this.view.k, 0.4);
-    const round = def.model?.p?.round;
+    const tree = def.model?.type === 'tree';
+    if (tree) c.fillStyle = 'rgba(146,172,112,.38)';
+    const round = def.model?.p?.round || tree;
     c.beginPath();
     if (round) c.arc(0, 0, w / 2, 0, Math.PI * 2); else c.rect(-w / 2, -d / 2, w, d);
     c.fill(); c.stroke();
@@ -636,6 +730,23 @@ export class Plan2D {
     c.fillStyle = SOFT; c.font = '15px ui-sans-serif, -apple-system, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText('Commence par tracer une pièce avec l’outil « Pièce »', this.w / 2, this.h / 2);
   }
+}
+
+function isSelected(hit) {
+  const s = store.selection; if (!s) return false;
+  if (hit.type === 'item') return s.type === 'item' && s.id === hit.item.id;
+  if (hit.type === 'wall') return s.type === 'wall' && s.id === hit.wall.id;
+  if (hit.type === 'opening') return s.type === 'opening' && s.id === hit.opening.id;
+  if (hit.type === 'node') return s.type === 'node' && s.id === hit.id;
+  return false;
+}
+
+function selectionOf(hit) {
+  if (hit.type === 'item') return { type: 'item', id: hit.item.id };
+  if (hit.type === 'wall') return { type: 'wall', id: hit.wall.id };
+  if (hit.type === 'opening') return { type: 'opening', id: hit.opening.id, wallId: hit.wall.id };
+  if (hit.type === 'node') return { type: 'node', id: hit.id };
+  return { type: 'room', id: hit.room.id };
 }
 
 function pointInPoly(p, poly) {

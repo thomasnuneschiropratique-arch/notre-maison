@@ -102,35 +102,54 @@ export function syncRooms(level) {
 
 // ——— Stockage local (IndexedDB) ———
 const DB = 'notre-maison';
+let dbConn = null;
 function open() {
-  return new Promise((res, rej) => {
+  dbConn ||= new Promise((res, rej) => {
     const q = indexedDB.open(DB, 1);
     q.onupgradeneeded = () => { q.result.createObjectStore('projects'); q.result.createObjectStore('renders'); q.result.createObjectStore('blobs'); };
-    q.onsuccess = () => res(q.result);
-    q.onerror = () => rej(q.error);
+    q.onsuccess = () => { q.result.onclose = () => { dbConn = null; }; res(q.result); };
+    q.onerror = () => { dbConn = null; rej(q.error); };
   });
+  return dbConn;
+}
+/** Ouvre une transaction ; si l'appareil a coupé la connexion, on la rouvre une fois. */
+async function txn(store, mode) {
+  try { return (await open()).transaction(store, mode); }
+  catch { dbConn = null; return (await open()).transaction(store, mode); }
 }
 async function tx(store, mode, fn) {
-  const db = await open();
+  const t = await txn(store, mode);
   return new Promise((res, rej) => {
-    const t = db.transaction(store, mode);
     const r = fn(t.objectStore(store));
     t.oncomplete = () => res(r?.result);
     t.onerror = () => rej(t.error);
+    t.onabort = () => rej(t.error);
   });
 }
 export const dbPut = (s, k, v) => tx(s, 'readwrite', (o) => o.put(v, k));
-export const dbGet = async (s, k) => { const db = await open(); return new Promise((res, rej) => { const q = db.transaction(s).objectStore(s).get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); };
+export const dbGet = async (s, k) => { const t = await txn(s, 'readonly'); return new Promise((res, rej) => { const q = t.objectStore(s).get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); };
 export const dbDel = (s, k) => tx(s, 'readwrite', (o) => o.delete(k));
 export const dbAll = async (s) => {
-  const db = await open();
+  const t = await txn(s, 'readonly');
   return new Promise((res, rej) => {
-    const q = db.transaction(s).objectStore(s).openCursor();
+    const q = t.objectStore(s).openCursor();
     const out = [];
     q.onsuccess = () => { const c = q.result; if (c) { out.push({ key: c.key, value: c.value }); c.continue(); } else res(out); };
     q.onerror = () => rej(q.error);
   });
 };
+
+// L'historique garde une seule fois chaque image de plan importée, au lieu de la recopier à chaque action.
+const imagePool = new Map(), imageTokens = new Map();
+const heavy = (k, v) => typeof v === 'string' && ((k === 'src' && v.startsWith('data:')) || ((k === 'h' || k === 'p') && v.length > 200));
+const pack = (project) => JSON.stringify(project, (k, v) => {
+  if (!heavy(k, v)) return v;
+  if (!imageTokens.has(v)) { const t = `@img${imageTokens.size}`; imageTokens.set(v, t); imagePool.set(t, v); }
+  return imageTokens.get(v);
+});
+const unpack = (json) => JSON.parse(json, (k, v) => (['src', 'h', 'p'].includes(k) && imagePool.has(v) ? imagePool.get(v) : v));
+
+const analysisMemo = new WeakMap();
 
 // ——— Magasin central ———
 class Store extends EventTarget {
@@ -150,11 +169,19 @@ class Store extends EventTarget {
 
   emit(type, detail) { this.dispatchEvent(new CustomEvent(type, { detail })); }
 
-  analysis(level = this.level) { return analyzeLevel(level); }
+  /** Analyse des pièces, recalculée seulement si les murs ont changé. */
+  analysis(level = this.level) {
+    const key = JSON.stringify([level.nodes, level.walls.map((w) => [w.id, w.a, w.b, w.thickness])]);
+    const m = analysisMemo.get(level);
+    if (m && m.key === key) return m.value;
+    const value = analyzeLevel(level);
+    analysisMemo.set(level, { key, value });
+    return value;
+  }
 
   /** Enregistre l'état AVANT une action, pour pouvoir l'annuler. */
   snapshot() {
-    this.undoStack.push(JSON.stringify(this.project));
+    this.undoStack.push(pack(this.project));
     if (this.undoStack.length > 80) this.undoStack.shift();
     this.redoStack = [];
   }
@@ -174,16 +201,20 @@ class Store extends EventTarget {
   }
   async save() {
     try {
-      await dbPut('projects', this.project.id, JSON.parse(JSON.stringify(this.project)));
+      clearTimeout(this.saveTimer); this.saveTimer = null;
+      await dbPut('projects', this.project.id, this.project);
       localStorage.setItem('nm-current', this.project.id);
       this.emit('saved');
     } catch (e) { console.error('Sauvegarde impossible', e); this.emit('save-error', e); }
   }
 
-  undo() { if (!this.undoStack.length) return; this.redoStack.push(JSON.stringify(this.project)); this.restore(this.undoStack.pop()); }
-  redo() { if (!this.redoStack.length) return; this.undoStack.push(JSON.stringify(this.project)); this.restore(this.redoStack.pop()); }
+  /** Écrit tout de suite ce qui attend encore, par exemple quand l'app passe en arrière-plan. */
+  flush() { if (this.saveTimer) this.save(); }
+
+  undo() { if (!this.undoStack.length) return; this.redoStack.push(pack(this.project)); this.restore(this.undoStack.pop()); }
+  redo() { if (!this.redoStack.length) return; this.undoStack.push(pack(this.project)); this.restore(this.redoStack.pop()); }
   restore(json) {
-    this.project = JSON.parse(json);
+    this.project = unpack(json);
     this.levelIndex = Math.min(this.levelIndex, this.project.levels.length - 1);
     this.selection = null;
     this.emit('select');

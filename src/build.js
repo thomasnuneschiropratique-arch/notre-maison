@@ -101,6 +101,7 @@ function buildWall(group, level, wall, corners, analysis, rooms, baseY, H, proje
         add(c.a, c.b, Math.min(c.o.sill + c.o.height, H), H);
       }
     }
+    if (exterior && opts.slabAbove && !opts.cutHeight) add(uS, uE, H, H + opts.slabAbove);
     if (!b.empty) wg.add(meshOf(b, getMaterial(matId), { kind: 'wall', wallId: wall.id, side, exterior, roomId: room?.id }));
 
     // Plinthes intérieures
@@ -158,7 +159,31 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
   const joinery = solid(o.color || project.style.joinery, 0.42, 0.05);
   const fw = 0.055;
 
-  if (o.type === 'door' || o.type === 'entry' || o.type === 'sliding-door') {
+  if (o.type === 'passage') return;
+  if (o.type === 'garage') {
+    const fd = t + 0.012;
+    box(g, fw, h, fd, joinery, -w / 2 + fw / 2, h / 2, 0); box(g, fw, h, fd, joinery, w / 2 - fw / 2, h / 2, 0); box(g, w, fw, fd, joinery, 0, h - fw / 2, 0);
+    const n = Math.round(h / 0.5);
+    for (let i = 0; i < n; i++) { const p = box(g, w - fw * 2, (h - fw) / n - 0.012, 0.05, joinery, 0, ((i + 0.5) * (h - fw)) / n, t * 0.2); p.userData = { kind: 'opening', wallId: wall.id, openingId: o.id }; }
+    return;
+  }
+  if (o.type === 'double' || (o.type === 'entry' && o.leaves === 2)) {
+    const fd = t + 0.012, isEntry = o.type === 'entry', frame = isEntry ? joinery : solid('#f1f0ec', 0.45);
+    box(g, fw, h, fd, frame, -w / 2 + fw / 2, h / 2, 0); box(g, fw, h, fd, frame, w / 2 - fw / 2, h / 2, 0); box(g, w, fw, fd, frame, 0, h - fw / 2, 0);
+    const lw = (w - fw * 2) / 2 - 0.004, lh = h - fw - 0.008, mat = isEntry ? joinery : solid('#f4f3ef', 0.4);
+    for (const s of [-1, 1]) {
+      const hinge = new THREE.Group();
+      hinge.position.set(s * (w / 2 - fw), 0, t / 2 - 0.02);
+      hinge.rotation.y = -s * ((o.open ?? 0) * Math.PI) / 180 * -1;
+      g.add(hinge);
+      const leaf = box(hinge, lw, lh, 0.04, mat, -s * lw / 2, lh / 2 + 0.006, 0);
+      leaf.userData = { kind: 'opening', wallId: wall.id, openingId: o.id };
+      if (o.glazed) box(hinge, lw * 0.7, lh * 0.72, 0.042, glass(), -s * lw / 2, lh * 0.52, 0);
+      box(hinge, 0.018, 0.2, 0.05, isEntry ? chrome() : blackMetal(), -s * (lw - 0.06), 1.02, 0.03);
+    }
+    return;
+  }
+  if (o.type === 'door' || o.type === 'entry' || o.type === 'sliding-door' || o.type === 'pocket') {
     const isEntry = o.type === 'entry';
     const frame = isEntry ? joinery : solid('#f1f0ec', 0.45);
     const fd = t + 0.012;
@@ -167,6 +192,11 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
     box(g, w, fw, fd, frame, 0, h - fw / 2, 0);
     const leafW = w - fw * 2, leafH = h - fw - 0.008;
     const leafMat = isEntry ? joinery : o.finish === 'bois' ? wood('chene') : solid('#f4f3ef', 0.4);
+    if (o.type === 'pocket') {
+      const leaf = box(g, leafW, leafH, 0.035, leafMat, o.open ? leafW * 0.8 : 0, leafH / 2 + 0.006, 0);
+      leaf.userData = { kind: 'opening', wallId: wall.id, openingId: o.id };
+      return;
+    }
     if (o.type === 'sliding-door') {
       const leaf = box(g, leafW, leafH, 0.035, leafMat, o.open ? leafW * 0.9 : 0, leafH / 2 + 0.006, t / 2 + 0.04);
       leaf.userData = { kind: 'opening', wallId: wall.id, openingId: o.id };
@@ -195,9 +225,11 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
   box(g, fw, h, depth, joinery, w / 2 - fw / 2, h / 2, zOff);
   box(g, w, fw, depth, joinery, 0, h - fw / 2, zOff);
   box(g, w, fw, depth, joinery, 0, fw / 2, zOff);
-  const leaves = o.type === 'window1' ? 1 : o.type === 'fixed' ? 1 : o.type === 'bay' ? Math.max(2, Math.round(o.width / 120)) : 2;
+  const grid = o.type === 'glasswall' || o.type === 'atelier';
+  const leaves = o.type === 'window1' ? 1 : o.type === 'fixed' ? Math.max(1, Math.round(o.width / 180)) : o.type === 'bay' ? Math.max(2, Math.round(o.width / 120)) : grid ? Math.max(1, Math.round(o.width / (o.type === 'atelier' ? 60 : 130))) : 2;
   const innerW = w - fw * 2, leafW = innerW / leaves;
-  const pf = 0.045;
+  const pf = grid ? 0.03 : 0.045;
+  if (o.type === 'atelier') { const bars = Math.max(1, Math.round(h / 0.55) - 1); for (let j = 1; j <= bars; j++) box(g, innerW, 0.022, 0.03, joinery, 0, (j * h) / (bars + 1), zOff); }
   for (let i = 0; i < leaves; i++) {
     const x = -innerW / 2 + leafW / 2 + i * leafW;
     const slide = o.type === 'bay' ? (i % 2 ? 0.02 : -0.02) : 0;
@@ -246,7 +278,8 @@ export function stairVoids(lower, stairDefs) {
     if (!def || def.model?.type !== 'stairs') continue;
     const w = (it.w ?? def.w) / 2, d = (it.d ?? def.d) / 2;
     const r = ((it.rot || 0) * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
-    out.push([[-w - 3, -d - 3], [-w - 3, d * 0.2], [w + 3, d * 0.2], [w + 3, -d - 3]].map(([x, y]) => ({ x: it.x + x * c - y * s, y: it.y + x * s + y * c })));
+    const straight = !def.model.p?.shape || def.model.p.shape === 'straight';
+    out.push([[-w - 3, -d - 3], [-w - 3, straight ? d * 0.2 : d + 3], [w + 3, straight ? d * 0.2 : d + 3], [w + 3, -d - 3]].map(([x, y]) => ({ x: it.x + x * c - y * s, y: it.y + x * s + y * c })));
   }
   return out;
 }
@@ -262,10 +295,12 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
   const ceilings = new THREE.Group(); ceilings.name = 'ceilings';
   root.add(walls, floors, ceilings);
 
+  const wallOpts = { ...opts, slabAbove: project.levels[index + 1] ? level.slab : 0 };
   for (const w of analysis.walls) {
     const c = corners.get(w.id);
-    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, H, project, opts);
+    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, H, project, wallOpts);
   }
+  if (opts.groundAt && index <= (project.entry || 0)) buildFoundation(walls, level, index, project, analysis, corners, baseY, opts);
 
   const lowerLevel = project.levels[index - 1];
   const voids = opts.stairVoids(lowerLevel);
@@ -295,6 +330,32 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
     }
   });
   return root;
+}
+
+/** Soubassement : sur un terrain en pente, le mur descend jusqu'au sol. */
+function buildFoundation(parent, level, index, project, analysis, corners, baseY, opts) {
+  const lower = project.levels[index - 1];
+  const b = new QuadBatch();
+  for (const w of analysis.walls) {
+    const extL = analysis.sideRoom.get(`${w.id}:L`) === undefined, extR = analysis.sideRoom.get(`${w.id}:R`) === undefined;
+    if (extL === extR) continue;
+    const A = level.nodes[w.a], B_ = level.nodes[w.b], L = Math.hypot(B_.x - A.x, B_.y - A.y);
+    if (L < 1) continue;
+    const mid = { x: (A.x + B_.x) / 2, y: (A.y + B_.y) / 2 };
+    if (lower && opts.coveredBy(lower, mid)) continue;
+    const dir = { x: (B_.x - A.x) / L, y: (B_.y - A.y) / L }, nor = { x: -dir.y, y: dir.x }, sign = extL ? 1 : -1;
+    const c = corners.get(w.id); if (!c) continue;
+    const s0 = extL ? c.aL : c.aR, s1 = extL ? c.bL : c.bR;
+    let lowest = Infinity;
+    const n = Math.max(2, Math.ceil(L / 50));
+    for (let i = 0; i <= n; i++) lowest = Math.min(lowest, opts.groundAt(s0.x + ((s1.x - s0.x) * i) / n, s0.y + ((s1.y - s0.y) * i) / n));
+    if (lowest >= baseY - 0.005) continue;
+    const y0 = lowest - 0.4, y1 = baseY, X = (p) => p.x * M, Z = (p) => p.y * M, len = L * M, hh = y1 - y0;
+    const p0 = [X(s0), y0, Z(s0)], p1 = [X(s1), y0, Z(s1)], p2 = [X(s1), y1, Z(s1)], p3 = [X(s0), y1, Z(s0)], ng = [nor.x * sign, 0, nor.y * sign];
+    if (sign > 0) b.quad(p0, p1, p2, p3, ng, [[0, 0], [len, 0], [len, hh], [0, hh]]);
+    else b.quad(p1, p0, p3, p2, ng, [[len, 0], [0, 0], [0, hh], [len, hh]]);
+  }
+  if (!b.empty) parent.add(meshOf(b, getMaterial(project.style.facade), { kind: 'foundation' }));
 }
 
 function footprintBounds(level) {

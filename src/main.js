@@ -1,11 +1,12 @@
 import './style.css';
-import { store, newLevel, dbAll, dbGet, dbPut, dbDel, uid, ROOM_TYPES, roomType } from './state.js';
+import { store, newLevel, addNode, addWall, dbAll, dbGet, dbPut, dbDel, uid, ROOM_TYPES, roomType } from './state.js';
 import { Plan2D } from './plan2d.js';
-import { View3D, ThumbRenderer } from './view3d.js';
-import { allItems, getItem, CATEGORIES, subLabel, purchaseLinks, OPENINGS, setCustom, catalogStats, isHerStyle } from './catalog.js';
-import { FLOORS, PAINTS, WALL_FINISHES, FACADES, ROOFS, GROUNDS, materialInfo, buyLinks } from './materials.js';
+import { allItems, getItem, CATEGORIES, subLabel, purchaseLinks, OPENINGS, setCustom, catalogStats, isHerStyle, isDoorType } from './catalog.js';
+import { ensureTerrain, commitTerrain, shapeTerrain, seatHouse, flattenAround, applyBrush, heightAt, TERRAIN_SHAPES, SLOPE_DEFAULT, DIRECTIONS, BRUSHES, ENVIRONMENTS } from './terrain.js';
+import { FLOORS, PAINTS, WALL_FINISHES, FACADES, ROOFS, GROUNDS, materialInfo, buyLinks } from './materials-data.js';
 import { TEMPLATES } from './templates.js';
-import { runChecks, budget, surfaces } from './advice.js';
+import { runChecks } from './advice.js';
+import { fullBudget, budgetSettings, GAMMES, MODES, MARKET, BUDGET_SOURCES } from './budget.js';
 import { dist } from './geometry.js';
 
 const ICONS = {
@@ -52,8 +53,10 @@ document.getElementById('app').innerHTML = `
       </div>
       <div class="sunbar" id="sunbar">
         <span class="lbl">Heure</span><input type="range" id="hour" min="5" max="23" step="0.25" value="15"/><span class="val" id="hourV"></span>
+        <button class="sunmore" id="sunMore" aria-label="Plus de réglages">⋯</button>
         <div class="row2"><button class="chip" id="season">Été</button><button class="chip on" id="lamps">Lampes</button><span style="flex:1"></span><span>Exposition</span><input type="range" id="expo" min="0.4" max="2.4" step="0.05" value="1" style="width:96px"/></div>
       </div>
+      <div class="loadpill hidden" id="loadPill"><i></i><span></span></div>
       <div class="walkgo hidden" id="walkgo"><select id="walkRoom" aria-label="Aller dans une pièce"></select></div>
       <div class="joy hidden" id="joy"><i></i></div>
       <div class="photoHud hidden" id="photoHud">
@@ -62,6 +65,9 @@ document.getElementById('app').innerHTML = `
         <div class="acts"><button class="pri" id="phSave">Enregistrer l'image</button><button id="phClose">Terminer</button></div>
       </div>
     </div>
+    <div class="selbar hidden" id="selbar"></div>
+    <div class="brushbar hidden" id="brushbar"></div>
+    <button class="paneltoggle" id="panelToggle" title="Masquer ou afficher le panneau" aria-label="Masquer ou afficher le panneau">›</button>
   </div>
   <aside class="panel" id="panel">
     <button class="grabber" id="grabber" aria-label="Fermer le panneau"></button>
@@ -79,40 +85,79 @@ document.getElementById('app').innerHTML = `
 
 const plan = new Plan2D($('#plan'));
 store.plan = plan;
-const view = new View3D($('#view'));
-const thumbs = new ThumbRenderer();
-window.__maison = { store, view, plan };
+let view = null, viewLoading = null, thumbs = null;
+window.__maison = { store, plan, get view() { return view; } };
+
+/** Le moteur 3D n'est téléchargé qu'au moment où on en a besoin. */
+function loadView() {
+  viewLoading ||= import('./view3d.js').then(({ View3D }) => { view = new View3D($('#view')); return view; }).catch((e) => { viewLoading = null; throw e; });
+  return viewLoading;
+}
+async function customThumb(def, img) {
+  if (!thumbs) { const { ThumbRenderer } = await import('./thumbs.js'); thumbs ||= new ThumbRenderer(); }
+  thumbs.request(def, img);
+}
 
 const narrow = () => matchMedia('(max-width: 820px)').matches;
-const TABS = [['catalog', 'Meubles'], ['style', 'Style'], ['budget', 'Budget'], ['advice', 'Conseils'], ['photos', 'Photos'], ['projects', 'Projets']];
+const TABS = [['catalog', 'Meubles'], ['style', 'Style'], ['terrain', 'Terrain'], ['budget', 'Budget'], ['advice', 'Conseils'], ['photos', 'Photos'], ['projects', 'Projets']];
 const ui = { view: 'plan', tab: 'catalog', cat: 'anna', sub: null, q: '', sort: 'pop', detail: null, panelOpen: !narrow(), summer: true };
 
 function toast(t) {
   document.querySelector('.toast')?.remove();
-  const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; document.body.append(el);
-  setTimeout(() => el.remove(), 2800);
+  const el = document.createElement('div'); el.className = 'toast';
+  const undo = typeof t === 'object' && t.undo;
+  el.textContent = typeof t === 'object' ? t.text : t;
+  if (undo) { const b = document.createElement('button'); b.textContent = 'Annuler'; b.onclick = () => { store.undo(); el.remove(); }; el.append(b); }
+  document.body.append(el);
+  setTimeout(() => el.remove(), undo ? 5000 : 2800);
 }
 store.addEventListener('toast', (e) => toast(e.detail));
+// Après une mise à jour de l'app, un ancien morceau peut avoir disparu : on recharge une seule fois.
+addEventListener('vite:preloadError', () => { if (!sessionStorage.getItem('nm-reloaded')) { sessionStorage.setItem('nm-reloaded', '1'); location.reload(); } });
 store.addEventListener('save-error', () => toast('Sauvegarde impossible sur cet appareil.'));
 
-function setView(v) {
+async function setView(v) {
   ui.view = v;
   $('#planLayer').classList.toggle('hidden', v !== 'plan');
   $('#viewLayer').classList.toggle('hidden', v !== '3d');
-  view.setActive(v === '3d');
-  if (v === 'plan') { plan.resize(); }
-  if (v === '3d' && !ui.framed) { view.frame(); ui.framed = true; }
   syncChrome();
+  if (v === 'plan') { view?.setActive(false); plan.resize(); return; }
+  if (!view) {
+    showPill('Préparation de la 3D…');
+    try { await loadView(); }
+    catch (e) {
+      console.error(e); hidePill();
+      toast('La 3D n’a pas pu se charger. Vérifie ta connexion et réessaie.');
+      setView('plan');
+      return;
+    }
+    hidePill();
+    if (ui.view !== '3d') return;
+  }
+  view.env.sky = ui.sky;
+  view.setActive(true);
+  if (!ui.framed) { view.frame(); ui.framed = true; }
 }
 
+function showPill(text) { const p = $('#loadPill'); p.classList.remove('hidden'); p.lastElementChild.textContent = text; }
+function hidePill() { $('#loadPill').classList.add('hidden'); }
+store.addEventListener('loading', (e) => {
+  if (e.detail && e.detail.loaded < e.detail.total) showPill(`Chargement ${e.detail.loaded} / ${e.detail.total}`);
+  else hidePill();
+});
+
 function setPanel(open) { ui.panelOpen = open; $('#panel').classList.toggle('open', open); syncChrome(); }
+$('#panelToggle').onclick = () => {
+  const hide = $('.work').classList.toggle('nopanel');
+  $('#panelToggle').textContent = hide ? '‹' : '›';
+};
 function openTab(t) { ui.tab = t; ui.detail = null; if (store.selection) store.selection = null; setPanel(true); render(); }
 
 function syncChrome() {
   document.querySelectorAll('#viewSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === ui.view));
   document.querySelectorAll('#bottomnav button').forEach((b) => {
     const n = b.dataset.n;
-    const on = ui.panelOpen ? (n === ui.tab || (n === 'more' && ['style', 'advice', 'photos', 'projects', 'more'].includes(ui.tab))) : n === ui.view;
+    const on = ui.panelOpen ? (n === ui.tab || (n === 'more' && ['style', 'terrain', 'advice', 'photos', 'projects', 'more'].includes(ui.tab))) : n === ui.view;
     b.classList.toggle('on', on);
   });
   document.querySelectorAll('#rail button').forEach((b) => b.classList.toggle('on', b.dataset.t === plan.tool || (b.dataset.t === 'door' && plan.tool === 'opening')));
@@ -133,16 +178,38 @@ $('#bottomnav').onclick = (e) => {
   store.selection = null; ui.detail = null; ui.tab = n; setPanel(true); render();
 };
 $('#level').onchange = (e) => {
-  if (e.target.value === 'add') {
-    store.mutate((p) => { const n = newLevel(`Étage ${p.levels.length}`, 250); p.levels.push(n); });
-    store.setLevel(store.project.levels.length - 1); fillLevels(); return;
+  if (e.target.value === 'up') {
+    store.mutate((p) => { const e0 = p.entry || 0; p.levels.push(newLevel(`Étage ${p.levels.length - e0}`, 250)); });
+    store.setLevel(store.project.levels.length - 1); fillLevels(); plan.fitted = false; plan.fit(); return;
+  }
+  if (e.target.value === 'down') {
+    addLevelBelow(); store.setLevel(0); fillLevels(); plan.fitted = false; plan.fit();
+    toast('Niveau créé sous le précédent, avec le même contour. Ajoute ses cloisons, puis un escalier.');
+    return;
   }
   store.setLevel(Number(e.target.value));
   plan.fitted = false; plan.fit();
 };
 
+/** Ajoute un niveau sous tous les autres, avec le même contour extérieur. */
+function addLevelBelow() {
+  store.mutate((p) => {
+    const e = p.entry || 0, ref = p.levels[0], a = store.analysis(ref);
+    const n = newLevel(e > 0 ? 'Sous-sol' : 'Rez-de-jardin', 250);
+    for (const w of a.walls) {
+      if ((a.sideRoom.get(`${w.id}:L`) === undefined) === (a.sideRoom.get(`${w.id}:R`) === undefined)) continue;
+      const A = ref.nodes[w.a], B = ref.nodes[w.b];
+      addWall(n, addNode(n, A.x, A.y), addNode(n, B.x, B.y), w.thickness);
+    }
+    p.levels.unshift(n);
+    p.entry = e + 1;
+    store.levelIndex += 1;
+  });
+}
+
 function fillLevels() {
-  $('#level').innerHTML = store.project.levels.map((l, i) => `<option value="${i}" ${i === store.levelIndex ? 'selected' : ''}>${esc(l.name)}</option>`).join('') + '<option value="add">+ Ajouter un étage</option>';
+  const lv = store.project.levels;
+  $('#level').innerHTML = '<option value="up">+ Ajouter un étage au-dessus</option>' + lv.map((l, i) => [i, l]).reverse().map(([i, l]) => `<option value="${i}" ${i === store.levelIndex ? 'selected' : ''}>${esc(l.name)}</option>`).join('') + '<option value="down">+ Ajouter un niveau en dessous</option>';
   $('#projName').textContent = store.project.name;
   document.title = `${store.project.name} — Notre Maison`;
 }
@@ -154,14 +221,22 @@ $('#rail').onclick = (e) => {
   if (t === 'fit') { plan.fitted = false; plan.fit(); return; }
   if (t === 'door') {
     const pop = $('#openPop');
-    pop.innerHTML = OPENINGS.map((o, i) => `<button data-i="${i}">${esc(o.name)} <span class="muted small">${o.width} cm</span></button>`).join('');
+    const groups = [...new Set(OPENINGS.map((o) => o.group))];
+    pop.innerHTML = `<div class="popcustom"><b>Sur mesure</b><div class="row"><label>L<input id="ocW" type="number" value="400"/></label><label>H<input id="ocH" type="number" value="225"/></label><label>Allège<input id="ocS" type="number" value="0"/></label></div><select id="ocT">${OPENING_TYPES.map(([k, l]) => `<option value="${k}" ${k === 'bay' ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select><button id="ocGo" class="btn pri block">Placer sur un mur</button></div>${groups.map((g) => `<h4>${g}</h4>${OPENINGS.map((o, i) => (o.group === g ? `<button data-i="${i}">${esc(o.name)} <span class="muted small">${(o.width / 100).toFixed(2).replace('.', ',')} × ${(o.height / 100).toFixed(2).replace('.', ',')} m</span></button>` : '')).join('')}`).join('')}`;
     pop.classList.remove('hidden');
     return;
   }
   plan.setTool(t);
 };
+const OPENING_TYPES = [['bay', 'Baie coulissante'], ['glasswall', 'Mur vitré'], ['atelier', 'Verrière atelier'], ['window1', 'Fenêtre 1 vantail'], ['window2', 'Fenêtre 2 vantaux'], ['fixed', 'Fenêtre fixe'], ['door', 'Porte'], ['double', 'Porte double'], ['sliding-door', 'Porte coulissante'], ['pocket', 'Porte à galandage'], ['entry', "Porte d'entrée"], ['garage', 'Porte de garage'], ['passage', 'Passage ouvert']];
 $('#openPop').onclick = (e) => {
   const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'ocGo') {
+    const P = $('#openPop'), type = $('#ocT', P).value;
+    plan.setTool('opening', { type, name: OPENING_TYPES.find((t) => t[0] === type)[1], width: Math.max(30, Number($('#ocW', P).value) || 100), height: Math.max(30, Number($('#ocH', P).value) || 200), sill: Math.max(0, Number($('#ocS', P).value) || 0) });
+    P.classList.add('hidden');
+    return;
+  }
   plan.setTool('opening', OPENINGS[Number(b.dataset.i)]);
   $('#openPop').classList.add('hidden');
 };
@@ -180,8 +255,13 @@ function setPreset(p) {
   document.querySelectorAll('#presetSeg button').forEach((b) => b.classList.toggle('on', b.dataset.p === p));
   const walk = p === 'walk';
   $('#walkgo').classList.toggle('hidden', !walk);
-  $('#joy').classList.toggle('hidden', !walk || !matchMedia('(pointer: coarse)').matches);
-  if (walk) fillWalkRooms();
+  const touch = matchMedia('(pointer: coarse)').matches;
+  $('#joy').classList.toggle('hidden', !walk || !touch);
+  $('#viewLayer').classList.toggle('walking', walk);
+  if (walk) {
+    fillWalkRooms();
+    if (!ui.walkHint) { ui.walkHint = true; toast(touch ? 'Joystick pour marcher, glisse pour regarder, touche le sol pour t’y rendre.' : 'Z Q S D ou flèches pour marcher, glisse pour regarder, clique le sol pour t’y rendre.'); }
+  }
 }
 function fillWalkRooms() {
   const lv = store.level;
@@ -195,6 +275,7 @@ $('#season').onclick = () => { ui.summer = !ui.summer; $('#season').textContent 
 $('#lamps').onclick = (e) => { view.env.lamps = !view.env.lamps; e.target.classList.toggle('on', view.env.lamps); view.updateLamps(); };
 $('#expo').oninput = (e) => view.setEnv({ exposure: Number(e.target.value) });
 $('#hourV').textContent = fmtHour(15);
+$('#sunMore').onclick = () => $('#sunbar').classList.toggle('more');
 
 // Joystick de déplacement (tactile)
 const joy = $('#joy'), knob = joy.firstElementChild;
@@ -217,11 +298,18 @@ $('#photoBtn').onclick = async () => {
   hud.classList.remove('hidden'); $('#sunbar').classList.add('hidden'); $('#v3bar').classList.add('hidden');
   $('#walkgo').classList.add('hidden'); $('#joy').classList.add('hidden');
   $('#phTitle').textContent = 'Préparation de la scène…'; $('#phCount').textContent = ''; $('#phBar').style.width = '0';
+  // Garde l'écran allumé pendant le calcul, quand l'appareil le permet.
+  try { ui.wake = await navigator.wakeLock?.request('screen'); } catch { /* facultatif */ }
+  const started = { at: 0, s: 0 };
   try {
     await view.startPhoto({
+      target: matchMedia('(pointer: coarse)').matches ? 150 : 300,
       onProgress: (s, t) => {
+        if (s >= 1 && !started.at) { started.at = performance.now(); started.s = s; }
+        const rate = started.at && s > started.s + 2 ? (s - started.s) / ((performance.now() - started.at) / 1000) : 0;
+        const left = rate ? Math.max(0, (t - s) / rate) : 0;
         $('#phTitle').textContent = s >= t ? 'Image terminée' : 'Rendu photoréaliste en cours';
-        $('#phCount').textContent = `${Math.floor(s)} / ${t} passes`;
+        $('#phCount').textContent = `${Math.floor(s)} / ${t}${s < t && rate ? ` · encore ${left < 60 ? 'moins d’une minute' : `≈ ${Math.ceil(left / 60)} min`}` : ''}`;
         $('#phBar').style.width = `${Math.min(100, (s / t) * 100)}%`;
       },
     });
@@ -231,7 +319,9 @@ $('#photoBtn').onclick = async () => {
     toast('Le mode photo ne fonctionne pas sur cet appareil. Ouvre le projet sur un ordinateur.');
   }
 };
+store.addEventListener('photo-lost', () => { closePhoto(); toast('L’appareil a manqué de mémoire pour le mode photo. Essaie sur un ordinateur.'); });
 function closePhoto() {
+  ui.wake?.release?.(); ui.wake = null;
   view.stopPhoto();
   $('#photoHud').classList.add('hidden'); $('#sunbar').classList.remove('hidden'); $('#v3bar').classList.remove('hidden');
   if (view.preset === 'walk') { $('#walkgo').classList.remove('hidden'); $('#joy').classList.toggle('hidden', !matchMedia('(pointer: coarse)').matches); }
@@ -260,21 +350,26 @@ function render() {
   $('#tabs').innerHTML = TABS.map(([k, l]) => `<button data-k="${k}" class="${ui.tab === k && !sel && !ui.detail ? 'on' : ''}">${l}</button>`).join('');
   if (sel) renderSelection(body, sel);
   else if (ui.detail) renderDetail(body, ui.detail);
-  else ({ catalog: renderCatalog, style: renderStyle, budget: renderBudget, advice: renderAdvice, photos: renderPhotos, projects: renderProjects, more: renderMore }[ui.tab] || renderCatalog)(body);
+  else ({ catalog: renderCatalog, style: renderStyle, terrain: renderTerrain, budget: renderBudget, advice: renderAdvice, photos: renderPhotos, projects: renderProjects, more: renderMore }[ui.tab] || renderCatalog)(body);
   syncChrome();
 }
 $('#tabs').onclick = (e) => { const k = e.target.dataset.k; if (k) openTab(k); };
 
 function thumbOf(def, img) {
-  if (def.model?.kind === 'ph') img.src = `./thumbs/${def.model.id}.png`;
-  else if (def.model?.kind === 'proc') thumbs.request(def, img);
+  img.decoding = 'async';
+  if (def.model?.kind === 'ph') img.src = `./thumbs/${def.model.id}.webp`;
+  else if (def.cat === 'perso') customThumb(def, img);
+  else if (def.model?.kind === 'proc') {
+    img.onerror = () => { img.onerror = null; customThumb(def, img); };
+    img.src = `./thumbs/p/${def.id}.webp`;
+  }
 }
 
 function fillThumbs(root) {
   const io = new IntersectionObserver((entries) => {
     for (const en of entries) if (en.isIntersecting) { io.unobserve(en.target); const def = getItem(en.target.dataset.th); if (def) thumbOf(def, en.target); }
-  }, { root: $('#pbody'), rootMargin: '300px' });
-  root.querySelectorAll('img[data-th]').forEach((i) => io.observe(i));
+  }, { root: $('#pbody'), rootMargin: '400px' });
+  root.querySelectorAll('img[data-th]:not([data-o])').forEach((i) => { i.dataset.o = '1'; io.observe(i); });
 }
 
 function filteredItems() {
@@ -300,20 +395,44 @@ function renderCatalog(body) {
     ${!ui.q && subs.length > 1 ? `<div class="chips" id="subs"><button class="chip ${!ui.sub ? 'on' : ''}" data-s="">Tout</button>${subs.map((s) => `<button class="chip ${ui.sub === s ? 'on' : ''}" data-s="${s}">${subLabel(s)}</button>`).join('')}</div>` : ''}
     <div id="gridWrap"></div>
     <div class="btnrow"><button class="btn block" id="addCustom">+ Ajouter un meuble trouvé en ligne</button></div>`;
-  const drawGrid = () => {
-    const list = filteredItems();
+  const PAGE = 40;
+  const cardHtml = (i) => `<div class="card" role="button" tabindex="0" data-id="${esc(i.id)}" ${narrow() ? '' : 'draggable="true"'}><img class="th" data-th="${esc(i.id)}" alt=""/><button class="add" data-add="${esc(i.id)}" aria-label="Placer ${esc(i.name)}" title="Placer sur le plan">+</button><div class="b"><div class="n">${esc(i.name)}</div><div class="l">${esc(i.label)}</div><div class="p"><span>${i.brand === 'IKEA' || i.brand === 'Générique' ? '' : `${esc(i.brand)} · `}${Math.round(i.w)}×${Math.round(i.d)}</span><b>${i.approx ? '≈ ' : ''}${euro(i.price)}</b></div></div></div>`;
+  let list = [], shown = 0, more = null;
+  const drawGrid = (keep = 0) => {
+    list = filteredItems(); shown = 0;
+    more?.disconnect();
     const wrap = $('#gridWrap', body);
     wrap.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px" class="small muted"><span>${list.length} article${list.length > 1 ? 's' : ''}</span><select id="sort" style="border:0;background:none;color:var(--soft)"><option value="pop" ${ui.sort === 'pop' ? 'selected' : ''}>Par défaut</option><option value="asc" ${ui.sort === 'asc' ? 'selected' : ''}>Prix croissant</option><option value="desc" ${ui.sort === 'desc' ? 'selected' : ''}>Prix décroissant</option></select></div>
-    <div class="grid">${list.map((i) => `<button class="card" data-id="${esc(i.id)}"><img class="th" data-th="${esc(i.id)}" alt=""/><div class="b"><div class="n">${esc(i.name)}</div><div class="l">${esc(i.label)}</div><div class="p"><span>${i.brand === 'IKEA' || i.brand === 'Générique' ? '' : `${esc(i.brand)} · `}${Math.round(i.w)}×${Math.round(i.d)}</span><b>${i.approx ? '≈ ' : ''}${euro(i.price)}</b></div></div></button>`).join('')}</div>`;
+    <div class="grid"></div><div id="moreItems" style="height:1px"></div>`;
+    const grid = wrap.querySelector('.grid');
+    const append = (n) => {
+      const chunk = list.slice(shown, shown + n);
+      grid.insertAdjacentHTML('beforeend', chunk.map(cardHtml).join(''));
+      shown += chunk.length;
+      fillThumbs(grid);
+      if (shown >= list.length) more?.disconnect();
+    };
+    append(Math.max(PAGE, keep));
+    if (shown < list.length) {
+      more = new IntersectionObserver((en) => { if (en[0].isIntersecting) append(PAGE); }, { root: $('#pbody'), rootMargin: '500px' });
+      more.observe($('#moreItems', wrap));
+    }
     $('#sort', wrap).onchange = (e) => { ui.sort = e.target.value; drawGrid(); };
-    wrap.querySelector('.grid').onclick = (e) => { const c = e.target.closest('.card'); if (c) { ui.detail = c.dataset.id; render(); $('#pbody').scrollTop = 0; } };
-    fillThumbs(wrap);
+    grid.onclick = (e) => {
+      const add = e.target.closest('[data-add]');
+      if (add) { placeItem(getItem(add.dataset.add)); return; }
+      const c = e.target.closest('.card');
+      if (c) { ui.catScroll = $('#pbody').scrollTop; ui.catShown = shown; ui.detail = c.dataset.id; render(); $('#pbody').scrollTop = 0; }
+    };
+    grid.ondragstart = (e) => { const c = e.target.closest('.card'); if (c) { e.dataTransfer.setData('text/plain', c.dataset.id); e.dataTransfer.effectAllowed = 'copy'; } };
   };
-  drawGrid();
-  $('#q', body).oninput = (e) => { ui.q = e.target.value; drawGrid(); };
-  $('#cats', body).onclick = (e) => { const c = e.target.dataset.c; if (c) { ui.cat = c; ui.sub = null; ui.q = ''; render(); } };
+  drawGrid(ui.catShown || 0);
+  ui.catShown = 0;
+  let typing;
+  $('#q', body).oninput = (e) => { ui.q = e.target.value; clearTimeout(typing); typing = setTimeout(() => drawGrid(), 120); };
+  $('#cats', body).onclick = (e) => { const c = e.target.dataset.c; if (c) { ui.cat = c; ui.sub = null; ui.q = ''; ui.catScroll = 0; render(); } };
   const subsEl = $('#subs', body);
-  if (subsEl) subsEl.onclick = (e) => { if (e.target.dataset.s !== undefined) { ui.sub = e.target.dataset.s || null; render(); } };
+  if (subsEl) subsEl.onclick = (e) => { if (e.target.dataset.s !== undefined) { ui.sub = e.target.dataset.s || null; ui.catScroll = 0; render(); } };
   $('#addCustom', body).onclick = customForm;
 }
 
@@ -333,24 +452,86 @@ function renderDetail(body, id) {
     <div class="muted">${esc(def.label)}${def.brand !== 'Générique' ? ` · ${esc(def.brand)}` : ''}</div>
     <div class="price">${def.approx ? '≈ ' : ''}${euro(def.price)}</div>
     <div class="muted small" style="margin-top:6px">L ${Math.round(def.w)} × P ${Math.round(def.d)} × H ${Math.round(def.h)} cm</div>
-    <div class="btnrow"><button class="btn pri block" id="place">Placer dans ${esc(placeTarget())}</button></div>
+    <div class="btnrow"><button class="btn pri block" id="place">${def.sub === 'escalier' ? 'Escalier qui monte depuis ce niveau' : `Placer dans ${esc(placeTarget())}`}</button>${def.sub === 'escalier' ? '<button class="btn pri block" id="placeDown">Escalier qui descend depuis ce niveau</button>' : ''}</div>
     ${buyBlock(def)}`;
+  const pd = $('#placeDown', body); if (pd) pd.onclick = () => placeItem(def, null, { down: true });
   thumbOf(def, $('#hero', body));
-  $('#back', body).onclick = () => { ui.detail = null; render(); };
-  $('#place', body).onclick = () => placeItem(def);
+  $('#back', body).onclick = () => { ui.detail = null; render(); $('#pbody').scrollTop = ui.catScroll || 0; };
+  $('#place', body).onclick = () => placeItem(def, null, { down: false });
 }
 
 function placeTarget() { return store.level.name.toLowerCase().startsWith('rez') ? 'le plan' : store.level.name; }
 
-function placeItem(def) {
-  const c = ui.view === 'plan' ? plan.center() : centerOfView();
+function placeItem(def, at, opts = {}) {
+  const c = at || (ui.view === 'plan' ? plan.center() : centerOfView());
   const id = uid('it');
+  if (def.sub === 'escalier') {
+    const hasUp = store.levelIndex < store.project.levels.length - 1, hasDown = store.levelIndex > 0;
+    const down = opts.down ?? (!hasUp && hasDown);
+    if (down) {
+      if (!hasDown) addLevelBelow();
+      // Un escalier appartient au niveau d'où il part vers le haut : il se pose donc sur le niveau du bas.
+      store.mutate((p) => { p.levels[store.levelIndex - 1].items.push({ id, cat: def.id, x: Math.round(c.x), y: Math.round(c.y), rot: 0 }); });
+      fillLevels();
+      ui.detail = null; if (narrow()) setPanel(false); render();
+      toast(hasDown ? 'Escalier posé. Touche-le sur le plan pour le déplacer.' : 'Niveau du bas créé et escalier posé. Touche-le sur le plan pour le déplacer.');
+      return;
+    }
+    if (!hasUp) toast('Il n’y a pas encore d’étage au-dessus : ajoute-le dans le menu des niveaux.');
+  }
   store.mutate((p, lv) => { lv.items.push({ id, cat: def.id, x: Math.round(c.x), y: Math.round(c.y), rot: 0 }); });
+  const wasDetail = ui.detail;
   ui.detail = null;
   store.select({ type: 'item', id });
   if (narrow()) setPanel(false);
+  if (!wasDetail) ui.detail = null;
   toast(`${def.name} placé. Fais-le glisser à sa place.`);
 }
+
+// Glisser un meuble du catalogue vers le plan ou la 3D (ordinateur).
+for (const [sel, pos] of [['#plan', (e) => { const r = $('#plan').getBoundingClientRect(); return plan.toWorld(e.clientX - r.left, e.clientY - r.top); }], ['#view', (e) => view?.floorPoint(e.clientX, e.clientY)]]) {
+  const el = $(sel);
+  el.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  el.addEventListener('drop', (e) => { e.preventDefault(); const def = getItem(e.dataTransfer.getData('text/plain')); const p = pos(e); if (def && p) placeItem(def, { x: p.x, y: p.y }); });
+}
+
+// ——— Actions rapides sur la sélection ———
+function rotateSel() { const s = store.selection, it = s?.type === 'item' && store.level.items.find((i) => i.id === s.id); if (it) { live(() => { it.rot = ((it.rot || 0) + 90) % 360; }); render(); } }
+function dupSel() { const s = store.selection, it = s?.type === 'item' && store.level.items.find((i) => i.id === s.id); if (!it) return; const id = uid('it'); store.mutate((p, lv) => lv.items.push({ ...it, id, x: it.x + 30, y: it.y + 30 })); store.select({ type: 'item', id }); }
+
+function renderSelbar() {
+  const bar = $('#selbar'), s = store.selection;
+  if (!s || !narrow()) { bar.classList.add('hidden'); $('#viewLayer').classList.remove('selecting'); return; }
+  const lv = store.level;
+  let name = 'Sélection', acts = '';
+  if (s.type === 'item') { const it = lv.items.find((i) => i.id === s.id); name = getItem(it?.cat)?.name || 'Meuble'; acts = '<button data-a="rot">Tourner</button><button data-a="dup">Dupliquer</button><button data-a="del">Retirer</button><button data-a="more" class="pri">Détails</button>'; }
+  else if (s.type === 'room') { name = lv.rooms.find((r) => r.id === s.id)?.name || 'Pièce'; acts = '<button data-a="more" class="pri">Modifier</button>'; }
+  else if (s.type === 'wall') { name = 'Mur'; acts = '<button data-a="del">Supprimer</button><button data-a="more" class="pri">Modifier</button>'; }
+  else if (s.type === 'opening') { name = lv.walls.find((w) => w.id === s.wallId)?.openings.find((o) => o.id === s.id)?.name || 'Ouverture'; acts = '<button data-a="del">Retirer</button><button data-a="more" class="pri">Modifier</button>'; }
+  else { name = 'Angle de mur'; acts = '<button data-a="del">Supprimer</button>'; }
+  bar.innerHTML = `<div class="nm">${esc(name)}</div><div class="ac">${acts}<button data-a="x" aria-label="Désélectionner">${icon('close')}</button></div>`;
+  bar.classList.remove('hidden');
+  $('#viewLayer').classList.add('selecting');
+}
+$('#selbar').onclick = (e) => {
+  const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
+  if (a === 'rot') rotateSel();
+  if (a === 'dup') dupSel();
+  if (a === 'del') plan.deleteSelection();
+  if (a === 'more') setPanel(true);
+  if (a === 'x') closeSel();
+};
+
+// Raccourcis clavier sur ordinateur
+addEventListener('keydown', (e) => {
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+  const s = store.selection, it = s?.type === 'item' && store.level.items.find((i) => i.id === s.id);
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') { if (it) { e.preventDefault(); dupSel(); } return; }
+  if (e.metaKey || e.ctrlKey || !it || view?.mode === 'walk') return;
+  if (e.key.toLowerCase() === 'r') rotateSel();
+  const step = e.shiftKey ? 1 : 5, delta = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+  if (delta) { e.preventDefault(); live(() => { it.x += delta[0]; it.y += delta[1]; }); }
+});
 
 function centerOfView() {
   const t = view.mode === 'walk' ? { x: view.camera.position.x * 100 + -Math.sin(view.yaw) * 150, z: view.camera.position.z * 100 + -Math.cos(view.yaw) * 150 } : { x: view.controls.target.x * 100, z: view.controls.target.z * 100 };
@@ -393,14 +574,14 @@ function itemPanel(body, it) {
   $('#closeSel', body).onclick = closeSel;
   for (const k of ['w', 'd', 'h', 'z', 'rot']) $(`#${k}`, body).onchange = (e) => live(() => { it[k] = Number(e.target.value); });
   const col = $('#col', body); if (col) col.onchange = (e) => live(() => { it.color = e.target.value; });
-  $('#rot90', body).onclick = () => live(() => { it.rot = ((it.rot || 0) + 90) % 360; render(); });
+  $('#rot90', body).onclick = rotateSel;
   $('#del', body).onclick = () => plan.deleteSelection();
   $('#bought', body).onchange = (e) => live(() => { it.bought = e.target.checked; });
-  $('#dup', body).onclick = () => { const id = uid('it'); store.mutate((p, lv) => lv.items.push({ ...it, id, x: it.x + 30, y: it.y + 30 })); store.select({ type: 'item', id }); };
+  $('#dup', body).onclick = dupSel;
 }
 
 function swatchRow(list, cur, kind) {
-  return `<div class="swatches">${list.map((m) => `<button class="swatch ${cur === m.id ? 'on' : ''}" data-m="${m.id}" data-kind="${kind}" title="${esc(m.name)}" style="${m.hex ? `background:${m.hex}` : `background-image:url(./thumbs/t_${m.t}.png)`}"></button>`).join('')}</div>`;
+  return `<div class="swatches">${list.map((m) => `<button class="swatch ${cur === m.id ? 'on' : ''}" data-m="${m.id}" data-kind="${kind}" title="${esc(m.name)}" style="${m.hex ? `background:${m.hex}` : `background-image:url(./thumbs/t_${m.t}.webp)`}"></button>`).join('')}</div>`;
 }
 
 function roomPanel(body, r, index, part) {
@@ -449,17 +630,29 @@ function wallPanel(body, w, s) {
 function openingPanel(body, w, o) {
   if (!o) return closeSel();
   const isDoor = ['door', 'entry'].includes(o.type);
-  const isWin = !['door', 'entry', 'sliding-door'].includes(o.type);
+  const isWin = !isDoorType(o.type);
+  const lv0 = store.level, wallLen = dist(lv0.nodes[w.a], lv0.nodes[w.b]);
   body.innerHTML = `${header(o.name || 'Ouverture', `${o.width} × ${o.height} cm`)}
+    <div class="field wide" style="margin-top:8px"><label>Type</label><select id="otype">${OPENING_TYPES.map(([k, l]) => `<option value="${k}" ${k === o.type ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+    <div class="chips" id="owidths">${[90, 120, 180, 240, 300, 400, 500, 600].filter((x) => x <= wallLen - 8).map((x) => `<button class="chip ${o.width === x ? 'on' : ''}" data-w="${x}">${(x / 100).toFixed(1).replace('.', ',')} m</button>`).join('')}<button class="chip" data-full="1">Toute hauteur</button></div>
+    <div class="field"><label>Distance à l’angle (cm)</label><input type="number" id="pos" value="${Math.round(o.t - o.width / 2)}"/></div>
     <div class="dims" style="margin-top:12px"><div><label>Largeur</label><input type="number" id="width" value="${o.width}"/></div><div><label>Hauteur</label><input type="number" id="height" value="${o.height}"/></div><div><label>Allège</label><input type="number" id="sill" value="${o.sill}"/></div></div>
     ${isDoor ? `<div class="field"><label>Ouverture (°)</label><input type="number" id="open" min="0" max="110" step="5" value="${o.open ?? 0}"/></div>
     <div class="btnrow"><button class="btn" id="flip">Inverser le sens</button><button class="btn" id="hinge">Changer le côté</button></div>` : ''}
     <div class="field"><label>Couleur</label><input type="color" id="col" value="${o.color || store.project.style.joinery}" style="height:36px;padding:2px"/></div>
     ${isWin ? `<div class="field"><label>Volet roulant</label><input type="checkbox" id="sh" ${o.shutter ? 'checked' : ''} style="width:22px;height:22px;justify-self:end"/></div>` : ''}
     <div class="btnrow"><button class="btn danger block" id="del">${icon('trash')}Retirer</button></div>
-    <h3 class="s">Où l'acheter</h3>${buyLinks(isDoor ? 'bloc porte' : isWin ? 'fenêtre aluminium' : 'porte coulissante').map((l) => `<a class="buy" href="${esc(l.url)}" target="_blank" rel="noopener"><span>${esc(l.shop)}</span>${icon('ext')}</a>`).join('')}`;
+    <h3 class="s">Où l'acheter</h3>${buyLinks(o.type === 'garage' ? 'porte de garage' : isDoor ? 'bloc porte' : isWin ? 'fenêtre aluminium' : 'porte coulissante').map((l) => `<a class="buy" href="${esc(l.url)}" target="_blank" rel="noopener"><span>${esc(l.shop)}</span>${icon('ext')}</a>`).join('')}`;
   $('#closeSel', body).onclick = closeSel;
-  for (const k of ['width', 'height', 'sill', 'open']) { const el = $(`#${k}`, body); if (el) el.onchange = (e) => live(() => { o[k] = Number(e.target.value); }); }
+  const clampOpening = () => { o.width = Math.min(o.width, wallLen - 8); o.t = Math.max(o.width / 2 + 4, Math.min(wallLen - o.width / 2 - 4, o.t)); };
+  for (const k of ['width', 'height', 'sill', 'open']) { const el = $(`#${k}`, body); if (el) el.onchange = (e) => { live(() => { o[k] = Number(e.target.value); clampOpening(); }); render(); }; }
+  $('#pos', body).onchange = (e) => { live(() => { o.t = Number(e.target.value) + o.width / 2; clampOpening(); }); render(); };
+  $('#otype', body).onchange = (e) => { live(() => { o.type = e.target.value; o.name = OPENING_TYPES.find((t) => t[0] === o.type)[1]; }); render(); };
+  $('#owidths', body).onclick = (e) => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    live(() => { if (b.dataset.w) o.width = Number(b.dataset.w); if (b.dataset.full) { o.sill = 0; o.height = store.level.height - 8; } clampOpening(); });
+    render();
+  };
   $('#col', body).onchange = (e) => live(() => { o.color = e.target.value; });
   const fl = $('#flip', body); if (fl) fl.onclick = () => live(() => { o.flip = !o.flip; });
   const hg = $('#hinge', body); if (hg) hg.onclick = () => live(() => { o.hinge = o.hinge === 'right' ? 'left' : 'right'; });
@@ -487,6 +680,7 @@ function renderStyle(body) {
     <h3 class="s">${esc(lv.name)}</h3>
     <div class="field wide"><label>Nom</label><input id="lvn" value="${esc(lv.name)}"/></div>
     <div class="field"><label>Hauteur sous plafond (cm)</label><input type="number" id="lvh" value="${lv.height}"/></div>
+    ${p.levels.length > 1 ? '<div class="btnrow"><button class="btn danger block" id="lvdel">Supprimer cet étage</button></div>' : ''}
     <h3 class="s">Plan de l'architecte</h3>
     <p class="muted small">Importe la photo d'un plan et décalque les murs par-dessus.</p>
     <div class="btnrow"><label class="btn block">Importer une image<input type="file" id="bg" accept="image/*" hidden/></label></div>
@@ -502,6 +696,14 @@ function renderStyle(body) {
   bind('lvn', (v) => { lv.name = v; }); bind('lvh', (v) => { lv.height = Number(v); });
   bind('bgw', (v) => { lv.background.scale = (Number(v) * 100) / lv.background.width; });
   bind('bgo', (v) => { lv.background.opacity = Number(v); });
+  const ld = $('#lvdel', body);
+  if (ld) ld.onclick = () => {
+    store.mutate((pr) => { pr.levels.splice(store.levelIndex, 1); });
+    store.setLevel(Math.max(0, store.levelIndex - 1));
+    fillLevels(); plan.fitted = false; plan.fit();
+    toast({ text: 'Étage supprimé.', undo: true });
+    render();
+  };
   const x = $('#bgx', body); if (x) x.onclick = () => { live(() => { lv.background = null; }); render(); };
   $('#bg', body).onchange = async (e) => {
     const f = e.target.files[0]; if (!f) return;
@@ -517,24 +719,148 @@ function renderStyle(body) {
   };
 }
 
-function renderBudget(body) {
-  const b = budget(store), s = surfaces(store);
-  const rooms = new Map();
-  for (const l of b.lines) { if (!rooms.has(l.room)) rooms.set(l.room, []); rooms.get(l.room).push(l); }
+const fmt1 = (n) => (Math.round(n * 10) / 10).toLocaleString('fr-FR');
+function setBudget(fn) {
+  const body = $('#pbody'), top = body.scrollTop;
+  store.snapshot();
+  store.project.budget = budgetSettings(store.project);
+  fn(store.project.budget);
+  store.commit({ rebuild: false });
+  render();
+  body.scrollTop = top;
+}
+
+function budgetLine(l) {
+  const qty = l.unit === '€' ? '' : l.unit === 'forfait' ? 'Forfait' : `${fmt1(l.qty)} ${l.unit} × ${euro(l.price)}`;
+  const tags = `${l.plan ? '<em class="tag plan">d’après le plan</em>' : ''}${l.over ? '<em class="tag dev">ton montant</em>' : l.est ? '<em class="tag est">estimation</em>' : ''}`;
+  return `<div class="bl ${l.off ? 'off' : ''}"><input type="checkbox" data-on="${esc(l.key)}" ${l.off ? '' : 'checked'} aria-label="Compter cette ligne"/><div class="m"><b>${esc(l.label)}</b><span>${[qty, l.note].filter(Boolean).map(esc).join(' · ')}</span><div>${tags}</div></div><input class="amt" type="number" inputmode="numeric" data-amt="${esc(l.key)}" value="${l.off ? Math.round(l.raw) : Math.round(l.amount)}" aria-label="Montant"/>${l.over ? `<button class="rs" data-reset="${esc(l.key)}" title="Revenir au calcul">↺</button>` : ''}</div>`;
+}
+
+// ——— Terrain ———
+function endBrush() { store.brush = null; $('#brushbar').classList.add('hidden'); plan.draw(); if (ui.tab === 'terrain') render(); }
+function startBrush(mode) {
+  store.brush = { mode, radius: ui.bRadius, strength: ui.bStrength, ground: ui.bGround };
+  const lbl = BRUSHES.find((b) => b[0] === mode)[1];
+  const bar = $('#brushbar');
+  bar.innerHTML = `<span>${lbl} : ${matchMedia('(pointer: coarse)').matches ? 'glisse le doigt' : 'clique et glisse'} sur le terrain</span><button id="brushEnd">Terminer</button>`;
+  bar.classList.remove('hidden');
+  $('#brushEnd').onclick = endBrush;
+  if (narrow()) setPanel(false);
+}
+Object.assign(ui, { tShape: 'slope', tDir: 180, tPct: 22, bRadius: 5, bStrength: 1, bGround: 0, sky: 'auto' });
+store.brushStroke = {
+  m: null,
+  one(p) { applyBrush(this.m, p.x, p.y, { ...store.brush, target: this.target }); store.emit('terrain-live'); },
+  begin(p) { store.snapshot(); this.m = ensureTerrain(store.project); this.target = heightAt(this.m, p.x, p.y); this.last = p; this.one(p); },
+  at(p) {
+    if (!this.m) return;
+    const d = Math.hypot(p.x - this.last.x, p.y - this.last.y), step = store.brush.radius * 40;
+    if (d < step * 0.25) return;
+    const n = Math.min(8, Math.ceil(d / step));
+    for (let i = 1; i <= n; i++) this.one({ x: this.last.x + ((p.x - this.last.x) * i) / n, y: this.last.y + ((p.y - this.last.y) * i) / n });
+    this.last = p;
+  },
+  end() { if (!this.m) return; this.m = null; commitTerrain(store.project); store.commit(); },
+};
+
+function renderTerrain(body) {
+  const p = store.project, slopeKinds = Object.keys(SLOPE_DEFAULT), cur = p.site.env || 'campagne';
   body.innerHTML = `
-    <h2 class="t">Budget</h2>
-    <div class="total"><span class="muted">Mobilier restant à acheter</span><b>${euro(b.furn)}</b></div>
-    <div class="total"><span class="muted">Sols (fournitures)</span><b>${euro(b.finTotal)}</b></div>
-    <div class="total"><span class="muted">Surface habitable</span><b>${s.habitable.toFixed(0)} m²</b></div>
-    <div class="note">Construction, ordre de grandeur en France : ${euro(b.build.low)} à ${euro(b.build.high)} hors terrain (1 700 à 2 600 €/m²). À confirmer par des devis.</div>
-    ${[...rooms].map(([name, list]) => `<h3 class="s">${esc(name)} · ${euro(list.reduce((t, l) => t + l.price, 0))}</h3>${list.map((l) => `<div class="line"><input type="checkbox" data-b="${l.it.id}" ${l.it.bought ? 'checked' : ''} style="width:20px;height:20px" aria-label="Acheté"/><img data-th="${esc(l.def.id)}" alt=""/><div class="m"><b>${esc(l.def.name)}</b><span>${esc(l.def.label)}</span></div><div class="r"><a href="${esc(purchaseLinks(l.def)[0]?.url || '#')}" target="_blank" rel="noopener">${euro(l.price)}</a></div></div>`).join('')}`).join('') || '<p class="muted" style="margin-top:14px">Place des meubles pour construire le budget.</p>'}
-    ${b.finishes.length ? `<h3 class="s">Sols</h3>${b.finishes.map((f) => `<div class="line"><div class="m"><b>${esc(f.name)}</b><span>${f.area.toFixed(1).replace('.', ',')} m²</span></div><div class="r">${euro(f.price)}</div></div>`).join('')}` : ''}
-    <div class="btnrow"><button class="btn block" id="csv">Exporter la liste d'achats</button></div>`;
+    <h2 class="t">Terrain et paysage</h2>
+    <h3 class="s">Paysage autour</h3>
+    <div class="chips wrap" id="envs">${ENVIRONMENTS.map((e) => `<button class="chip ${e.id === cur ? 'on' : ''}" data-e="${e.id}">${esc(e.name)}</button>`).join('')}</div>
+    <h3 class="s">Forme du terrain</h3>
+    <div class="chips wrap" id="shapes">${TERRAIN_SHAPES.map(([k, l]) => `<button class="chip ${k === ui.tShape ? 'on' : ''}" data-k="${k}">${esc(l)}</button>`).join('')}</div>
+    <div class="field wide"><label>Descend vers</label><select id="tdir">${DIRECTIONS.map(([k, l]) => `<option value="${k}" ${Number(k) === ui.tDir ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+    ${slopeKinds.includes(ui.tShape) ? `<div class="field"><label>Pente : <b id="tpctv">${ui.tPct} %</b></label><input type="range" id="tpct" min="3" max="60" value="${ui.tPct}"/></div>` : ''}
+    <div class="btnrow"><button class="btn pri block" id="tapply">Appliquer cette forme</button></div>
+    <h3 class="s">Modeler à la main</h3>
+    <div class="chips wrap" id="brushes">${BRUSHES.map(([k, l]) => `<button class="chip ${store.brush?.mode === k ? 'on' : ''}" data-b="${k}">${esc(l)}</button>`).join('')}</div>
+    <div class="field"><label>Taille du pinceau : <b id="brv">${ui.bRadius} m</b></label><input type="range" id="brad" min="1" max="20" value="${ui.bRadius}"/></div>
+    <div class="field"><label>Force</label><input type="range" id="bstr" min="0.2" max="3" step="0.1" value="${ui.bStrength}"/></div>
+    <h3 class="s">Sol${store.brush?.mode === 'paint' ? ' à peindre' : ''}</h3>
+    <div class="swatches">${GROUNDS.map((g, i) => `<button class="swatch ${(store.brush?.mode === 'paint' ? ui.bGround === i : p.site.ground === g.id) ? 'on' : ''}" data-g="${i}" title="${esc(g.name)}" style="background-image:url(./thumbs/t_${g.t}.webp)"></button>`).join('')}</div>
+    <p class="muted small" style="margin-top:6px">Touche un sol pour couvrir tout le terrain, ou choisis « Peindre » pour dessiner des zones.</p>
+    <h3 class="s">Position de la maison</h3>
+    <div class="field"><label>Altitude du niveau d’entrée (m)</label><input type="number" step="0.1" id="alt" value="${p.site.altitude || 0}"/></div>
+    <div class="btnrow"><button class="btn" id="seat">Poser sur le terrain</button><button class="btn" id="flat">Aplanir autour</button></div>
+    <h3 class="s">Ciel</h3>
+    <div class="field wide"><label>Ambiance</label><select id="tsky">${[['auto', 'Selon l’heure'], ['matin', 'Matin'], ['midi', 'Plein soleil'], ['soir', 'Coucher de soleil'], ['couvert', 'Couvert'], ['nuit', 'Nuit']].map(([k, l]) => `<option value="${k}" ${k === ui.sky ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+    <div class="note">Sur une pente, le mur s’adapte seul et un niveau en dessous sort du terrain du côté bas. Ajoute-le depuis le menu des niveaux, en haut.</div>`;
+  const redo = () => { const t = $('#pbody').scrollTop; render(); $('#pbody').scrollTop = t; };
+  $('#envs', body).onclick = (e) => { const k = e.target.dataset.e; if (k) { live(() => { p.site.env = k; if (k === 'neige') p.site.ground = 'neige'; }); redo(); } };
+  $('#shapes', body).onclick = (e) => { const k = e.target.dataset.k; if (k) { ui.tShape = k; if (SLOPE_DEFAULT[k]) ui.tPct = SLOPE_DEFAULT[k]; redo(); } };
+  $('#tdir', body).onchange = (e) => { ui.tDir = Number(e.target.value); };
+  const pc = $('#tpct', body); if (pc) pc.oninput = (e) => { ui.tPct = Number(e.target.value); $('#tpctv', body).textContent = `${ui.tPct} %`; };
+  $('#tapply', body).onclick = () => { live(() => { shapeTerrain(p, ui.tShape, { dir: ui.tDir, pct: ui.tPct }); seatHouse(p); }); plan.contourSrc = null; toast('Terrain modifié. Tout reste annulable.'); redo(); };
+  $('#brushes', body).onclick = (e) => { const k = e.target.dataset.b; if (!k) return; if (store.brush?.mode === k) endBrush(); else { startBrush(k); redo(); } };
+  $('#brad', body).oninput = (e) => { ui.bRadius = Number(e.target.value); $('#brv', body).textContent = `${ui.bRadius} m`; if (store.brush) store.brush.radius = ui.bRadius; };
+  $('#bstr', body).oninput = (e) => { ui.bStrength = Number(e.target.value); if (store.brush) store.brush.strength = ui.bStrength; };
+  body.querySelectorAll('.swatch[data-g]').forEach((b) => { b.onclick = () => {
+    const i = Number(b.dataset.g);
+    if (store.brush?.mode === 'paint') { ui.bGround = i; store.brush.ground = i; redo(); return; }
+    live(() => { p.site.ground = GROUNDS[i].id; if (p.site.terrain) { const m = ensureTerrain(p); m.p.fill(0); commitTerrain(p); } });
+    redo();
+  }; });
+  $('#alt', body).onchange = (e) => live(() => { p.site.altitude = Number(e.target.value) || 0; });
+  $('#seat', body).onclick = () => { if (!p.site.terrain) { toast('Le terrain est plat : rien à ajuster.'); return; } live(() => seatHouse(p)); redo(); };
+  $('#flat', body).onclick = () => { live(() => flattenAround(p, (p.site.altitude || 0))); plan.contourSrc = null; toast('Terrain aplani autour de la maison.'); redo(); };
+  $('#tsky', body).onchange = (e) => { ui.sky = e.target.value; view?.setEnv({ sky: ui.sky }); };
+}
+
+function renderBudget(body) {
+  const b = fullBudget(store), s = b.settings, inside = b.perM2 >= MARKET.low && b.perM2 <= MARKET.high;
+  ui.openGroups ||= new Set(['mobilier']);
+  const opt = (list, cur) => list.map(([k, l]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${esc(l)}</option>`).join('');
+  body.innerHTML = `
+    <h2 class="t">Budget tout compris</h2>
+    <div class="bigtotal"><span>${b.hasTerrain ? 'Coût total du projet' : 'Coût total, hors prix du terrain'}</span><b>${euro(b.total)}</b><small>De ${euro(b.low)} en économique à ${euro(b.high)} en haut de gamme</small></div>
+    ${b.hasTerrain ? '' : '<div class="check warn"><b>Indique le prix du terrain</b><span>Le terrain et ses frais de notaire ne sont pas comptés tant qu’il n’est pas renseigné.</span></div>'}
+    ${b.bought ? `<div class="total"><span class="muted">Déjà acheté</span><b>${euro(b.bought)}</b></div><div class="total"><span class="muted">Reste à payer</span><b>${euro(b.remaining)}</b></div>` : ''}
+    <div class="note">Construction seule : <b>${euro(b.perM2)}/m²</b> habitable pour ${fmt1(b.m.hab)} m². ${b.m.hab ? (inside ? `Dans la fourchette française de ${euro(MARKET.low)} à ${euro(MARKET.high)}/m².` : `Hors de la fourchette française habituelle (${euro(MARKET.low)} à ${euro(MARKET.high)}/m²) : vérifie les lignes ci-dessous.`) : ''}</div>
+    <h3 class="s">Ton projet</h3>
+    <div class="seg gamme" id="gamme">${GAMMES.map(([k, l]) => `<button data-g="${k}" class="${k === s.gamme ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="field wide"><label>Réalisation</label><select data-s="mode">${opt(MODES, s.mode)}</select></div>
+    <div class="field"><label>Prix du terrain (€)</label><input type="number" inputmode="numeric" data-n="terrain" value="${s.terrain || ''}" placeholder="À renseigner"/></div>
+    <div class="field"><label>Surface du terrain (m²)</label><input type="number" inputmode="numeric" data-n="terrainArea" value="${s.terrainArea}"/></div>
+    <div class="field wide"><label>Vendeur</label><select data-s="vendeur">${opt([['particulier', 'Un particulier'], ['pro', 'Un lotisseur']], s.vendeur)}</select></div>
+    <div class="field wide"><label>Égouts</label><select data-s="assainissement">${opt([['collectif', 'Tout-à-l’égout'], ['individuel', 'Assainissement individuel']], s.assainissement)}</select></div>
+    <div class="field"><label>Taxe, part commune (%)</label><input type="number" step="0.5" data-n="commune" value="${s.commune}"/></div>
+    <div class="field"><label>Taxe, part département (%)</label><input type="number" step="0.5" data-n="dept" value="${s.dept}"/></div>
+    <div class="field"><label>Imprévus (%)</label><input type="number" step="1" data-n="imprevus" value="${s.imprevus}"/></div>
+    <h3 class="s">Détail</h3>
+    <p class="muted small" style="margin:0 0 8px">Remplace n’importe quel montant par ton devis. Décoche ce que tu ne veux pas compter.</p>
+    ${b.groups.map((g) => `<details class="bg" data-g="${g.id}" ${ui.openGroups.has(g.id) ? 'open' : ''}><summary><span>${esc(g.title)}</span><b>${euro(g.total)}</b></summary>
+      ${g.lines.map(budgetLine).join('')}
+      ${g.items.map((l) => `<div class="line"><input type="checkbox" data-b="${l.it.id}" ${l.it.bought ? 'checked' : ''} style="width:20px;height:20px" aria-label="Acheté"/><img data-th="${esc(l.def.id)}" alt=""/><div class="m"><b>${esc(l.def.name)}</b><span>${esc(l.room)} · ${esc(l.def.label)}</span></div><div class="r"><a href="${esc(purchaseLinks(l.def)[0]?.url || '#')}" target="_blank" rel="noopener">${l.def.approx ? '≈ ' : ''}${euro(l.price)}</a></div></div>`).join('')}
+    </details>`).join('')}
+    <h3 class="s">Si vous empruntez</h3>
+    <div class="field"><label>Apport (€)</label><input type="number" inputmode="numeric" data-l="apport" value="${s.loan.apport || ''}"/></div>
+    <div class="field"><label>Taux du prêt (%)</label><input type="number" step="0.05" data-l="taux" value="${s.loan.taux || ''}" placeholder="Ex. offre bancaire"/></div>
+    <div class="field"><label>Durée (ans)</label><input type="number" data-l="duree" value="${s.loan.duree}"/></div>
+    <div class="field"><label>Assurance (% par an)</label><input type="number" step="0.05" data-l="assurance" value="${s.loan.assurance}"/></div>
+    ${b.credit ? `<div class="total"><span class="muted">Mensualité, assurance comprise</span><b>${euro(b.credit.mensualite)}</b></div><div class="total"><span class="muted">Coût du crédit</span><b>${euro(b.credit.total)}</b></div><div class="note">Calcul simple à taux fixe, sans les intérêts intercalaires pendant le chantier. Seule une offre de prêt fait foi.</div>` : ''}
+    <div class="btnrow"><button class="btn block" id="csv">Exporter tout le budget</button></div>
+    <div class="note">Prix TTC relevés en novembre 2026, à titre indicatif : les écarts entre artisans et régions sont importants. Les lignes « estimation » n’ont pas de source publique fiable. Seuls des devis font foi. Hors aides, frais de garde-meubles et taxe foncière.</div>
+    <details class="bg"><summary><span>Sources des prix</span></summary><ul class="src">${BUDGET_SOURCES.map(([t, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join('')}</ul></details>`;
   fillThumbs(body);
-  body.querySelectorAll('[data-b]').forEach((c) => { c.onchange = () => { for (const lv of store.project.levels) { const it = lv.items.find((i) => i.id === c.dataset.b); if (it) { live(() => { it.bought = c.checked; }); } } render(); }; });
+  body.querySelectorAll('details[data-g]').forEach((d) => { d.ontoggle = () => { if (d.open) ui.openGroups.add(d.dataset.g); else ui.openGroups.delete(d.dataset.g); }; });
+  $('#gamme', body).onclick = (e) => { const g = e.target.dataset.g; if (g) setBudget((c) => { c.gamme = g; }); };
+  body.querySelectorAll('[data-s]').forEach((el) => { el.onchange = () => setBudget((c) => { c[el.dataset.s] = el.value; }); });
+  body.querySelectorAll('[data-n]').forEach((el) => { el.onchange = () => setBudget((c) => { c[el.dataset.n] = Math.max(0, Number(el.value) || 0); }); });
+  body.querySelectorAll('[data-l]').forEach((el) => { el.onchange = () => setBudget((c) => { c.loan = { ...c.loan, [el.dataset.l]: Math.max(0, Number(el.value) || 0) }; }); });
+  body.querySelectorAll('[data-on]').forEach((el) => { el.onchange = () => setBudget((c) => { if (el.checked) delete c.off[el.dataset.on]; else c.off[el.dataset.on] = true; }); });
+  body.querySelectorAll('[data-amt]').forEach((el) => { el.onchange = () => setBudget((c) => { c.over[el.dataset.amt] = Math.max(0, Number(el.value) || 0); delete c.off[el.dataset.amt]; }); });
+  body.querySelectorAll('[data-reset]').forEach((el) => { el.onclick = () => setBudget((c) => { delete c.over[el.dataset.reset]; }); });
+  body.querySelectorAll('[data-b]').forEach((c) => { c.onchange = () => { for (const lv of store.project.levels) { const it = lv.items.find((i) => i.id === c.dataset.b); if (it) { store.snapshot(); it.bought = c.checked; store.commit({ rebuild: false }); } } }; });
   $('#csv', body).onclick = () => {
-    const rows = [['Pièce', 'Article', 'Type', 'Prix', 'Acheté', 'Lien'], ...b.lines.map((l) => [l.room, l.def.name, l.def.label, Math.round(l.price), l.it.bought ? 'oui' : 'non', purchaseLinks(l.def)[0]?.url || ''])];
-    downloadBlob(new Blob(['﻿' + rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n')], { type: 'text/csv' }), 'liste-achats.csv');
+    const rows = [['Poste', 'Détail', 'Quantité', 'Unité', 'Prix unitaire', 'Montant', 'Base', 'Acheté', 'Lien']];
+    for (const g of b.groups) {
+      for (const l of g.lines) if (!l.off) rows.push([g.title, l.label, l.unit === '€' ? '' : fmt1(l.qty), l.unit === '€' ? '' : l.unit, l.unit === '€' ? '' : Math.round(l.price), Math.round(l.amount), l.over ? 'Mon montant' : l.est ? 'Estimation' : 'Prix marché', '', '']);
+      for (const l of g.items) rows.push([g.title, `${l.def.name} (${l.room})`, 1, 'u', Math.round(l.price), Math.round(l.price), l.def.approx ? 'Prix indicatif' : 'Fiche produit', l.it.bought ? 'oui' : 'non', purchaseLinks(l.def)[0]?.url || '']);
+    }
+    rows.push(['TOTAL', '', '', '', '', Math.round(b.total + (b.credit?.total || 0)), '', '', '']);
+    downloadBlob(new Blob(['﻿' + rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n')], { type: 'text/csv' }), 'budget-maison.csv');
   };
 }
 
@@ -592,7 +918,7 @@ async function renderProjects(body) {
 }
 
 function renderMore(body) {
-  body.innerHTML = `<h2 class="t">Plus</h2>${[['style', 'Style de la maison', 'Façade, toiture, terrain, plan importé'], ['advice', 'Conseils', 'Règles et confort'], ['photos', 'Photos', 'Images photoréalistes'], ['projects', 'Projets', 'Versions, passer d’un appareil à l’autre']].map(([k, a, b]) => `<button class="tpl" data-k="${k}"><b>${a}</b><span class="muted small">${b}</span></button>`).join('')}`;
+  body.innerHTML = `<h2 class="t">Plus</h2>${[['terrain', 'Terrain et paysage', 'Pente, relief, environnement, sol'], ['style', 'Style de la maison', 'Façade, toiture, plan importé'], ['advice', 'Conseils', 'Règles et confort'], ['photos', 'Photos', 'Images photoréalistes'], ['projects', 'Projets', 'Versions, passer d’un appareil à l’autre']].map(([k, a, b]) => `<button class="tpl" data-k="${k}"><b>${a}</b><span class="muted small">${b}</span></button>`).join('')}`;
   body.querySelectorAll('[data-k]').forEach((b) => { b.onclick = () => openTab(b.dataset.k); });
 }
 
@@ -641,18 +967,20 @@ function openProject(p) {
   plan.fitted = false; plan.fit();
   ui.framed = false;
   fillLevels();
-  if (ui.view === '3d') { view.rebuild(); view.frame(); ui.framed = true; }
+  if (ui.view === '3d' && view) { view.rebuild(); view.frame(); ui.framed = true; }
 }
 
 // ——— Événements du magasin ———
 store.addEventListener('select', () => {
   ui.detail = null;
-  if (store.selection && narrow() && store.selection.type !== 'node') setPanel(true);
+  renderSelbar();
+  if (narrow() && !store.selection && ui.panelOpen && ui.selPanel) setPanel(false);
+  ui.selPanel = !!store.selection;
   render();
 });
 store.addEventListener('change', () => {
   syncChrome();
-  if (['budget', 'advice'].includes(ui.tab) && !store.selection) render();
+  if (['budget', 'advice'].includes(ui.tab) && !store.selection && !$('#pbody').contains(document.activeElement)) { const t = $('#pbody').scrollTop; render(); $('#pbody').scrollTop = t; }
   $('#saved').textContent = 'Enregistrement…';
 });
 store.addEventListener('saved', () => { $('#saved').textContent = 'Enregistré'; });
@@ -673,5 +1001,14 @@ store.addEventListener('level', () => { fillLevels(); render(); });
   setPanel(!narrow());
   setView('plan');
   render();
+  document.getElementById('splash')?.remove();
+  // Évite que l'appareil efface le projet en cas de manque de place.
+  navigator.storage?.persist?.().catch(() => {});
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
+  // Prépare la 3D en arrière-plan une fois l'app affichée, sauf en mode économie de données.
+  if (!navigator.connection?.saveData) (window.requestIdleCallback || setTimeout)(() => import('./view3d.js').catch(() => {}), { timeout: 4000 });
 })();
+
+// Enregistre sans attendre quand l'app passe en arrière-plan ou se ferme.
+addEventListener('pagehide', () => store.flush());
+document.addEventListener('visibilitychange', () => { if (document.hidden) store.flush(); });

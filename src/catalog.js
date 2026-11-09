@@ -231,12 +231,30 @@ const GENERIC = [
   G('objets', 'objet', 'Buste en marbre', 27, 30, 51, 129, H('marble_bust_01'), DECO, { query: 'buste marbre déco', scanned: true, onSurface: true }),
   G('structure', 'escalier', 'Escalier droit (2,80 m)', 90, 320, 280, 2400, P('stairs', { woodKind: 'chene' }), BTP, { query: 'escalier droit bois', noColor: true }),
   G('structure', 'escalier', 'Escalier droit compact', 80, 260, 260, 1490, P('stairs', { woodKind: 'chene' }), BTP, { query: 'escalier droit compact' }),
-  G('exterieur', 'terrasse', 'Terrasse bois', 400, 300, 12, 1800, P('slab', { woodKind: 'chene' }), BTP, { query: 'lame terrasse bois' }),
-  G('exterieur', 'pergola', 'Pergola aluminium 4 × 3', 400, 300, 250, 2490, P('pergola'), ['leroy', 'casto', 'google'], { query: 'pergola aluminium 4x3' }),
-  G('exterieur', 'piscine', 'Piscine 8 × 4', 800, 400, 10, 28000, P('pool'), ['google'], { query: 'piscine enterrée 8x4' }),
-  G('exterieur', 'plantation', 'Haie (3 m)', 300, 60, 170, 180, P('hedge'), BTP, { query: 'haie arbustes' }),
+  G('structure', 'escalier', 'Escalier sans contremarche', 90, 320, 280, 3200, P('stairs', { woodKind: 'chene', open: true }), BTP, { query: 'escalier droit bois sans contremarche' }),
+  G('structure', 'escalier', 'Escalier métal et bois', 90, 320, 280, 4500, P('stairs', { woodKind: 'chene', open: true, rail: 'metal' }), BTP, { query: 'escalier métal bois limon central' }),
+  G('structure', 'escalier', 'Escalier béton', 100, 320, 280, 5500, P('stairs', { stone: true }), BTP, { query: 'escalier béton sur mesure' }),
+  G('structure', 'escalier', 'Escalier garde-corps verre', 100, 320, 280, 6900, P('stairs', { woodKind: 'chene', open: true, rail: 'glass' }), BTP, { query: 'escalier garde-corps verre' }),
+  G('structure', 'escalier', 'Escalier quart tournant', 190, 300, 280, 3500, P('stairs', { woodKind: 'chene', shape: 'L' }), BTP, { query: 'escalier quart tournant' }),
+  G('structure', 'escalier', 'Escalier en U', 200, 260, 280, 4800, P('stairs', { woodKind: 'chene', shape: 'U' }), BTP, { query: 'escalier deux quarts tournants' }),
+  G('structure', 'escalier', 'Colimaçon 1,60 m', 160, 160, 280, 2900, P('stairs', { woodKind: 'chene', shape: 'spiral' }), BTP, { query: 'escalier colimaçon 160' }),
+  G('structure', 'escalier', 'Colimaçon compact 1,20 m', 120, 120, 280, 1900, P('stairs', { shape: 'spiral', metal: true }), BTP, { query: 'escalier colimaçon 120 métal' }),
+  G('structure', 'balcon', 'Balcon garde-corps verre 4 m', 400, 150, 110, 5200, P('balcony', { rail: 'glass' }), BTP, { query: 'balcon garde-corps verre', priceBy: 'area' }),
+  G('structure', 'balcon', 'Balcon métal 3 m', 300, 120, 110, 3100, P('balcony', { rail: 'metal' }), BTP, { query: 'balcon métal', priceBy: 'area' }),
+  G('structure', 'balcon', 'Terrasse sur pilotis 6 × 3 m', 600, 300, 110, 9800, P('balcony', { rail: 'glass', stilts: true, woodKind: 'chene' }), BTP, { query: 'terrasse sur pilotis', priceBy: 'area' }),
+  G('structure', 'balcon', 'Terrasse suspendue bois 4 × 2 m', 400, 200, 110, 4900, P('balcony', { rail: 'metal', stilts: true, woodKind: 'chene' }), BTP, { query: 'terrasse bois surélevée', priceBy: 'area' }),
+  G('structure', 'garde-corps', 'Garde-corps verre 2 m', 200, 6, 105, 760, P('railing', { rail: 'glass' }), BTP, { query: 'garde-corps verre', priceBy: 'length', wall: true }),
+  G('structure', 'garde-corps', 'Garde-corps métal 2 m', 200, 6, 105, 340, P('railing', { rail: 'metal' }), BTP, { query: 'garde-corps métal', priceBy: 'length', wall: true }),
+  G('exterieur', 'soutenement', 'Mur de soutènement pierre 3 m', 300, 40, 120, 1500, P('retaining', { kind: 'stone' }), BTP, { query: 'mur de soutènement pierre', priceBy: 'length' }),
+  G('exterieur', 'soutenement', 'Mur de soutènement béton 3 m', 300, 25, 150, 1200, P('retaining', {}), BTP, { query: 'mur de soutènement béton', priceBy: 'length' }),
+  G('exterieur', 'soutenement', 'Gabions 2 m', 200, 50, 100, 520, P('retaining', { kind: 'gabion' }), BTP, { query: 'mur gabion', priceBy: 'length' }),
+  G('exterieur', 'marches', 'Marches extérieures 1,20 m', 120, 200, 100, 650, P('stairs', { stone: true, noRail: true }), BTP, { query: 'escalier extérieur pierre' }),
+  G('exterieur', 'terrasse', 'Terrasse bois', 400, 300, 12, 1800, P('slab', { woodKind: 'chene' }), BTP, { query: 'lame terrasse bois', priceBy: 'area' }),
+  G('exterieur', 'pergola', 'Pergola aluminium 4 × 3', 400, 300, 250, 2490, P('pergola'), ['leroy', 'casto', 'google'], { query: 'pergola aluminium 4x3', priceBy: 'area' }),
+  G('exterieur', 'piscine', 'Piscine 8 × 4', 800, 400, 10, 28000, P('pool'), ['google'], { query: 'piscine enterrée 8x4', priceBy: 'area' }),
+  G('exterieur', 'plantation', 'Haie (3 m)', 300, 60, 170, 180, P('hedge'), BTP, { query: 'haie arbustes', priceBy: 'length' }),
   G('exterieur', 'plantation', 'Arbre', 340, 340, 500, 149, P('tree'), BTP, { query: 'arbre de jardin' }),
-  G('exterieur', 'cloture', 'Palissade bois (2,50 m)', 250, 5, 150, 149, P('fence'), BTP, { query: 'palissade bois' }),
+  G('exterieur', 'cloture', 'Palissade bois (2,50 m)', 250, 5, 150, 149, P('fence'), BTP, { query: 'palissade bois', priceBy: 'length' }),
   G('exterieur', 'mobilier', 'Salon de jardin 2 places', 78, 183, 86, 349, H('outdoor_table_chair_set_01'), DECO, { query: 'salon de jardin', scanned: true }),
   G('exterieur', 'mobilier', 'Table de pique-nique', 224, 302, 75, 399, H('wooden_picnic_table'), BTP, { query: 'table pique-nique bois', scanned: true }),
   G('exterieur', 'mobilier', 'Banc en bois peint', 116, 50, 89, 189, H('painted_wooden_bench'), DECO, { query: 'banc jardin bois', scanned: true }),
@@ -251,25 +269,25 @@ const BRANDS = [
   BR('Maisons du Monde', 'salon', 'canape', 'Milano', 'Canapé cosy rond 3 places bouclette', 210, 85, 85, 399.99, BOUCLE('#efe9dc'), 'https://www.maisonsdumonde.com/FR/fr/p/canape-3-places-cosy-rond-tissu-bouclettes-blanches-milano-M23079364.htm', { query: 'canapé rond bouclette' }),
   BR('Sklum', 'salon', 'canape', 'Eracli', 'Canapé 3 places bouclé', 225, 86, 75, 439.95, BOUCLE('#ece6d6'), 'https://www.sklum.com/fr/acheter-canape-3-places/158700-canape-3-places-eracli-en-peau-de-mouton.html', { query: 'canapé bouclé 3 places' }),
   BR('Sklum', 'salon', 'canape', 'Shirina', 'Canapé 3 places bouclé beige', 230, 100, 67, 739.95, BOUCLE('#c9b89e'), 'https://www.sklum.com/fr/acheter-canape-3-places/198288-canape-3-places-shirina-en-tissu-boucle.html', { query: 'canapé bouclé beige' }),
-  BR('Sklum', 'salon', 'canape', 'Yervin', 'Canapé 3 places aluminium et bouclé', 190, 84, 71, 559.95, BOUCLE('#e0d7c6'), 'https://www.sklum.com/fr/acheter-canape-3-places/173684-canape-3-places-en-aluminium-et-tissu-boucle-yervin.html', { query: 'canapé bouclé aluminium' }),
+  BR('Sklum', 'salon', 'canape', 'Yervin', 'Canapé 3 places aluminium et bouclé', 190, 84, 71, 419.95, BOUCLE('#e0d7c6'), 'https://www.sklum.com/fr/acheter-canape-3-places/173684-canape-3-places-en-aluminium-et-tissu-boucle-yervin.html', { query: 'canapé bouclé aluminium' }),
   BR('Sklum', 'salon', 'canape', 'Cardea', 'Canapé modulaire 3 pièces bouclé', 288, 96, 68, 1269.85, P('sofa', { seats: 3, kind: 'bouclette', color: '#d8cdb9' }), 'https://www.sklum.com/fr/acheter-canapes-modulables-3-places/191482-canape-modulaire-3-pieces-en-tissu-boucle-cardea.html', { query: 'canapé modulaire bouclé' }),
-  BR('Sklum', 'salon', 'canape', 'Famara', 'Canapé 3 places rotin et acacia', 195, 82, 84, 619.95, P('sofa', { seats: 3, kind: 'lin', color: '#d8cdb9' }), 'https://www.sklum.com/fr/acheter-canape-3-places/180665-canape-3-places-en-rotin-et-bois-d-acacia-famara.html', { query: 'canapé rotin acacia' }),
+  BR('Sklum', 'salon', 'canape', 'Famara', 'Canapé 3 places rotin et acacia', 195, 82, 84, 449.95, P('sofa', { seats: 3, kind: 'lin', color: '#d8cdb9' }), 'https://www.sklum.com/fr/acheter-canape-3-places/180665-canape-3-places-en-rotin-et-bois-d-acacia-famara.html', { query: 'canapé rotin acacia' }),
   BR('Miliboo', 'salon', 'canape', 'Oslo 3 places', 'Canapé scandinave gris clair et bois', 179, 80, 81, 479.99, P('sofa', { seats: 3, color: '#b4b4b0' }), 'https://www.miliboo.com/canape-scandinave-3-places-gris-clair-pieds-bois-oslo-40650.html', { query: 'canapé scandinave 3 places' }),
-  BR('Miliboo', 'salon', 'canape', 'Pure', 'Canapé scandinave 3 places', 190, 76, 80, 449.99, P('sofa', { seats: 3, color: '#b4b4b0' }), 'https://www.miliboo.com/canape-scandinave-3-places-gris-bois-pure-48747.html', { query: 'canapé scandinave gris' }),
-  BR('Miliboo', 'salon', 'canape', 'Moon', 'Canapé scandinave 2 places beige', 123, 69, 80, 287.99, P('sofa', { seats: 2, color: '#c9b89e' }), 'https://www.miliboo.com/canape-scandinave-2-places-beige-moon-47524.html', { query: 'canapé 2 places beige' }),
+  BR('Miliboo', 'salon', 'canape', 'Pure', 'Canapé scandinave 3 places', 190, 76, 80, 359.99, P('sofa', { seats: 3, color: '#b4b4b0' }), 'https://www.miliboo.com/canape-scandinave-3-places-gris-bois-pure-48747.html', { query: 'canapé scandinave gris' }),
+  BR('Miliboo', 'salon', 'canape', 'Moon', 'Canapé scandinave 2 places beige', 123, 69, 80, 319.99, P('sofa', { seats: 2, color: '#c9b89e' }), 'https://www.miliboo.com/canape-scandinave-2-places-beige-moon-47524.html', { query: 'canapé 2 places beige' }),
   BR('Maisons du Monde', 'salon', 'table-basse', 'Ratane', 'Table basse ronde manguier et rotin', 70, 70, 43, 239.2, H('coffee_table_round_01'), 'https://www.maisonsdumonde.com/FR/fr/p/table-basse-ronde-en-bois-de-manguier-massif-et-rotin-beige-l70-ratane-220032.htm', { query: 'table basse ronde rotin' }),
   BR('Maisons du Monde', 'repas', 'table', 'Rhonda', 'Table ronde en chêne, 8 personnes', 150, 150, 75, 897, H('round_wooden_table_02'), 'https://www.maisonsdumonde.com/FR/fr/p/table-ronde-en-chene-rhonda-M22178913.htm', { query: 'table ronde chêne', note: 'Vendu par un partenaire de Maisons du Monde.' }),
-  BR('Kave Home', 'repas', 'table', 'Cosgrove', 'Table 180 × 85 rotin et bois', 180, 85, 75, 355, H('wooden_table_02'), 'https://kavehome.com/fr/fr/tables-fixes/table-cosgrove-180x85-cm-en-rotin-naturel-et-bois', { query: 'table rotin bois', dimsApprox: true }),
+  BR('Kave Home', 'repas', 'table', 'Cosgrove', 'Table 180 × 85 rotin et bois', 180, 85, 75, 355, H('wooden_table_02'), 'https://kavehome.com/fr/fr/tables-fixes/table-cosgrove-180x85-cm-en-rotin-naturel-et-bois', { query: 'table rotin bois' }),
   BR('Maisons du Monde', 'repas', 'chaise', 'Esta', 'Chaise frêne et cannage', 45, 49, 86, 139, P('chair', { woodKind: 'chene' }), 'https://www.maisonsdumonde.com/FR/fr/p/chaise-en-bois-de-frene-cannage-en-rotin-esta-219774.htm', { query: 'chaise cannage' }),
   BR('Maisons du Monde', 'repas', 'chaise', 'Santa Fe', 'Chaise chêne et cannage', 52, 57, 85, 219, P('chair', { woodKind: 'clair' }), 'https://www.maisonsdumonde.com/FR/fr/p/chaise-en-chene-et-cannage-santa-fe-219071.htm', { query: 'chaise chêne cannage' }),
-  BR('Sklum', 'repas', 'chaise', 'Lali', 'Chaise frêne et rotin', 50, 52, 80, 174.95, P('chair', { woodKind: 'noyer' }), 'https://www.sklum.com/fr/acheter-chaises-salle-a-manger/118271-chaise-de-salle-a-manger-en-bois-de-style-lali.html', { query: 'chaise frêne rotin', dimsApprox: true }),
-  BR('Sklum', 'repas', 'chaise', 'Tento', 'Chaise en rotin', 50, 55, 80, 189.95, P('chair', { woodKind: 'chene' }), 'https://www.sklum.com/fr/acheter-chaises-salle-a-manger/107177-chaise-de-salle-a-manger-en-rotin-style-tento.html', { query: 'chaise rotin', dimsApprox: true }),
-  BR('Miliboo', 'repas', 'chaise', 'Walford (lot de 2)', 'Chaises bois clair et noir', 52, 50, 75, 173.89, P('chair', { woodKind: 'clair' }), 'https://www.miliboo.com/chaise-bois-clair-et-pu-noir-design-scandinave-japonais-walford-40335.html', { query: 'chaise scandinave bois clair' }),
+  BR('Sklum', 'repas', 'chaise', 'Lali', 'Chaise frêne et rotin', 45, 50, 82, 174.95, P('chair', { woodKind: 'noyer' }), 'https://www.sklum.com/fr/acheter-chaises-salle-a-manger/118271-chaise-de-salle-a-manger-en-bois-de-style-lali.html', { query: 'chaise frêne rotin' }),
+  BR('Sklum', 'repas', 'chaise', 'Tento', 'Chaise en rotin', 46.5, 67, 82.5, 189.95, P('chair', { woodKind: 'chene' }), 'https://www.sklum.com/fr/acheter-chaises-salle-a-manger/107177-chaise-de-salle-a-manger-en-rotin-style-tento.html', { query: 'chaise rotin' }),
+  BR('Miliboo', 'repas', 'chaise', 'Walford', 'Chaise bois clair et noir', 52, 50, 75, 86.95, P('chair', { woodKind: 'clair' }), 'https://www.miliboo.com/chaise-bois-clair-et-pu-noir-design-scandinave-japonais-walford-40335.html', { query: 'chaise scandinave bois clair', id: 'b-miliboo-walford-lot-de-2', note: 'Vendue par lot de 2 à 173,89 € : le prix indiqué est celui d’une chaise.' }),
   BR('Maisons du Monde', 'repas', 'buffet', 'Bornéo', 'Buffet 2 portes cannage rotin', 95, 40, 120, 499, P('wardrobe', { doors: 2, woodKind: 'chene' }), 'https://www.maisonsdumonde.com/FR/fr/p/buffet-2-portes-cannage-en-rotin-borneo-229777.htm', { query: 'buffet cannage rotin' }),
   BR('Maisons du Monde', 'repas', 'buffet', 'Himalaya', 'Buffet manguier sculpté L90', 90, 40, 90, 479, P('wardrobe', { doors: 2, woodKind: 'noyer' }), 'https://www.maisonsdumonde.com/FR/fr/p/buffet-2-portes-en-bois-de-manguier-massif-sculpte-l90-himalaya-186069.htm', { query: 'buffet manguier' }),
 ];
 
-const SUB_LABELS = { canape: 'Canapés', fauteuil: 'Fauteuils', 'table-basse': 'Tables basses', 'meuble-tv': 'Meubles TV', bibliotheque: 'Bibliothèques', table: 'Tables', chaise: 'Chaises', buffet: 'Buffets', tabouret: 'Tabourets', lit: 'Lits', matelas: 'Matelas', chevet: 'Chevets', armoire: 'Armoires', commode: 'Commodes', bureau: 'Bureaux', siege: 'Sièges', meuble: 'Meubles', plan: 'Plans de travail', evier: 'Éviers', electro: 'Électroménager', ilot: 'Îlots', 'meuble-vasque': 'Meubles vasque', 'miroir-sdb': 'Armoires miroir', 'rangement-sdb': 'Rangements', tapis: 'Tapis', rideau: 'Rideaux', suspension: 'Suspensions', lampadaire: 'Lampadaires', lampe: 'Lampes', miroir: 'Miroirs', cadre: 'Cadres', plante: 'Plantes', coussin: 'Coussins', vase: 'Vases', rangement: 'Rangements', baignoire: 'Baignoires', douche: 'Douches', wc: 'WC', radiateur: 'Radiateurs', tv: 'Téléviseurs', objet: 'Objets', 'lit-enfant': 'Lits enfant', 'rangement-enfant': 'Rangements', 'table-ext': 'Tables', 'chaise-ext': 'Assises', escalier: 'Escaliers', terrasse: 'Terrasses', pergola: 'Pergolas', piscine: 'Piscines', plantation: 'Plantations', cloture: 'Clôtures', mobilier: 'Mobilier', cheminee: 'Chauffage' };
+const SUB_LABELS = { canape: 'Canapés', fauteuil: 'Fauteuils', 'table-basse': 'Tables basses', 'meuble-tv': 'Meubles TV', bibliotheque: 'Bibliothèques', table: 'Tables', chaise: 'Chaises', buffet: 'Buffets', tabouret: 'Tabourets', lit: 'Lits', matelas: 'Matelas', chevet: 'Chevets', armoire: 'Armoires', commode: 'Commodes', bureau: 'Bureaux', siege: 'Sièges', meuble: 'Meubles', plan: 'Plans de travail', evier: 'Éviers', electro: 'Électroménager', ilot: 'Îlots', 'meuble-vasque': 'Meubles vasque', 'miroir-sdb': 'Armoires miroir', 'rangement-sdb': 'Rangements', tapis: 'Tapis', rideau: 'Rideaux', suspension: 'Suspensions', lampadaire: 'Lampadaires', lampe: 'Lampes', miroir: 'Miroirs', cadre: 'Cadres', plante: 'Plantes', coussin: 'Coussins', vase: 'Vases', rangement: 'Rangements', baignoire: 'Baignoires', douche: 'Douches', wc: 'WC', radiateur: 'Radiateurs', tv: 'Téléviseurs', objet: 'Objets', 'lit-enfant': 'Lits enfant', 'rangement-enfant': 'Rangements', 'table-ext': 'Tables', 'chaise-ext': 'Assises', escalier: 'Escaliers', terrasse: 'Terrasses', pergola: 'Pergolas', piscine: 'Piscines', plantation: 'Plantations', cloture: 'Clôtures', mobilier: 'Mobilier', cheminee: 'Chauffage', balcon: 'Balcons et terrasses', 'garde-corps': 'Garde-corps', soutenement: 'Soutènements', marches: 'Marches' };
 export const subLabel = (s) => SUB_LABELS[s] || s;
 
 const ikeaItems = ikea.filter((x) => x.sub !== 'facade' && x.price > 0).map(fromIkea);
@@ -285,6 +303,13 @@ export function setCustom(list) {
 }
 export const allItems = () => [...items, ...custom];
 export const getItem = (id) => byId.get(id);
+/** Prix d'un article posé : une terrasse, une haie ou une clôture suit sa taille réelle. */
+export function itemPrice(it, def) {
+  const p = def.price || 0;
+  if (def.priceBy === 'area') return p * (((it.w ?? def.w) * (it.d ?? def.d)) / (def.w * def.d));
+  if (def.priceBy === 'length') return p * ((it.w ?? def.w) / def.w);
+  return p;
+}
 export const catalogStats = () => ({ ikea: ikeaItems.length, total: items.length });
 export const isHerStyle = (i) => !['IKEA', 'Générique'].includes(i.brand) && i.cat !== 'perso';
 
@@ -299,14 +324,25 @@ export function purchaseLinks(item) {
   return out;
 }
 
+export const DOOR_TYPES = ['door', 'entry', 'sliding-door', 'pocket', 'double', 'garage', 'passage'];
+export const isDoorType = (t) => DOOR_TYPES.includes(t);
+
+const D = (name, width, height = 204, extra = {}) => ({ group: 'Portes', type: 'door', name, width, height, sill: 0, ...extra });
+const W = (name, width, height, sill, type = 'window2', extra = {}) => ({ group: 'Fenêtres', type, name, width, height, sill, ...extra });
+const B_ = (name, width, height = 215, extra = {}) => ({ group: 'Baies vitrées', type: 'bay', name, width, height, sill: 0, ...extra });
+
 export const OPENINGS = [
-  { type: 'door', name: 'Porte intérieure', width: 83, height: 204, sill: 0 },
-  { type: 'door', name: 'Porte vitrée', width: 83, height: 204, sill: 0, glazed: true },
-  { type: 'sliding-door', name: 'Porte coulissante', width: 83, height: 204, sill: 0 },
-  { type: 'entry', name: "Porte d'entrée", width: 100, height: 215, sill: 0 },
-  { type: 'window1', name: 'Fenêtre 1 vantail', width: 60, height: 115, sill: 100 },
-  { type: 'window2', name: 'Fenêtre 2 vantaux', width: 120, height: 135, sill: 90 },
-  { type: 'window2', name: 'Porte-fenêtre', width: 140, height: 215, sill: 0 },
-  { type: 'bay', name: 'Baie vitrée', width: 280, height: 215, sill: 0 },
-  { type: 'fixed', name: 'Fenêtre fixe', width: 100, height: 100, sill: 110 },
+  B_('Porte-fenêtre', 140, 215, { type: 'window2' }),
+  B_('Baie 2,40 m', 240), B_('Baie 2,80 m', 280), B_('Baie 3 m', 300), B_('Grande baie 4 m', 400), B_('Grande baie 5 m', 500), B_('Très grande baie 6 m', 600),
+  B_('Baie toute hauteur 3 m', 300, 245, { full: true }), B_('Baie toute hauteur 5 m', 500, 245, { full: true }),
+  B_('Mur vitré 4 m', 400, 245, { type: 'glasswall', full: true }), B_('Mur vitré 6 m', 600, 245, { type: 'glasswall', full: true }),
+  D('Porte intérieure 73', 73), D('Porte intérieure 83', 83), D('Porte large 93', 93), D('Porte vitrée', 83, 204, { glazed: true }),
+  D('Porte double', 146, 204, { type: 'double' }), D('Porte double vitrée', 166, 215, { type: 'double', glazed: true }),
+  D('Porte coulissante', 83, 204, { type: 'sliding-door' }), D('Porte à galandage', 83, 204, { type: 'pocket' }),
+  D("Porte d'entrée", 100, 215, { type: 'entry' }), D("Grande porte d'entrée", 125, 225, { type: 'entry' }), D("Porte d'entrée double", 160, 225, { type: 'entry', leaves: 2 }),
+  D('Passage ouvert', 120, 215, { type: 'passage' }), D('Grand passage', 240, 225, { type: 'passage' }),
+  D('Porte de garage 2,40 m', 240, 200, { type: 'garage' }), D('Porte de garage 3 m', 300, 215, { type: 'garage' }), D('Porte de garage double 5 m', 500, 215, { type: 'garage' }),
+  W('Fenêtre 1 vantail', 60, 115, 100, 'window1'), W('Petite fenêtre', 45, 60, 130, 'window1'), W('Fenêtre 2 vantaux', 120, 135, 90), W('Fenêtre 2 vantaux large', 140, 135, 90), W('Fenêtre 3 vantaux', 180, 135, 90, 'bay'),
+  W('Fenêtre haute', 200, 50, 190, 'fixed'), W('Bandeau vitré', 300, 60, 150, 'glasswall'), W('Fenêtre fixe', 100, 100, 110, 'fixed'), W('Fenêtre carrée', 60, 60, 120, 'fixed'),
+  W('Verrière atelier', 200, 150, 90, 'atelier'), W('Verrière toute hauteur', 240, 215, 0, 'atelier'),
 ];

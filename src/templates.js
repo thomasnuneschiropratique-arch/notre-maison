@@ -1,6 +1,7 @@
 // Maisons de départ, modifiables.
 import { newProject, newLevel, addNode, addWall, uid, syncRooms, store } from './state.js';
 import { allItems, getItem } from './catalog.js';
+import { ensureTerrain, commitTerrain, shapeTerrain, T_N } from './terrain.js';
 
 function rect(lv, x0, y0, x1, y1, t = 25) {
   const ids = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => addNode(lv, x, y));
@@ -189,7 +190,83 @@ function houseTwoStorey() {
   return p;
 }
 
+/** Maison à flanc de colline : on entre en haut, les chambres sont en dessous et regardent la vallée. */
+function houseHillside() {
+  const p = newProject('Maison sur la colline');
+  p.roof.type = 'mono'; p.roof.pitch = 8; p.style.facade = 'facade_enduit'; p.site.env = 'campagne';
+  const top = p.levels[0];
+  top.name = 'Rez-de-chaussée';
+  rect(top, 0, 0, 1200, 800);
+  partition(top, 600, 0, 600, 800);
+  partition(top, 0, 300, 600, 300);
+  open(top, 300, 0, 'entry', 110, 225, 0, { name: "Porte d'entrée" });
+  open(top, 900, 800, 'bay', 500, 240, 0, { name: 'Grande baie 5 m' });
+  open(top, 300, 800, 'bay', 300, 240, 0, { name: 'Baie 3 m' });
+  open(top, 1200, 400, 'bay', 300, 240, 0, { name: 'Baie 3 m' });
+  open(top, 900, 0, 'window2', 120, 135, 90);
+  open(top, 600, 550, 'passage', 240, 225, 0, { name: 'Grand passage' });
+  open(top, 530, 300, 'door', 93, 204, 0);
+  setRoom(top, 300, 150, 'entree', 'Entrée', { floor: 'tile_terracotta' });
+  setRoom(top, 300, 550, 'cuisine', 'Cuisine', { floor: 'oak_natural' });
+  setRoom(top, 900, 400, 'salon', 'Salon', { floor: 'oak_natural', paint: 'paint_wimborne' });
+  place(top, getItem('b-maisons-du-monde-wallas') || find('canape'), 900, 480, 0);
+  place(top, find('tapis', (i) => i.w >= 190), 900, 610, 0);
+  place(top, getItem('b-maisons-du-monde-ratane') || find('table-basse'), 900, 610, 0);
+  place(top, getItem('g-ilot--lot-central-180-90'), 300, 560, 0);
+  for (let i = 0; i < 4; i++) place(top, getItem('g-meuble-meuble-bas-60-cm'), 60 + i * 60, 345, 0);
+  place(top, getItem('g-electro-r-frig-rateur-combin-60-cm'), 320, 345, 0);
+  place(top, getItem('g-electro-lave-vaisselle-60-cm'), 380, 345, 0);
+  place(top, getItem('g-electro-plaque-induction-60-cm'), 120, 345, 0, { z: 88 });
+  place(top, getItem('g-electro-hotte-murale-60-cm'), 120, 335, 0);
+  place(top, find('suspension'), 300, 560);
+  place(top, getItem('g-balcon-balcon-garde-corps-verre-4-m') , 900, 890, 0, { w: 560, d: 150 });
+
+  const low = newLevel('Rez-de-jardin', 250);
+  rect(low, 0, 0, 1200, 800);
+  partition(low, 0, 300, 1200, 300);
+  partition(low, 400, 300, 400, 800);
+  partition(low, 800, 300, 800, 800);
+  partition(low, 800, 0, 800, 300);
+  open(low, 200, 800, 'bay', 300, 235, 0, { name: 'Baie 3 m' });
+  open(low, 600, 800, 'bay', 300, 235, 0, { name: 'Baie 3 m' });
+  open(low, 1000, 800, 'bay', 300, 235, 0, { name: 'Baie 3 m' });
+  open(low, 200, 300, 'door', 83, 204, 0); open(low, 600, 300, 'door', 83, 204, 0); open(low, 1000, 300, 'door', 83, 204, 0); open(low, 800, 150, 'door', 83, 204, 0);
+  setRoom(low, 400, 150, 'couloir', 'Dégagement');
+  setRoom(low, 1000, 150, 'sdb', 'Salle de bain', { floor: 'tile_marble' });
+  setRoom(low, 200, 550, 'parentale', 'Suite parentale', { paint: 'paint_skimming' });
+  setRoom(low, 600, 550, 'chambre', 'Chambre 2');
+  setRoom(low, 1000, 550, 'chambre', 'Chambre 3');
+  const bed = find('lit', (i) => i.w >= 160 && i.w < 185);
+  place(low, bed, 200, 415, 0); place(low, bed, 600, 415, 0); place(low, find('lit', (i) => i.w < 150) || bed, 1000, 415, 0);
+  place(low, getItem('g-douche-douche-l-italienne-120-80'), 1100, 60, 0);
+  place(low, find('meuble-vasque'), 950, 40, 0);
+  place(low, getItem('g-wc-wc-suspendu-avec-b-ti-support'), 860, 260, 180);
+  place(low, getItem('g-escalier-escalier-sans-contremarche'), 300, 150, 90);
+
+  p.levels.unshift(low);
+  p.entry = 1;
+  syncRooms(top); syncRooms(low);
+
+  // Pente vers le sud : au nord on entre de plain-pied, au sud le niveau du bas s'ouvre sur le paysage.
+  shapeTerrain(p, 'slope', { dir: 180, pct: 34 });
+  const m = ensureTerrain(p), half = (T_N - 1) / 2;
+  p.site.terrain.cx = 600; p.site.terrain.cy = 0; m.cx = 600; m.cy = 0;
+  for (let j = 0; j < T_N; j++) for (let i = 0; i < T_N; i++) {
+    const y = j - half, base = -y * 0.34 + (Math.sin(i * 0.11) * 0.25);
+    // Jardin plat devant les chambres, puis la colline reprend.
+    let v = base;
+    if (y > 8) v = -2.72 - Math.max(0, y - 16) * 0.3;
+    else if (y > 7.2) v = -2.72 + (8 - y) * 0.2;
+    m.h[j * T_N + i] = Math.round(v * 100);
+  }
+  commitTerrain(p);
+  p.site.altitude = 0;
+  for (const [x, y] of [[-900, 2400], [2100, 2100], [-400, 3400], [1500, 3200], [-1600, -700], [2600, -500]]) place(top, getItem('g-plantation-arbre'), x, y, 0);
+  return p;
+}
+
 export const TEMPLATES = [
+  { id: 'hill', name: 'Maison sur la colline', desc: 'Salon et cuisine en haut, chambres en dessous avec vue sur la vallée', make: houseHillside },
   { id: 'single', name: 'Plain-pied meublé', desc: '126 m², 3 chambres, déjà aménagé', make: houseSinglestorey },
   { id: 'two', name: 'Maison à étage', desc: '2 niveaux, 88 m² au sol, avec escalier', make: houseTwoStorey },
   { id: 'empty', name: 'Page blanche', desc: 'Partir de zéro ou d’un plan importé', make: () => newProject('Notre maison') },

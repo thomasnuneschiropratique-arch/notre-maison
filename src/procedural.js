@@ -633,23 +633,94 @@ function picture(p) {
 }
 
 // ——— Structure et extérieur ———
+function railRun(g, a, b, h, kind, metal, gl) {
+  // Portion de garde-corps entre deux points (x, y, z).
+  const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], len = Math.hypot(dx, dy, dz), flat = Math.hypot(dx, dz);
+  if (len < 0.02) return;
+  const mid = (o) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + o, (a[2] + b[2]) / 2];
+  const ry = Math.atan2(dx, dz), rx = -Math.atan2(dy, flat);
+  const bar = (w, t, y) => { const [x, yy, z] = mid(y); const m = B(g, w, t, len, metal, x, 0, z); m.position.y = yy; m.rotation.order = 'YXZ'; m.rotation.y = ry; m.rotation.x = rx; return m; };
+  bar(0.03, 0.03, h);
+  if (kind === 'glass') { const [x, yy, z] = mid(h / 2); const m = B(g, 0.012, h - 0.03, len, gl, x, 0, z); m.position.y = yy; m.rotation.order = 'YXZ'; m.rotation.y = ry; m.rotation.x = rx; m.castShadow = false; }
+  else { const n = Math.max(1, Math.round(len / 0.14)); for (let i = 0; i <= n; i++) { const t = i / n; B(g, 0.012, h, 0.012, metal, a[0] + dx * t, a[1] + dy * t, a[2] + dz * t); } }
+}
+
+/** Escaliers : droit, quart tournant, en U, colimaçon ; bois, métal, béton ; toujours à la bonne hauteur. */
 function stairs(p) {
   const g = new THREE.Group();
-  const { w = 0.9, d = 3, h = 2.8, finish } = p;
-  const n = Math.max(3, Math.round(h / 0.18));
-  const rise = h / n, run = d / n;
-  const metal = blackMetal();
-  for (let i = 0; i < n; i++) {
-    B(g, w, 0.04, run + 0.03, finish, 0, rise * (i + 1) - 0.04, d / 2 - run * (i + 0.5), 0.004);
+  const { w = 0.9, d = 3, h = 2.8, finish, shape = 'straight', open: openRiser, rail = 'metal', stone, noRail, metal: allMetal } = p;
+  const metal = blackMetal(), gl = glass();
+  const tread = stone ? solid('#b9b5ab', 0.85) : allMetal ? metal : finish;
+  const n = Math.max(3, Math.round(h / 0.18)), rise = h / n, th = stone ? 0.14 : 0.04;
+  const step = (x, z, sx, sz, i) => { B(g, sx, stone ? rise : th, sz, tread, x, stone ? rise * i : rise * (i + 1) - th, z, 0.004); if (!openRiser && !stone) B(g, Math.max(sx, sz) === sx ? sx : 0.02, rise, Math.max(sx, sz) === sx ? 0.02 : sz, solid('#efeee9', 0.5), x, rise * i, z); };
+  const R = (a, b) => { if (!noRail) railRun(g, a, b, 0.92, rail, metal, gl); };
+  if (shape === 'spiral') {
+    const r = Math.min(w, d) / 2, turn = (Math.PI * 2 * 1.1) / n;
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, h + 1, 12), metal); pole.position.y = (h + 1) / 2; pole.castShadow = true; g.add(pole);
+    let prev = null;
+    for (let i = 0; i < n; i++) {
+      const a = i * turn, wedge = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.04, 8, 1, false, a, turn * 1.08), tread);
+      wedge.position.y = rise * (i + 1) - 0.02; wedge.castShadow = wedge.receiveShadow = true; g.add(wedge);
+      const e = [Math.sin(a + turn / 2) * r * 0.97, rise * (i + 1), Math.cos(a + turn / 2) * r * 0.97];
+      if (prev) R(prev, e);
+      prev = e;
+    }
+    return g;
   }
-  for (const sx of [-1, 1]) {
-    const len = Math.hypot(h, d);
-    const s = B(g, 0.03, 0.22, len, metal, sx * (w / 2 + 0.015), 0, 0);
+  if (shape === 'L' || shape === 'U') {
+    const f = Math.min(0.95, shape === 'U' ? w / 2 - 0.04 : w * 0.5), lenA = d - f;
+    const nA = shape === 'U' ? Math.floor((n - 1) / 2) : Math.round(((n - 1) * lenA) / (lenA + (w - f)));
+    const nB = n - 1 - nA, runA = lenA / nA, xA = -w / 2 + f / 2;
+    for (let i = 0; i < nA; i++) step(xA, d / 2 - runA * (i + 0.5), f, runA + 0.02, i);
+    R([xA + f / 2, 0, d / 2], [xA + f / 2, rise * nA, -d / 2 + f]);
+    if (shape === 'L') {
+      step(xA, -d / 2 + f / 2, f, f, nA);
+      const runB = (w - f) / nB, zB = -d / 2 + f / 2;
+      for (let i = 0; i < nB; i++) step(xA + f / 2 + runB * (i + 0.5), zB, runB + 0.02, f, nA + 1 + i);
+      R([xA - f / 2, rise * nA, -d / 2], [w / 2, rise * n, -d / 2]);
+    } else {
+      step(0, -d / 2 + f / 2, w, f, nA);
+      const runB = lenA / nB, xB = w / 2 - f / 2;
+      for (let i = 0; i < nB; i++) step(xB, -d / 2 + f + runB * (i + 0.5), f, runB + 0.02, nA + 1 + i);
+      R([xB - f / 2, rise * (nA + 1), -d / 2 + f], [xB - f / 2, rise * n, d / 2]);
+    }
+    return g;
+  }
+  const run = d / n;
+  for (let i = 0; i < n; i++) step(0, d / 2 - run * (i + 0.5), w, run + 0.03, i);
+  if (!stone) for (const sx of [-1, 1]) {
+    const len = Math.hypot(h, d), s = B(g, 0.03, 0.22, len, metal, sx * (w / 2 + 0.015), 0, 0);
     s.position.y = h / 2 - 0.02; s.rotation.x = Math.atan2(h, d);
-    const rail = B(g, 0.03, 0.03, len, metal, sx * (w / 2 + 0.015), 0, 0);
-    rail.position.y = h / 2 + 0.92; rail.rotation.x = Math.atan2(h, d);
-    for (let i = 0; i <= n; i += 2) B(g, 0.012, 0.92, 0.012, metal, sx * (w / 2 + 0.015), rise * i, d / 2 - run * i);
   }
+  for (const sx of [-1, 1]) R([sx * (w / 2 + 0.015), 0, d / 2], [sx * (w / 2 + 0.015), h, -d / 2]);
+  return g;
+}
+
+/** Balcon ou terrasse surélevée ; `drop` donne la longueur des poteaux jusqu'au sol. */
+function balcony(p) {
+  const g = new THREE.Group();
+  const { w = 4, d = 1.5, finish, rail = 'glass', stilts, drop = 0 } = p;
+  const metal = blackMetal(), gl = glass(), floor = stilts ? finish : solid('#c9c5bb', 0.8);
+  B(g, w, 0.14, d, floor, 0, -0.14, 0);
+  if (stilts && drop > 0.05) {
+    const nx = Math.max(2, Math.round(w / 2.2) + 1), nz = Math.max(2, Math.round(d / 2.2) + 1);
+    for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) B(g, 0.1, drop, 0.1, metal, -w / 2 + 0.1 + (i * (w - 0.2)) / (nx - 1), -drop - 0.14, -d / 2 + 0.1 + (j * (d - 0.2)) / (nz - 1));
+  }
+  const H = 1.02, a = [-w / 2, 0, -d / 2], b = [w / 2, 0, -d / 2], c = [w / 2, 0, d / 2], e = [-w / 2, 0, d / 2];
+  railRun(g, a, e, H, rail, metal, gl); railRun(g, e, c, H, rail, metal, gl); railRun(g, c, b, H, rail, metal, gl);
+  return g;
+}
+
+function railing(p) {
+  const g = new THREE.Group(), { w = 2, h = 1.05, rail = 'glass' } = p;
+  railRun(g, [-w / 2, 0, 0], [w / 2, 0, 0], h, rail, blackMetal(), glass());
+  return g;
+}
+
+function retaining(p) {
+  const g = new THREE.Group(), { w = 3, d = 0.3, h = 1.2, kind } = p;
+  const mat = kind === 'stone' ? texturedMaterial('stone_wall', 3) : kind === 'gabion' ? texturedMaterial('stone_wall', 1.2) : solid('#a6a39b', 0.92);
+  B(g, w, h + 0.6, d, mat, 0, -0.6, 0);
   return g;
 }
 
@@ -679,8 +750,9 @@ function leafBlob(g, mat, x, y, z, sx, sy, sz, seed) {
     const a = pos.getX(i), b = pos.getY(i), c = pos.getZ(i);
     const n = Math.sin(a * 9 + seed) * Math.cos(b * 11 + seed * 2) * Math.sin(c * 8 - seed) * 0.13 + Math.sin(a * 23 + c * 19 + seed) * 0.05;
     pos.setXYZ(i, a * (1 + n), b * (1 + n), c * (1 + n));
+    // Normale lissée : le feuillage ne montre plus de facettes.
+    geo.attributes.normal.setXYZ(i, a, b, c);
   }
-  geo.computeVertexNormals();
   const m = mesh(geo, mat, x, y, z);
   m.scale.set(sx, sy, sz);
   g.add(m);
@@ -737,7 +809,7 @@ export const PROC = {
   sofa, armchair, tvBench, tv, bookcase, table, chair, barStool, bed, mattress: mattressOnly, drawers, wardrobe, desk, officeChair,
   kitchenBase, kitchenWall, kitchenTall, oven, sinkUnit, hob, hood, fridge, dishwasher, washer, worktop, island,
   bathtub, shower, vanity, wc, towelRadiator, mirrorWall, mirrorCabinet, rug, curtain, pendant, floorLamp, tableLamp, picture,
-  stairs, slab, pergola, hedge, tree, fence, pool,
+  stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */
