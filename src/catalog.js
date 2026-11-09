@@ -146,9 +146,10 @@ function fromIkea(x, i) {
   if (x.sub === 'tapis') { w = Math.min(D.largeur ?? dw, D.longueur ?? dd); d = Math.max(D.largeur ?? dw, D.longueur ?? dd); h = 1; }
   if (x.sub === 'miroir' || x.sub === 'cadre') { d = 3; }
   if (x.sub === 'rideau') { d = 10; }
-  const id = `ik-${x.slug}`;
+  if (x.brand && ['canape', 'table', 'buffet', 'meuble-tv', 'bureau', 'table-ext'].includes(x.sub) && d > w) [w, d] = [d, w];
+  const id = x.brand ? x.slug : `ik-${x.slug}`;
   return {
-    id, name: `${x.name}`, label: x.type, brand: 'IKEA', cat: x.cat, sub: x.sub, w, d, h, price: x.price, color: x.color, url: x.url,
+    id, name: `${x.name}`, label: x.brand ? subLabel(x.sub) : x.type, brand: x.brand || 'IKEA', thumb: x.a, cat: x.cat, sub: x.sub, w, d, h, price: x.price, color: x.color, url: x.url,
     model: modelFor(x, w, d, h), query: GENERIC_QUERY({ type: x.type, w }), ...(PLACEMENT[x.sub] || {}),
   };
 }
@@ -251,6 +252,10 @@ const GENERIC = [
   G('exterieur', 'marches', 'Marches extérieures 1,20 m', 120, 200, 100, 650, P('stairs', { stone: true, noRail: true }), BTP, { query: 'escalier extérieur pierre' }),
   G('exterieur', 'terrasse', 'Terrasse bois', 400, 300, 12, 1800, P('slab', { woodKind: 'chene' }), BTP, { query: 'lame terrasse bois', priceBy: 'area' }),
   G('exterieur', 'pergola', 'Pergola aluminium 4 × 3', 400, 300, 250, 2490, P('pergola'), ['leroy', 'casto', 'google'], { query: 'pergola aluminium 4x3', priceBy: 'area' }),
+  G('exterieur', 'terrasse', 'Terrasse pierre', 400, 300, 10, 3400, P('slab', { color: '#d8cbb4' }), BTP, { query: 'dalle pierre terrasse', priceBy: 'area' }),
+  G('bureau', 'sport', 'Banc de musculation réglable', 135, 50, 48, 249, P('slab', { color: '#25262a' }), ['decathlon', 'google'].filter((s) => s === 'google'), { query: 'banc de musculation réglable' }),
+  G('bureau', 'sport', 'Rangement haltères', 180, 40, 140, 399, P('bookcase', { color: '#2b2b2e' }), ['google'], { query: 'rack haltères' }),
+  G('bureau', 'sport', 'Tapis de course', 180, 80, 130, 899, P('slab', { color: '#1f2023' }), ['google'], { query: 'tapis de course' }),
   G('exterieur', 'piscine', 'Piscine 8 × 4', 800, 400, 10, 28000, P('pool'), ['google'], { query: 'piscine enterrée 8x4', priceBy: 'area' }),
   G('exterieur', 'plantation', 'Haie (3 m)', 300, 60, 170, 180, P('hedge'), BTP, { query: 'haie arbustes', priceBy: 'length' }),
   G('exterieur', 'plantation', 'Arbre', 340, 340, 500, 149, P('tree'), BTP, { query: 'arbre de jardin' }),
@@ -297,6 +302,25 @@ items = items.filter((i) => (seen.has(i.id) ? false : seen.add(i.id)));
 
 let custom = [];
 const byId = new Map(items.map((i) => [i.id, i]));
+
+const SHOP_ROOT = { Sklum: 'https://www.sklum.com/fr/', Drawer: 'https://www.drawer.fr/', Miliboo: 'https://www.miliboo.com/' };
+const shortSlug = { Sklum: 'sk', Drawer: 'dr', Miliboo: 'mi' };
+let moreLoading = null;
+/** Le reste du catalogue arrive après le démarrage, pour ne pas ralentir l'ouverture de l'app. */
+export function loadMore() {
+  moreLoading ||= import('./data/more.json').then(({ default: rows }) => {
+    for (const r of rows) {
+      const url = (SHOP_ROOT[r.b] || 'https://www.ikea.com/fr/fr/p/') + r.u;
+      const tail = url.replace(/\/$/, '').split('/').pop().replace(/\.html$/, '');
+      const item = fromIkea({ cat: r.c, sub: r.s, brand: r.b, name: r.n, type: r.t ?? r.n.toLowerCase(), price: r.p, dims: r.d, color: r.o, url, slug: r.b ? `${shortSlug[r.b]}-${tail}` : tail, a: r.a });
+      if (!byId.has(item.id)) { items.push(item); byId.set(item.id, item); }
+    }
+    return items.length;
+  }).catch((e) => { moreLoading = null; throw e; });
+  return moreLoading;
+}
+export const needsMore = (project) => project.levels.some((l) => l.items.some((i) => !byId.has(i.cat)));
+
 export function setCustom(list) {
   custom = list || [];
   for (const c of custom) byId.set(c.id, c);
@@ -343,6 +367,7 @@ export const OPENINGS = [
   D('Passage ouvert', 120, 215, { type: 'passage' }), D('Grand passage', 240, 225, { type: 'passage' }),
   D('Porte de garage 2,40 m', 240, 200, { type: 'garage' }), D('Porte de garage 3 m', 300, 215, { type: 'garage' }), D('Porte de garage double 5 m', 500, 215, { type: 'garage' }),
   W('Fenêtre 1 vantail', 60, 115, 100, 'window1'), W('Petite fenêtre', 45, 60, 130, 'window1'), W('Fenêtre 2 vantaux', 120, 135, 90), W('Fenêtre 2 vantaux large', 140, 135, 90), W('Fenêtre 3 vantaux', 180, 135, 90, 'bay'),
+  { group: 'Fenêtres anglaises', type: 'window2', name: 'Fenêtre anglaise', width: 140, height: 200, sill: 70, muntins: [2, 4] }, { group: 'Fenêtres anglaises', type: 'window2', name: 'Grande fenêtre anglaise', width: 200, height: 230, sill: 40, muntins: [3, 5] }, { group: 'Fenêtres anglaises', type: 'window2', name: 'Porte-fenêtre anglaise', width: 180, height: 240, sill: 0, muntins: [2, 5] }, { group: 'Fenêtres anglaises', type: 'bay', name: 'Grande baie anglaise', width: 400, height: 250, sill: 0, muntins: [2, 4] },
   W('Fenêtre haute', 200, 50, 190, 'fixed'), W('Bandeau vitré', 300, 60, 150, 'glasswall'), W('Fenêtre fixe', 100, 100, 110, 'fixed'), W('Fenêtre carrée', 60, 60, 120, 'fixed'),
   W('Verrière atelier', 200, 150, 90, 'atelier'), W('Verrière toute hauteur', 240, 215, 0, 'atelier'),
 ];

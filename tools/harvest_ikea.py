@@ -4,7 +4,7 @@
 Respecte robots.txt (seules des pages /p/ sont lues), s'identifie honnêtement et
 attend entre chaque page. Usage : harvest_ikea.py urls.txt sortie.json
 """
-import json, re, sys, time, urllib.request, html, collections
+import json, os, re, sys, time, urllib.request, html, collections
 
 UA = "MaisonCatalogue/1.0 (projet personnel)"
 DELAY = 1.2
@@ -68,7 +68,9 @@ def color(slug):
 
 def select(urls):
     out, seen = [], set()
+    scale = int(os.environ.get("SCALE", "1"))
     for cat, sub, rx, cap, per in RULES:
+        cap, per = cap * scale, per * scale
         rx_c = re.compile(rx)
         n, by = 0, collections.Counter()
         for u in sorted(urls):

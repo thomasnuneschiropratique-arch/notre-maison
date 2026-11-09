@@ -1,7 +1,7 @@
 import './style.css';
 import { store, newLevel, addNode, addWall, dbAll, dbGet, dbPut, dbDel, uid, ROOM_TYPES, roomType } from './state.js';
 import { Plan2D } from './plan2d.js';
-import { allItems, getItem, CATEGORIES, subLabel, purchaseLinks, OPENINGS, setCustom, catalogStats, isHerStyle, isDoorType } from './catalog.js';
+import { allItems, getItem, CATEGORIES, subLabel, purchaseLinks, OPENINGS, setCustom, catalogStats, isHerStyle, isDoorType, loadMore, needsMore } from './catalog.js';
 import { ensureTerrain, commitTerrain, shapeTerrain, seatHouse, flattenAround, applyBrush, heightAt, TERRAIN_SHAPES, SLOPE_DEFAULT, DIRECTIONS, BRUSHES, ENVIRONMENTS } from './terrain.js';
 import { FLOORS, PAINTS, WALL_FINISHES, FACADES, ROOFS, GROUNDS, materialInfo, buyLinks } from './materials-data.js';
 import { TEMPLATES } from './templates.js';
@@ -367,8 +367,29 @@ function render() {
 }
 $('#tabs').onclick = (e) => { const k = e.target.dataset.k; if (k) openTab(k); };
 
+// Les vignettes du grand catalogue sont regroupées par planches : très peu de fichiers à télécharger.
+const ATLAS = { cell: 160, cols: 8 }, sheets = new Map();
+function sheet(n) {
+  if (!sheets.has(n)) {
+    const im = new Image(); im.src = `./thumbs/p/atlas-${n}.webp`;
+    sheets.set(n, im.decode().then(() => im));
+    if (sheets.size > 4) sheets.delete(sheets.keys().next().value);
+  }
+  return sheets.get(n);
+}
+async function atlasThumb(def, img) {
+  const [n, i] = def.thumb, { cell, cols } = ATLAS;
+  try {
+    const s = await sheet(n), c = document.createElement('canvas');
+    c.width = c.height = cell;
+    c.getContext('2d').drawImage(s, (i % cols) * cell, Math.floor(i / cols) * cell, cell, cell, 0, 0, cell, cell);
+    img.src = c.toDataURL('image/webp', 0.86);
+  } catch { sheets.delete(n); customThumb(def, img); }
+}
+
 function thumbOf(def, img) {
   img.decoding = 'async';
+  if (def.thumb) { atlasThumb(def, img); return; }
   if (def.model?.kind === 'ph') img.src = `./thumbs/${def.model.id}.webp`;
   else if (def.cat === 'perso') customThumb(def, img);
   else if (def.model?.kind === 'proc') {
@@ -388,7 +409,7 @@ function filteredItems() {
   const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const q = norm(ui.q.trim());
   let list = allItems();
-  if (q) list = list.filter((i) => norm(`${i.name} ${i.label} ${subLabel(i.sub)} ${i.brand}`).includes(q));
+  if (q) { const words = q.split(/\s+/); list = list.filter((i) => { const t = norm(`${i.name} ${i.label} ${subLabel(i.sub)} ${i.brand}`); return words.every((w) => t.includes(w)); }); }
   else {
     list = list.filter((i) => (ui.cat === 'anna' ? isHerStyle(i) : i.cat === ui.cat));
     if (ui.sub) list = list.filter((i) => i.sub === ui.sub);
@@ -1249,6 +1270,7 @@ function templatePicker() {
   $('#mx', m).onclick = () => m.remove();
   m.querySelectorAll('[data-t]').forEach((b) => { b.onclick = async () => {
     await store.save();
+    await loadMore().catch(() => {});
     openProject(TEMPLATES.find((t) => t.id === b.dataset.t).make());
     await store.save();
     m.remove(); render();
@@ -1299,7 +1321,12 @@ store.addEventListener('level', () => { fillLevels(); render(); });
     const id = localStorage.getItem('nm-current');
     if (id) project = await dbGet('projects', id);
   } catch (e) { console.warn(e); }
-  if (!project) project = TEMPLATES[0].make();
+  if (!project) project = TEMPLATES.find((t) => t.id === 'hill').make();
+  const more = loadMore().then(() => {
+    setCustom(store.project?.custom);
+    if (['catalog'].includes(ui.tab) && !store.selection && !ui.detail && !$('#pbody').contains(document.activeElement)) render();
+  }).catch((e) => console.warn(e));
+  if (needsMore(project)) await more;
   openProject(project);
   store.save();
   document.querySelectorAll('#presetSeg button')[0].classList.add('on');

@@ -26,6 +26,7 @@ export const FLOORS = [
   { id: 'concrete_tiles', name: 'Dalles de béton', t: 'concrete_tiles', s: 2, price: 30, buy: 'carrelage effet béton' },
   { id: 'carpet', name: 'Moquette', t: 'dirty_carpet', s: 1.5, price: 18, buy: 'moquette' },
   { id: 'deck_wood', name: 'Terrasse bois', t: 'wood_floor_deck', s: 2.4, price: 50, buy: 'lame de terrasse bois' },
+  { id: 'dalle_pierre', name: 'Grandes dalles de pierre', t: 'large_sandstone_blocks', s: 3, price: 85, buy: 'dalle pierre naturelle' },
   { id: 'pavers', name: 'Pavés extérieurs', t: 'square_pavers', s: 1.8, price: 35, buy: 'dalle terrasse pavé' },
 ];
 
@@ -63,6 +64,9 @@ export const WALL_FINISHES = [
   { id: 'wall_marbre', name: 'Faïence effet marbre', t: 'marble_tiles', s: 1.6, price: 42, buy: 'faïence effet marbre' },
   { id: 'wall_mosaique', name: 'Mosaïque', t: 'marble_mosaic_tiles', s: 0.8, price: 69, buy: 'mosaïque salle de bain' },
   { id: 'wall_carrelage', name: 'Carrelage gris', t: 'grey_tiles', s: 1.6, price: 26, buy: 'faïence grise' },
+  { id: 'wall_noyer', name: 'Lambris noyer', t: 'american_walnut_veneer', s: 2, price: 70, buy: 'lambris noyer' },
+  { id: 'wall_pierre_blonde', name: 'Pierre blonde', t: 'rustic_stone_wall', s: 1.8, price: 90, buy: 'parement pierre naturelle' },
+  { id: 'wall_marbre_vert', name: 'Marbre vert', t: 'marble_01', s: 2.5, tint: '#4f6b52', price: 140, buy: 'marbre vert' },
   { id: 'wall_bois', name: 'Lambris chêne', t: 'oak_veneer_01', s: 2, price: 45, buy: 'lambris chêne' },
 ];
 
@@ -72,6 +76,8 @@ export const FACADES = [
   { id: 'facade_ocre', name: 'Enduit ocre', t: 'plastered_wall', s: 3, tint: '#cfa873', price: 45 },
   { id: 'facade_gris', name: 'Enduit gris', t: 'plastered_wall', s: 3, tint: '#a7a6a1', price: 45 },
   { id: 'facade_brique', name: 'Brique rouge toulousaine', t: 'red_brick_03', s: 2, price: 110 },
+  { id: 'facade_pierre_blonde', name: 'Pierre blonde appareillée', t: 'white_sandstone_bricks', s: 3.2, tint: '#f6ead6', gain: 2.2, price: 175 },
+  { id: 'facade_brique_blonde', name: 'Brique blonde', t: 'yellow_bricks', s: 2, price: 130 },
   { id: 'facade_pierre', name: 'Pierre', t: 'stone_wall', s: 3, price: 150 },
   { id: 'facade_bois', name: 'Bardage bois', t: 'weathered_planks', s: 2.4, price: 85 },
   { id: 'facade_beton', name: 'Béton brut', t: 'concrete_tile_facade', s: 4, price: 90 },
@@ -81,6 +87,7 @@ export const ROOFS = [
   { id: 'roof_terracotta', name: 'Tuile canal terre cuite', t: 'clay_roof_tiles', s: 2.2 },
   { id: 'roof_terracotta2', name: 'Tuile romane', t: 'clay_roof_tiles_02', s: 2.2 },
   { id: 'roof_tile', name: 'Tuile brune', t: 'roof_tiles', s: 2.2 },
+  { id: 'roof_ardoise', name: 'Ardoise', t: 'roof_slates_02', s: 2.2, tint: '#6b7077', gain: 0.8 },
   { id: 'roof_grey', name: 'Tuile grise', t: 'grey_roof_tiles', s: 2.2 },
 ];
 

@@ -505,7 +505,7 @@ export class Plan2D {
     }
     const id = uid('o');
     const height = preset.full ? Math.max(preset.height, lv.height - 8) : Math.min(preset.height, lv.height - preset.sill);
-    store.mutate(() => { h.wall.openings = h.wall.openings.filter((o) => !replaced.includes(o)); h.wall.openings.push({ id, type: preset.type, name: preset.name, width: preset.width, height, sill: preset.sill, t, open: preset.type === 'door' ? 20 : 0, glazed: preset.glazed, leaves: preset.leaves }); });
+    store.mutate(() => { h.wall.openings = h.wall.openings.filter((o) => !replaced.includes(o)); h.wall.openings.push({ id, type: preset.type, name: preset.name, width: preset.width, height, sill: preset.sill, t, open: preset.type === 'door' ? 20 : 0, glazed: preset.glazed, leaves: preset.leaves, muntins: preset.muntins }); });
     if (replaced.length) store.emit('toast', { text: 'L’ouverture a remplacé celle qui gênait.', undo: true });
     store.select({ type: 'opening', id, wallId: h.wall.id });
     this.setTool('select');

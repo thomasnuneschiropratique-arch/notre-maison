@@ -1,5 +1,6 @@
 // Transforme le plan (centimètres) en scène 3D (mètres) : murs percés, sols, plafonds, menuiseries, toiture.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { wallCorners, dot, sub } from './geometry.js';
 import { getMaterial, solid, glass, wood, blackMetal, chrome } from './materials.js';
 
@@ -240,6 +241,13 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
     const pane = box(g, leafW - pf * 2, h - 2 * fw - pf * 2, 0.006, glass(), x, h / 2, zOff + slide);
     pane.castShadow = false;
     pane.userData = { kind: 'opening', wallId: wall.id, openingId: o.id };
+    // Petits bois des fenêtres anglaises : un seul maillage par ouverture.
+    if (o.muntins) {
+      const [cols, rows] = o.muntins, inW = leafW - pf * 2, inH = h - 2 * fw - pf * 2, z = zOff + slide + 0.012, parts = [];
+      for (let j = 1; j < cols; j++) parts.push(new THREE.BoxGeometry(0.022, inH, 0.026).translate(x - inW / 2 + (j * inW) / cols, h / 2, z));
+      for (let j = 1; j < rows; j++) parts.push(new THREE.BoxGeometry(inW, 0.022, 0.026).translate(x, fw + pf + (j * inH) / rows, z));
+      if (parts.length) { const m = new THREE.Mesh(mergeGeometries(parts), joinery); m.castShadow = true; g.add(m); parts.forEach((p) => p.dispose()); }
+    }
   }
   if (o.sill > 0) box(g, w + 0.06, 0.03, t * 0.55, solid('#d8d4cb', 0.7), 0, -0.015, o.flip ? -t * 0.42 : t * 0.42);
   if (o.shutter) box(g, w, 0.18, 0.16, joinery, 0, h - 0.0, o.flip ? -t * 0.62 : t * 0.62);
@@ -414,7 +422,9 @@ export function buildRoof(project, level, baseY, zone) {
   const addPlane = (p0, p1, p2, p3) => {
     const a = new THREE.Vector3(...p1).sub(new THREE.Vector3(...p0));
     const b2 = new THREE.Vector3(...p3).sub(new THREE.Vector3(...p0));
-    const n = a.clone().cross(b2).normalize();
+    let n = a.clone().cross(b2);
+    if (n.lengthSq() < 1e-9) n = new THREE.Vector3(...p2).sub(new THREE.Vector3(...p0)).cross(b2);
+    n.normalize();
     if (n.y < 0) { [p1, p3] = [p3, p1]; n.negate(); }
     const lenU = new THREE.Vector3(...p1).distanceTo(new THREE.Vector3(...p0));
     const lenV = new THREE.Vector3(...p3).distanceTo(new THREE.Vector3(...p0));
@@ -440,7 +450,8 @@ export function buildRoof(project, level, baseY, zone) {
         const n = alongX ? [s === s0 ? -1 : 1, 0, 0] : [0, 0, s === s0 ? -1 : 1];
         const a = P(s, t0, top), b2 = P(s, t1, top), c = P(s, tm, peak);
         const uv = [[0, 0], [(t1 - t0) * M, 0], [(t1 - t0) * M / 2, peak - top], [(t1 - t0) * M / 2, peak - top]];
-        const flip = (s === s0) === alongX;
+        const ab = new THREE.Vector3(...b2).sub(new THREE.Vector3(...a)), ac = new THREE.Vector3(...c).sub(new THREE.Vector3(...a));
+        const flip = ab.cross(ac).dot(new THREE.Vector3(...n)) < 0;
         if (flip) gable.quad(b2, a, c, c, n, [uv[1], uv[0], uv[2], uv[3]]); else gable.quad(a, b2, c, c, n, uv);
       }
     }

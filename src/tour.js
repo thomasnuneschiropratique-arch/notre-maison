@@ -4,7 +4,7 @@ export const tourSeen = () => { try { return !!localStorage.getItem(KEY); } catc
 
 const steps = (narrow) => [
   { sel: '#rail', title: 'Dessine ta maison', text: 'Trace des pièces et des murs, ajoute portes et fenêtres. « Groupe » sélectionne la maison ou une partie pour la déplacer.' },
-  { sel: narrow ? '#bottomnav [data-n="catalog"]' : '#tabs [data-k="catalog"]', title: 'Meuble-la', text: 'Plus de 400 vrais meubles, avec leurs prix et le lien pour les acheter. Le filtre « Son style » est en tête.' },
+  { sel: narrow ? '#bottomnav [data-n="catalog"]' : '#tabs [data-k="catalog"]', title: 'Meuble-la', text: 'Des milliers de vrais meubles, avec leurs prix et le lien pour les acheter. Le filtre « Son style » est en tête.' },
   { sel: narrow ? '#bottomnav [data-n="3d"]' : '#viewSeg [data-v="3d"]', title: 'Promène-toi dedans', text: 'Passe en 3D pour voir la maison de dehors, ou entre en mode Visite. Le bouton Photo crée une image réaliste.' },
   { sel: narrow ? '#bottomnav [data-n="budget"]' : '#tabs [data-k="budget"]', title: 'Suis le budget', text: 'Tout est compté : terrain, taxes, travaux, meubles. Il se met à jour à chaque changement.' },
   { sel: narrow ? '#bottomnav [data-n="more"]' : '#tabs [data-k="terrain"]', title: 'Terrain et projets', text: narrow ? 'Dans « Plus » : le relief, ta parcelle, la liste d’achats, le plan en PDF et le partage entre vos téléphones.' : 'Ici et dans les onglets voisins : le relief, ta parcelle, la liste d’achats, le plan en PDF et le partage entre vos téléphones.' },
