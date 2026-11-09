@@ -661,6 +661,21 @@ function classicStairs(p) {
   return g;
 }
 
+/** Volée droite américaine le long d'un mur : le dessous est fermé par un soubassement, on ne peut pas passer dessous. */
+function classicStraight(p) {
+  const g = new THREE.Group(), { w = 1.15, d = 4.6, h = 3.6 } = p, n = Math.round(h / 0.18), rise = h / n, run = d / n, walnut = walnutMat(), white = solid('#f1ece2', 0.5), open = w / 2 - 0.02;
+  for (let i = 0; i < n; i++) { const z = d / 2 - run * (i + 0.5); B(g, w, 0.045, run + 0.025, walnut, 0, rise * (i + 1) - 0.045, z, 0.008); B(g, w - 0.01, rise - 0.045, 0.02, white, 0, rise * i, z + run / 2 - 0.03); }
+  // Soubassement plein côté hall, suivant la pente, avec moulures.
+  const shape = new THREE.Shape(); shape.moveTo(-d / 2, 0); shape.lineTo(d / 2, 0); shape.lineTo(d / 2, 0.02); shape.lineTo(-d / 2, h - 0.02); shape.lineTo(-d / 2, 0);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.04, bevelEnabled: false }); geo.rotateY(-Math.PI / 2); geo.translate(open + 0.02, 0, 0);
+  const side = new THREE.Mesh(geo, white); side.castShadow = side.receiveShadow = true; g.add(side);
+  for (let i = 0; i < 4; i++) { const zc = -d / 2 + d * (i + 0.5) / 4, top = h * (0.5 - zc / d) - 0.55; if (top > 0.4) B(g, 0.012, top, d / 4 - 0.16, solid('#e4dccd', 0.5), open + 0.045, 0.14, zc, 0); }
+  const metal = blackMetal(), gl = glass();
+  railRun(g, [open + 0.02, 0.02, d / 2], [open + 0.02, h, -d / 2], 0.95, 'classic', metal, gl);
+  B(g, 0.12, 1.15, 0.12, white, open + 0.02, 0, d / 2 - 0.02, 0.012); B(g, 0.17, 0.06, 0.17, walnut, open + 0.02, 1.15, d / 2 - 0.02, 0.012);
+  return g;
+}
+
 function railRun(g, a, b, h, kind, metal, gl) {
   if (kind === 'classic') {
     const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], len = Math.hypot(dx, dy, dz), flat = Math.hypot(dx, dz);
@@ -686,7 +701,7 @@ function railRun(g, a, b, h, kind, metal, gl) {
 function stairs(p) {
   const g = new THREE.Group();
   const { w = 0.9, d = 3, h = 2.8, finish, shape = 'straight', open: openRiser, rail = 'metal', stone, noRail, metal: allMetal, classic } = p;
-  if (classic) return classicStairs(p);
+  if (classic) return shape === 'straight' ? classicStraight(p) : classicStairs(p);
   const metal = blackMetal(), gl = glass();
   const tread = stone ? solid('#b9b5ab', 0.85) : allMetal ? metal : finish;
   const n = Math.max(3, Math.round(h / 0.18)), rise = h / n, th = stone ? 0.14 : 0.04;

@@ -577,6 +577,7 @@ export class View3D {
 
   // ——— Visite à pied ———
   startWalk(spot) {
+    this.camera.fov = 78; this.camera.updateProjectionMatrix();
     this.mode = 'walk';
     this.controls.enabled = false;
     const lv = store.level;
@@ -599,6 +600,7 @@ export class View3D {
 
   stopWalk() {
     this.mode = 'orbit';
+    this.camera.fov = 46; this.camera.updateProjectionMatrix();
     this.controls.enabled = true;
     this.frame();
     store.emit('walk', false);
@@ -668,7 +670,7 @@ export class View3D {
     const { f, s, t: turn } = this.move;
     if (turn) { this.yaw += turn * 1.7 * dt; this.applyLook(); }
     if (!f && !s) return;
-    const sp = (this.run ? 4.4 : 2.4) * dt;
+    const sp = (this.run ? 7.5 : 4.2) * dt;
     const dx = (Math.sin(this.yaw) * -f + Math.cos(this.yaw) * s) * sp;
     const dz = (Math.cos(this.yaw) * -f - Math.sin(this.yaw) * s) * sp;
     const from = { x: this.camera.position.x / M, y: this.camera.position.z / M };
