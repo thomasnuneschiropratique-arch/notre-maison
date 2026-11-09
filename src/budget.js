@@ -86,6 +86,8 @@ export function measure(project, analyze) {
     if (project.roof.type === 'gable') { const s = Math.min(W, D) - (2 * ov) / 100; const tri = (s * s * Math.tan(rad)) / 4; m.facade += 2 * tri; m.facades.set(project.style.facade, (m.facades.get(project.style.facade) || 0) + 2 * tri); }
   }
   for (const z of project.roofs || []) {
+    const lv = project.levels.find((l) => l.id === z.level);
+    if (lv && z.wallH > lv.height) { const extra = (2 * (z.x1 - z.x0 + z.y1 - z.y0) * (z.wallH - lv.height)) / 10000; m.facade += extra; m.facades.set(project.style.facade, (m.facades.get(project.style.facade) || 0) + extra); }
     const ov = z.type === 'flat' ? 0 : z.overhang, W = (z.x1 - z.x0 + 2 * ov) / 100, D = (z.y1 - z.y0 + 2 * ov) / 100;
     m.roof += z.type === 'flat' ? W * D : (W * D) / Math.cos((z.pitch * Math.PI) / 180);
   }

@@ -698,10 +698,12 @@ function roomPanel(body, r, index, part) {
     <h3 class="s">Murs de la pièce</h3>${swatchRow(PAINTS, r.paint, 'paint')}<div class="matname">${esc(materialInfo(r.paint)?.name || '')}${materialInfo(r.paint)?.brand ? ` · ${esc(materialInfo(r.paint).brand)}` : ''}</div>
     <h3 class="s">Revêtements muraux</h3>${swatchRow(WALL_FINISHES, r.paint, 'paint')}
     <h3 class="s">Plafond</h3>${swatchRow(PAINTS.slice(0, 6), r.ceiling, 'ceiling')}
+    <div class="field wide"><label>Moulures</label><select id="mould">${[['none', 'Aucune'], ['crown', 'Corniche au plafond'], ['panels', 'Corniche et panneaux moulurés']].map(([k, l]) => `<option value="${k}" ${(r.moulding || 'none') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     <div class="note">Les couleurs de marque sont des teintes approchées : un écran ne remplace pas un échantillon.</div>`;
   void part;
   $('#closeSel', body).onclick = closeSel;
   $('#nm', body).onchange = (e) => live(() => { r.name = e.target.value; });
+  $('#mould', body).onchange = (e) => live(() => { r.moulding = e.target.value; });
   $('#ty', body).onchange = (e) => live(() => { r.type = e.target.value; r.name = roomType(r.type)[1]; render(); });
   body.querySelectorAll('.swatch').forEach((b) => { b.onclick = () => { live(() => {
     r[b.dataset.kind] = b.dataset.m;
@@ -776,9 +778,10 @@ function renderStyle(body) {
       <div class="field"><label>Faîtage</label><select data-f="ridge">${[['auto', 'Automatique'], ['x', 'Horizontal sur le plan'], ['y', 'Vertical sur le plan']].map(([k, l]) => `<option value="${k}" ${z.ridge === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label>Pente (°)</label><input type="number" data-f="pitch" min="5" max="60" value="${z.pitch}"/></div>
       <div class="field"><label>Débord (cm)</label><input type="number" data-f="overhang" value="${z.overhang}"/></div>
-      <div class="field"><label>Murs dessous (cm)</label><input type="number" data-f="wallH" min="0" placeholder="Hauteur du niveau" value="${z.wallH || ''}"/></div></div>`).join('')}</div>
+      <div class="field"><label>Murs dessous (cm)</label><input type="number" data-f="wallH" min="0" placeholder="Hauteur du niveau" value="${z.wallH || ''}"/></div>
+      <div class="field"><label>Plafond cathédrale en bois</label><input type="checkbox" data-f="vault" ${z.vault ? 'checked' : ''} style="width:22px;height:22px;justify-self:end"/></div></div>`).join('')}</div>
     <div class="btnrow"><button class="btn block" id="addRoof">+ Dessiner un toit sur le plan</button></div>
-    <p class="muted small" style="margin-top:6px">Pour un garage, une avancée ou la partie du bas qui dépasse de l’étage. Indique une hauteur de murs plus faible pour un volume plus bas. Si plusieurs toits couvrent toute la maison, règle la forme du toit principal sur « Aucune ».</p>
+    <p class="muted small" style="margin-top:6px">Pour un garage, une avancée ou la partie du bas qui dépasse de l’étage. Indique une hauteur de murs plus faible pour un volume bas, ou beaucoup plus grande pour un séjour de 6 m ou plus. Si plusieurs toits couvrent toute la maison, règle la forme du toit principal sur « Aucune ».</p>
     ${swatchRow(ROOFS, p.style.roof, 'roof')}<div class="matname">${esc(materialInfo(p.style.roof)?.name)}</div>
     <div class="field"><label>Menuiseries</label><input type="color" id="joi" value="${p.style.joinery}" style="height:36px;padding:2px"/></div>
     <h3 class="s">Terrain</h3>${swatchRow(GROUNDS, p.site.ground, 'ground')}
@@ -804,7 +807,7 @@ function renderStyle(body) {
   $('#addRoof', body).onclick = () => { plan.setTool('roof'); setView('plan'); if (narrow()) setPanel(false); };
   $('#roofs', body).onchange = (e) => {
     const f = e.target.dataset.f, z = p.roofs[Number(e.target.closest('[data-z]').dataset.z)];
-    if (f && z) live(() => { z[f] = ['type', 'ridge'].includes(f) ? e.target.value : Number(e.target.value) || 0; });
+    if (f && z) live(() => { z[f] = f === 'vault' ? e.target.checked : ['type', 'ridge'].includes(f) ? e.target.value : Number(e.target.value) || 0; });
   };
   $('#roofs', body).onclick = (e) => {
     if (!e.target.closest('[data-del]')) return;

@@ -103,6 +103,27 @@ function buildWall(group, level, wall, corners, analysis, rooms, baseY, H, proje
       }
     }
     if (exterior && opts.slabAbove && !opts.cutHeight) add(uS, uE, H, H + opts.slabAbove);
+    // Corniche et panneaux moulurés, dans la matière du mur.
+    if (!exterior && room?.moulding && room.moulding !== 'none' && H > 200) {
+      const relief = new QuadBatch();
+      const strip = (u0, u1, v0, v1, out) => {
+        const [x0, z0] = off(u0), [x1, z1] = off(u1), ox = nor.x * sign * out * M, oz = nor.y * sign * out * M, y0 = baseY + v0 * M, y1 = baseY + v1 * M;
+        const P0 = [x0 + ox, y0, z0 + oz], P1 = [x1 + ox, y0, z1 + oz], P2 = [x1 + ox, y1, z1 + oz], P3 = [x0 + ox, y1, z0 + oz];
+        const a = [u0 * M, v0 * M], b2 = [u1 * M, v0 * M], c2 = [u1 * M, v1 * M], d2 = [u0 * M, v1 * M];
+        if (sign > 0) relief.quad(P0, P1, P2, P3, n, [a, b2, c2, d2]); else relief.quad(P1, P0, P3, P2, n, [b2, a, d2, c2]);
+      };
+      strip(uS, uE, H - 16, H, 3); strip(uS, uE, H - 22, H - 16, 1.6);
+      if (room.moulding === 'panels') for (const c of columns(uS + 8, uE - 8, openings)) {
+        const len = c.b - c.a;
+        if (c.o || len < 60) continue;
+        const count = Math.max(1, Math.round(len / 130)), each = len / count, top = H - 44, low = 34, w0 = 4;
+        for (let i = 0; i < count; i++) {
+          const x0 = c.a + i * each + 8, x1 = c.a + (i + 1) * each - 8;
+          strip(x0, x1, low, low + w0, 1.3); strip(x0, x1, top - w0, top, 1.3); strip(x0, x0 + w0, low + w0, top - w0, 1.3); strip(x1 - w0, x1, low + w0, top - w0, 1.3);
+        }
+      }
+      if (!relief.empty) wg.add(meshOf(relief, getMaterial(matId), { kind: 'wall', wallId: wall.id, side, exterior, roomId: room?.id }));
+    }
     if (!b.empty) wg.add(meshOf(b, getMaterial(matId), { kind: 'wall', wallId: wall.id, side, exterior, roomId: room?.id }));
 
     // Plinthes intérieures
@@ -305,12 +326,22 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
 
   const wallOpts = { ...opts, slabAbove: project.levels[index + 1] ? level.slab : 0 };
   // Un toit supplémentaire peut couvrir une partie plus basse : garage, appentis.
-  const zones = (project.roofs || []).filter((z) => z.level === level.id && z.wallH > 0 && z.wallH < level.height);
+  const zones = (project.roofs || []).filter((z) => z.level === level.id && ((z.wallH > 0 && z.wallH !== level.height) || z.vault));
   const inZone = (p, z) => p.x >= z.x0 - 1 && p.x <= z.x1 + 1 && p.y >= z.y0 - 1 && p.y <= z.y1 + 1;
-  const lowZone = (w) => zones.find((z) => inZone(level.nodes[w.a], z) && inZone(level.nodes[w.b], z) && ['L', 'R'].every((s) => { const i = analysis.sideRoom.get(`${w.id}:${s}`); return i === undefined || inZone(analysis.rooms[i].center, z); }));
+  // Plus bas (garage, appentis) : seuls les murs propres au volume descendent. Plus haut (séjour cathédrale) : tous ses murs montent.
+  const wallHeight = (w) => {
+    const sides = ['L', 'R'].map((s) => analysis.sideRoom.get(`${w.id}:${s}`));
+    for (const z of zones) {
+      if (!(z.wallH > 0) || !inZone(level.nodes[w.a], z) || !inZone(level.nodes[w.b], z)) continue;
+      const inside = sides.map((i) => i !== undefined && inZone(analysis.rooms[i].center, z));
+      if (z.wallH < level.height && sides.every((i, k) => i === undefined || inside[k])) return Math.min(H, z.wallH);
+      if (z.wallH > level.height && inside.some(Boolean)) return opts.cutHeight ? H : z.wallH;
+    }
+    return H;
+  };
   for (const w of analysis.walls) {
     const c = corners.get(w.id);
-    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, Math.min(H, lowZone(w)?.wallH ?? H), project, wallOpts);
+    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, wallHeight(w), project, wallOpts);
   }
   if (opts.groundAt && index <= (project.entry || 0)) buildFoundation(walls, level, index, project, analysis, corners, baseY, opts);
 
@@ -329,9 +360,11 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
     floors.add(f);
 
     const insideCeil = ceilingVoids.filter((v) => opts.inside(v[0], r.poly));
+    const zone = zones.find((z) => inZone(r.center, z));
+    if (zone?.vault) return;
     const cg = flipped(floorGeometry(r.poly, insideCeil));
     const c = new THREE.Mesh(cg, getMaterial(info.ceiling || 'paint_blanc'));
-    c.position.y = baseY + (zones.find((z) => inZone(r.center, z))?.wallH ?? level.height) * M;
+    c.position.y = baseY + ((zone?.wallH > 0 ? zone.wallH : 0) || level.height) * M;
     c.castShadow = true; c.receiveShadow = true;
     c.userData = { kind: 'ceiling', roomId: info.id };
     ceilings.add(c);
@@ -460,6 +493,14 @@ export function buildRoof(project, level, baseY, zone) {
   rm.material.side = THREE.DoubleSide;
   rm.castShadow = rm.receiveShadow = true;
   g.add(rm);
+  // Plafond cathédrale : l'intérieur du toit est habillé de bois.
+  if (zone?.vault) {
+    const lining = new THREE.Mesh(rm.geometry, getMaterial(zone.lining || 'wall_noyer').clone());
+    lining.material.side = THREE.BackSide;
+    lining.position.y = -0.04;
+    lining.receiveShadow = true;
+    g.add(lining);
+  }
   if (!gable.empty) {
     const gm = new THREE.Mesh(gable.geometry(), facade.clone());
     gm.material.side = THREE.DoubleSide;

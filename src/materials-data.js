@@ -64,7 +64,7 @@ export const WALL_FINISHES = [
   { id: 'wall_marbre', name: 'Faïence effet marbre', t: 'marble_tiles', s: 1.6, price: 42, buy: 'faïence effet marbre' },
   { id: 'wall_mosaique', name: 'Mosaïque', t: 'marble_mosaic_tiles', s: 0.8, price: 69, buy: 'mosaïque salle de bain' },
   { id: 'wall_carrelage', name: 'Carrelage gris', t: 'grey_tiles', s: 1.6, price: 26, buy: 'faïence grise' },
-  { id: 'wall_noyer', name: 'Lambris noyer', t: 'american_walnut_veneer', s: 2, price: 70, buy: 'lambris noyer' },
+  { id: 'wall_noyer', name: 'Lambris noyer', t: 'american_walnut_veneer', s: 2, tint: '#d7a877', gain: 1.15, price: 70, buy: 'lambris noyer' },
   { id: 'wall_pierre_blonde', name: 'Pierre blonde', t: 'rustic_stone_wall', s: 1.8, price: 90, buy: 'parement pierre naturelle' },
   { id: 'wall_marbre_vert', name: 'Marbre vert', t: 'marble_01', s: 2.5, tint: '#4f6b52', price: 140, buy: 'marbre vert' },
   { id: 'wall_bois', name: 'Lambris chêne', t: 'oak_veneer_01', s: 2, price: 45, buy: 'lambris chêne' },

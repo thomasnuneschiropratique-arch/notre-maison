@@ -805,11 +805,106 @@ function pool(p) {
   return g;
 }
 
+const stoneMat = () => texturedMaterial('rustic_stone_wall', 1.8, {});
+const walnutMat = () => texturedMaterial('american_walnut_veneer', 2, { tint: '#d7a877', gain: 1.15 });
+
+/** Cheminée monumentale : masse de pierre, panneau de noyer, foyer allumé. */
+function fireplace(p) {
+  const g = new THREE.Group(), { w = 4.2, h = 7, d = 0.9, outdoor } = p;
+  const stone = stoneMat(), soot = solid('#17161a', 0.92), fw = Math.min(w * 0.68, 2.6), fh = outdoor ? 0.75 : 0.62, sill = 0.42;
+  B(g, w, sill, d, stone, 0, 0, 0);
+  B(g, (w - fw) / 2, fh, d, stone, -(w + fw) / 4, sill, 0); B(g, (w - fw) / 2, fh, d, stone, (w + fw) / 4, sill, 0);
+  B(g, w, h - sill - fh, d, stone, 0, sill + fh, 0);
+  B(g, fw, fh, 0.08, soot, 0, sill, -d / 2 + 0.06, 0); B(g, 0.03, fh, d - 0.1, soot, -fw / 2 + 0.02, sill, 0, 0); B(g, 0.03, fh, d - 0.1, soot, fw / 2 - 0.02, sill, 0, 0);
+  B(g, fw + 0.36, 0.08, d + 0.14, solid('#23211f', 0.55), 0, sill - 0.08, 0.08, 0);
+  B(g, fw + 0.2, 0.14, d + 0.05, solid('#1b1a1c', 0.6), 0, sill + fh, 0.03, 0);
+  const fire = emissive('#ff5a14', 2.1), glow = emissive('#ffb347', 2.4);
+  for (let i = 0; i < 11; i++) { const x = -fw * 0.38 + (i * fw * 0.76) / 10; S(g, 0.075, fire, x, sill + 0.17, 0.08, 0.8, 2.3 + (i % 3) * 0.7, 0.8); if (i % 2) S(g, 0.045, glow, x, sill + 0.1, 0.13, 0.8, 1.8, 0.8); }
+  B(g, fw * 0.8, 0.09, 0.2, solid('#2a1a12', 0.9), 0, sill, 0.1, 0.03);
+  if (!outdoor && h > 3.2) { const pw = w * 0.56; B(g, pw, h - 1.9, 0.05, walnutMat(), 0, 1.75, d / 2 + 0.01); }
+  return g;
+}
+
+/** Cuisine d'été : meuble en pierre, plan sombre, plancha et évier. */
+function outdoorKitchen(p) {
+  const g = new THREE.Group(), { w = 4, d = 0.75, h = 0.92 } = p;
+  B(g, w, h - 0.05, d, stoneMat(), 0, 0, 0);
+  B(g, w + 0.06, 0.05, d + 0.06, solid('#2c2b2a', 0.35), 0, h - 0.05, 0);
+  B(g, 1, 0.09, d * 0.72, chrome(), -w * 0.2, h, 0.02); for (let i = 0; i < 5; i++) B(g, 0.9, 0.008, 0.012, solid('#1d1d1f', 0.5), -w * 0.2, h + 0.09, -d * 0.24 + i * d * 0.12, 0);
+  B(g, 0.55, 0.012, d * 0.5, chrome(), w * 0.25, h, 0.02);
+  const tap = C(g, 0.012, 0.012, 0.3, chrome(), w * 0.25, h, -d * 0.3, 10); void tap;
+  for (let i = 0; i < 4; i++) B(g, w / 4.4, h * 0.58, 0.02, walnutMat(), -w * 0.375 + i * w * 0.25, h * 0.16, d / 2 + 0.008);
+  return g;
+}
+
+/** Foyer rond d'extérieur. */
+function firepit(p) {
+  const g = new THREE.Group(), { w = 1.3, h = 0.42 } = p;
+  C(g, w / 2, w / 2 * 0.82, h, solid('#cfc8ba', 0.85), 0, 0, 0, 40);
+  C(g, w / 2 * 0.8, w / 2 * 0.8, 0.02, solid('#222', 0.9), 0, h, 0, 32);
+  const fire = emissive('#ff8b3a', 3.4);
+  for (let i = 0; i < 7; i++) { const a = (i / 7) * 6.28; S(g, 0.08, fire, Math.cos(a) * w * 0.18, h + 0.12 + (i % 2) * 0.04, Math.sin(a) * w * 0.18, 1, 2.2, 1); }
+  return g;
+}
+
+function column(p) {
+  const g = new THREE.Group(), { w = 0.4, d = 0.4, h = 3.2 } = p, stone = p.wood ? walnutMat() : texturedMaterial('white_sandstone_bricks', 3.2, { tint: '#f6ead6', gain: 2.2 });
+  B(g, w * 1.25, 0.28, d * 1.25, stone, 0, 0, 0); B(g, w, h - 0.48, d, stone, 0, 0.28, 0); B(g, w * 1.25, 0.2, d * 1.25, stone, 0, h - 0.2, 0);
+  return g;
+}
+
+function ringChandelier(p) {
+  const g = new THREE.Group(), { w = 2.2, h = 3 } = p, r = w / 2, metal = blackMetal(), glow = emissive('#ffd9a3', 3);
+  const ring = mesh(new THREE.TorusGeometry(r, 0.03, 10, 64), metal, 0, 0.1, 0); ring.rotation.x = Math.PI / 2; g.add(ring);
+  for (let i = 0; i < 16; i++) { const a = (i / 16) * 6.283; const x = Math.cos(a) * r, z = Math.sin(a) * r; C(g, 0.012, 0.012, 0.16, metal, x, 0.12, z, 8); S(g, 0.04, glow, x, 0.33, z, 1, 1.4, 1); }
+  for (let i = 0; i < 3; i++) { const a = (i / 3) * 6.283, x = Math.cos(a) * r, z = Math.sin(a) * r, L = Math.hypot(r, h - 0.1); const rod = mesh(new THREE.CylinderGeometry(0.008, 0.008, L, 6), metal, x / 2, 0.1 + (h - 0.1) / 2, z / 2); rod.lookAt(new THREE.Vector3(0, h, 0)); rod.rotateX(Math.PI / 2); g.add(rod); }
+  return g;
+}
+
+function parasol(p) {
+  const g = new THREE.Group(), { w = 2.8, h = 2.7 } = p, cloth = fabric('#e9e2d2', 'lin').clone(); cloth.side = THREE.DoubleSide;
+  C(g, 0.022, 0.022, h, wood('chene'), 0, 0, 0, 10);
+  const roof = mesh(new THREE.ConeGeometry(w / 2, 0.55, 8, 1, true), cloth, 0, h - 0.16, 0); g.add(roof);
+  C(g, 0.26, 0.3, 0.07, solid('#3a3a3a', 0.7), 0, 0, 0, 20);
+  return g;
+}
+
+function topiary(p) {
+  const g = new THREE.Group(), { w = 0.9, h = 0.9 } = p, leaf = solid('#3e5c31', 0.95);
+  S(g, 0.5, leaf, 0, h / 2, 0, w, h, w);
+  return g;
+}
+
+/** Voiture de sport rouge, silhouette basse à moteur central. Longueur en Z, capot vers +Z. */
+function sportsCar(p) {
+  const g = new THREE.Group(), { w = 1.98, d = 4.6, h = 1.2 } = p;
+  const paint = new THREE.MeshPhysicalMaterial({ color: '#b3100f', roughness: 0.28, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.08 });
+  const side = new THREE.Shape(), L = d / 2, y0 = 0.17;
+  side.moveTo(-L, y0 + 0.14); side.lineTo(-L + 0.04, 0.62); side.lineTo(-L + 0.55, 0.78); side.lineTo(-L * 0.42, 0.86); side.lineTo(-L * 0.08, h * 0.98); side.lineTo(L * 0.2, h * 0.96); side.lineTo(L * 0.52, 0.74); side.lineTo(L * 0.92, 0.6); side.lineTo(L, 0.42); side.lineTo(L * 0.98, y0 + 0.06); side.lineTo(-L * 0.98, y0);
+  const body = new THREE.ExtrudeGeometry(side, { depth: w - 0.16, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.05, bevelSegments: 3, curveSegments: 4 });
+  body.rotateY(-Math.PI / 2); body.translate((w - 0.16) / 2, 0, 0);
+  const m = new THREE.Mesh(body, paint); m.castShadow = m.receiveShadow = true; g.add(m);
+  const dark = new THREE.MeshPhysicalMaterial({ color: '#10141a', roughness: 0.08, metalness: 0.4 });
+  const glassShape = new THREE.Shape();
+  glassShape.moveTo(-L * 0.4, 0.88); glassShape.lineTo(-L * 0.08, h * 1.0); glassShape.lineTo(L * 0.18, h * 0.98); glassShape.lineTo(L * 0.48, 0.78); glassShape.lineTo(L * 0.1, 0.8);
+  const cab = new THREE.ExtrudeGeometry(glassShape, { depth: w * 0.74, bevelEnabled: false });
+  cab.rotateY(-Math.PI / 2); cab.translate(w * 0.37, 0.012, 0);
+  g.add(new THREE.Mesh(cab, dark));
+  const tire = solid('#141416', 0.85), rim = solid('#c9c9cd', 0.3, 0.8), wr = 0.34;
+  for (const sz of [-L * 0.62, L * 0.6]) for (const sx of [-1, 1]) {
+    const t = mesh(new THREE.CylinderGeometry(wr, wr, 0.3, 28), tire, sx * (w / 2 - 0.13), wr, sz); t.rotation.z = Math.PI / 2; g.add(t);
+    const r = mesh(new THREE.CylinderGeometry(wr * 0.62, wr * 0.62, 0.31, 12), rim, sx * (w / 2 - 0.13), wr, sz); r.rotation.z = Math.PI / 2; g.add(r);
+  }
+  for (const sx of [-1, 1]) { B(g, 0.32, 0.05, 0.03, emissive('#fff3d6', 2.2), sx * (w * 0.32), 0.62, L * 0.97, 0); B(g, 0.14, 0.14, 0.03, emissive('#e01818', 1.6), sx * (w * 0.33), 0.62, -L - 0.01, 0); }
+  return g;
+}
+
 export const PROC = {
   sofa, armchair, tvBench, tv, bookcase, table, chair, barStool, bed, mattress: mattressOnly, drawers, wardrobe, desk, officeChair,
   kitchenBase, kitchenWall, kitchenTall, oven, sinkUnit, hob, hood, fridge, dishwasher, washer, worktop, island,
   bathtub, shower, vanity, wc, towelRadiator, mirrorWall, mirrorCabinet, rug, curtain, pendant, floorLamp, tableLamp, picture,
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
+  fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */

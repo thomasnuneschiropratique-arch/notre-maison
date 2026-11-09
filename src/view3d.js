@@ -238,7 +238,7 @@ export class View3D {
     this.roof = roof;
     for (const z of p.roofs || []) {
       const i = p.levels.findIndex((l) => l.id === z.level);
-      if (i >= 0) this.house.add(buildRoof(p, p.levels[i], this.baseOf(i) + (z.wallH > 0 ? Math.min(z.wallH, p.levels[i].height) : p.levels[i].height) * M, z));
+      if (i >= 0) this.house.add(buildRoof(p, p.levels[i], this.baseOf(i) + (z.wallH > 0 ? z.wallH : p.levels[i].height) * M, z));
     }
     this.drawParcel(p);
     this.wallGroups = [];
@@ -344,7 +344,8 @@ export class View3D {
     this.sun.color.setHSL(0.09, 0.8 - 0.55 * day, 0.86);
     this.sun.position.copy(this.sun.target.position).addScaledVector(dir, 44);
     this.sun.castShadow = day > 0.01;
-    this.hemi.intensity = (interior ? 0.5 : 0.22) + (this.scene.environment ? 0 : 0.9);
+    this.hemi.color.set(interior ? '#ffe6c8' : '#dfe8f2');
+    this.hemi.intensity = (interior ? 0.85 : 0.22) + (this.scene.environment ? 0 : 0.9);
     this.nightFactor = 1 - day;
     this.updateLamps();
     this.renderer.toneMappingExposure = 1.05 * this.env.exposure * (interior ? 1.35 : 1);
@@ -533,7 +534,7 @@ export class View3D {
     const walk = this.mode === 'walk';
     const ceilings = walk || showRoof;
     for (const g of this.house.children) {
-      if (g.name === 'roof') { g.visible = showRoof; continue; }
+      if (g.name === 'roof') { g.visible = showRoof || walk; continue; }
       const i = g.userData.index;
       g.visible = this.levelVisible(i);
       const c = g.getObjectByName('ceilings');
