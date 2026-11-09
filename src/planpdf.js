@@ -109,7 +109,7 @@ function drawOpening(page, wall, o, A, B, X, Y, s) {
   page.fill([1, 1, 1]); page.poly([P(-hw, -ht - 0.6), P(hw, -ht - 0.6), P(hw, ht + 0.6), P(-hw, ht + 0.6)]); page.add('f');
   page.stroke([0.15, 0.14, 0.12]); page.width(0.5);
   page.line(P(-hw, -ht), P(-hw, ht)); page.line(P(hw, -ht), P(hw, ht));
-  if (o.type === 'passage') return;
+  if (o.type === 'passage' || o.type === 'arch') return;
   if (['door', 'entry'].includes(o.type) && o.leaves !== 2) {
     const dx = o.hinge === 'right' ? -1 : 1, dy = o.flip ? -1 : 1, hx = -dx * hw;
     const c = P(hx, dy * ht), open = P(hx, dy * (ht + o.width)), shut = P(hx + dx * o.width, dy * ht);

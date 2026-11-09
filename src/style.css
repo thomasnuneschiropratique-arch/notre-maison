@@ -283,3 +283,8 @@ h3.s { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color:
   .card .b { padding: 6px 7px 7px; }
   .swatches { grid-template-columns: repeat(7, 1fr); }
 }
+
+.navpad { position: absolute; right: 12px; top: 58px; z-index: 6; display: grid; grid-template-columns: repeat(2, 38px); gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 5px; box-shadow: 0 4px 16px rgba(38,35,30,.14); touch-action: none; user-select: none; }
+.navpad button { height: 36px; border-radius: 9px; font-size: 15px; color: var(--ink); background: #f1ece1; }
+.navpad.hidden { display: none; }
+@media (max-width: 820px) { .navpad { top: auto; right: 8px; bottom: 74px; grid-template-columns: repeat(5, 36px); } .selecting .navpad { display: none; } }

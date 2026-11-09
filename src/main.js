@@ -61,6 +61,7 @@ document.getElementById('app').innerHTML = `
         <button class="sunmore" id="sunMore" aria-label="Plus de réglages">⋯</button>
         <div class="row2"><button class="chip" id="season">Été</button><button class="chip on" id="lamps">Lampes</button><span style="flex:1"></span><span>Exposition</span><input type="range" id="expo" min="0.4" max="2.4" step="0.05" value="1" style="width:96px"/></div>
       </div>
+      <div class="navpad" id="navpad"><button data-n="left" aria-label="Aller à gauche">◄</button><button data-n="up" aria-label="Avancer">▲</button><button data-n="down" aria-label="Reculer">▼</button><button data-n="right" aria-label="Aller à droite">►</button><button data-n="turnL" aria-label="Tourner à gauche">↺</button><button data-n="turnR" aria-label="Tourner à droite">↻</button><button data-n="tiltU" aria-label="Regarder plus du dessus">⤒</button><button data-n="tiltD" aria-label="Regarder plus de face">⤓</button><button data-n="in" aria-label="Zoomer">+</button><button data-n="out" aria-label="Dézoomer">−</button></div>
       <div class="loadpill hidden" id="loadPill"><i></i><span></span></div>
       <div class="walkgo hidden" id="walkgo"><select id="walkRoom" aria-label="Aller dans une pièce"></select></div>
       <div class="joy hidden" id="joy"><i></i></div>
@@ -233,7 +234,7 @@ $('#rail').onclick = (e) => {
   }
   plan.setTool(t);
 };
-const OPENING_TYPES = [['bay', 'Baie coulissante'], ['glasswall', 'Mur vitré'], ['atelier', 'Verrière atelier'], ['window1', 'Fenêtre 1 vantail'], ['window2', 'Fenêtre 2 vantaux'], ['fixed', 'Fenêtre fixe'], ['door', 'Porte'], ['double', 'Porte double'], ['sliding-door', 'Porte coulissante'], ['pocket', 'Porte à galandage'], ['entry', "Porte d'entrée"], ['garage', 'Porte de garage'], ['passage', 'Passage ouvert']];
+const OPENING_TYPES = [['bay', 'Baie coulissante'], ['glasswall', 'Mur vitré'], ['atelier', 'Verrière atelier'], ['window1', 'Fenêtre 1 vantail'], ['window2', 'Fenêtre 2 vantaux'], ['fixed', 'Fenêtre fixe'], ['door', 'Porte'], ['double', 'Porte double'], ['sliding-door', 'Porte coulissante'], ['pocket', 'Porte à galandage'], ['entry', "Porte d'entrée"], ['garage', 'Porte de garage'], ['passage', 'Passage ouvert'], ['arch', 'Arche']];
 $('#openPop').onclick = (e) => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.id === 'ocGo') {
@@ -270,6 +271,7 @@ function setPreset(p) {
   const touch = matchMedia('(pointer: coarse)').matches;
   $('#joy').classList.toggle('hidden', !walk || !touch);
   $('#viewLayer').classList.toggle('walking', walk);
+  $('#navpad').classList.toggle('hidden', walk);
   if (walk) {
     fillWalkRooms();
     if (!ui.walkHint) { ui.walkHint = true; toast(touch ? 'Le pad avance et tourne d’un seul doigt. Glisse ailleurs pour regarder, touche le sol pour t’y rendre.' : 'Clique une fois : le regard suit ta souris ou ton pavé. Maintiens le clic ou Z pour avancer, Maj pour courir, Échap pour reprendre la main.'); }
@@ -288,6 +290,13 @@ $('#lamps').onclick = (e) => { view.env.lamps = !view.env.lamps; e.target.classL
 $('#expo').oninput = (e) => view.setEnv({ exposure: Number(e.target.value) });
 $('#hourV').textContent = fmtHour(15);
 $('#sunMore').onclick = () => $('#sunbar').classList.toggle('more');
+
+// Barre de commandes des vues 3D : maintenir un bouton pour continuer.
+const NAV = { left: { pan: [-1, 0] }, right: { pan: [1, 0] }, up: { pan: [0, 1] }, down: { pan: [0, -1] }, turnL: { turn: 1 }, turnR: { turn: -1 }, tiltU: { tilt: -1 }, tiltD: { tilt: 1 }, in: { zoom: 0.985 }, out: { zoom: 1.015 } };
+let navTimer = 0;
+const navStop = () => { clearInterval(navTimer); navTimer = 0; };
+$('#navpad').addEventListener('pointerdown', (e) => { const a = NAV[e.target.closest('[data-n]')?.dataset.n]; if (!a || !view) return; e.preventDefault(); navStop(); view.nudge(a); navTimer = setInterval(() => view.nudge(a), 28); });
+for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) $('#navpad').addEventListener(ev, navStop);
 
 // Joystick de déplacement (tactile)
 const joy = $('#joy'), knob = joy.firstElementChild;

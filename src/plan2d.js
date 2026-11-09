@@ -681,7 +681,7 @@ export class Plan2D {
     c.fillStyle = '#fffdf8'; c.fillRect(-hw, -ht, o.width, ht * 2);
     const col = ghost ? ACCENT : selected ? ACCENT : INK;
     c.strokeStyle = col; c.lineWidth = 1.6 / Math.max(this.view.k, 0.5);
-    if (o.type === 'passage') {
+    if (o.type === 'passage' || o.type === 'arch') {
       c.setLineDash([3, 4]); c.beginPath(); c.moveTo(-hw, -ht); c.lineTo(hw, -ht); c.moveTo(-hw, ht); c.lineTo(hw, ht); c.stroke(); c.setLineDash([]);
     } else if (o.type === 'garage') {
       c.setLineDash([8, 5]); c.strokeRect(-hw, -ht * 0.5, o.width, ht); c.setLineDash([]);

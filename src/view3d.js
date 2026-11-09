@@ -609,10 +609,26 @@ export class View3D {
     this.onCameraMove();
   }
 
+  /** Déplace la vue depuis les boutons : translation au sol, rotation, zoom, hauteur. */
+  nudge({ pan = [0, 0], turn = 0, tilt = 0, zoom = 1, lift = 0 }) {
+    if (this.mode === 'walk') return;
+    const t = this.controls.target, cam = this.camera.position, off = cam.clone().sub(t), dist = off.length();
+    const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 0).setY(0).normalize(), fwd = new THREE.Vector3(off.x, 0, off.z).normalize().negate();
+    const step = Math.max(0.05, dist * 0.009), move = right.multiplyScalar(pan[0] * step).addScaledVector(fwd, pan[1] * step).add(new THREE.Vector3(0, lift * step, 0));
+    t.add(move);
+    const sph = new THREE.Spherical().setFromVector3(off);
+    sph.theta += turn * 0.022; sph.phi = Math.max(0.05, Math.min(this.controls.maxPolarAngle, sph.phi + tilt * 0.016)); sph.radius = Math.max(this.controls.minDistance, Math.min(this.controls.maxDistance, sph.radius * zoom));
+    cam.copy(t).add(off.setFromSpherical(sph));
+    this.camera.lookAt(t);
+    this.controls.update(); this.invalidate();
+  }
+
   bindWalkKeys() {
     const map = { z: ['f', 1], w: ['f', 1], s: ['f', -1], q: ['s', -1], a: ['s', -1], d: ['s', 1], arrowup: ['f', 1], arrowdown: ['f', -1], arrowleft: ['t', 1], arrowright: ['t', -1] };
     const on = (e, v) => {
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName) || this.mode !== 'walk') return;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      if (this.mode === 'orbit' && this.active && v && !store.selection) { const k = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, 1], arrowdown: [0, -1], z: [0, 1], s: [0, -1], q: [-1, 0], d: [1, 0] }[e.key.toLowerCase()]; if (k) { this.nudge({ pan: k }); e.preventDefault(); } return; }
+      if (this.mode !== 'walk') return;
       const m = map[e.key.toLowerCase()];
       if (m) { this.move[m[0]] = v ? m[1] : 0; e.preventDefault(); }
     };
@@ -755,6 +771,8 @@ export class View3D {
       press = null;
     };
     c.addEventListener('pointerup', end);
+    // Double-clic ou double-touche : la vue se recentre sur ce point.
+    c.addEventListener('dblclick', (e) => { if (this.mode !== 'orbit') return; const hit = this.pick(e); if (hit !== undefined && this.lastHit) { this.controls.target.copy(this.lastHit); this.controls.update(); this.invalidate(); } });
     // Pavé tactile : deux doigts pour tourner, pincer pour zoomer. Molette classique : zoom.
     let padSeen = false;
     c.addEventListener('wheel', (e) => {
@@ -768,6 +786,7 @@ export class View3D {
       }
       if (e.ctrlKey || !padSeen) return;
       e.preventDefault(); e.stopImmediatePropagation();
+      if (e.shiftKey) { this.nudge({ pan: [e.deltaX * 0.03, -e.deltaY * 0.03] }); return; }
       const off = this.camera.position.clone().sub(this.controls.target), sph = new THREE.Spherical().setFromVector3(off);
       sph.theta -= e.deltaX * 0.0045;
       sph.phi = Math.max(0.08, Math.min(this.controls.maxPolarAngle, sph.phi - e.deltaY * 0.0045));

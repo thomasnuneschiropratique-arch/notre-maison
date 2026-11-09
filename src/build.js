@@ -182,6 +182,16 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
   const fw = 0.055;
 
   if (o.type === 'passage') return;
+  if (o.type === 'arch') {
+    // Arc en plein cintre : les écoinçons remplissent le haut de l'ouverture.
+    const R = Math.min(w / 2, h * 0.6), plaster = solid('#f1ece1', 0.72);
+    const shape = new THREE.Shape();
+    shape.moveTo(-w / 2, 0); shape.lineTo(-w / 2, R + 0.002); shape.lineTo(w / 2, R + 0.002); shape.lineTo(w / 2, 0); shape.absarc(0, 0, w / 2 - 0.001, 0, Math.PI, false);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: t + 0.012, bevelEnabled: false, curveSegments: 28 });
+    geo.translate(0, h - R, -(t + 0.012) / 2);
+    const m = new THREE.Mesh(geo, plaster); m.castShadow = m.receiveShadow = true; m.userData = { kind: 'opening', wallId: wall.id, openingId: o.id }; g.add(m);
+    return;
+  }
   if (o.type === 'garage') {
     const fd = t + 0.012;
     box(g, fw, h, fd, joinery, -w / 2 + fw / 2, h / 2, 0); box(g, fw, h, fd, joinery, w / 2 - fw / 2, h / 2, 0); box(g, w, fw, fd, joinery, 0, h - fw / 2, 0);

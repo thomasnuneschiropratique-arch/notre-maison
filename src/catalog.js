@@ -264,6 +264,27 @@ const GENERIC = [
   G('exterieur', 'plantation', 'Buis taillé en boule', 90, 90, 90, 95, P('topiary'), BTP, { query: 'buis boule' }),
   G('deco', 'suspension', 'Lustre couronne noir', 240, 240, 300, 1490, P('ringChandelier'), ['google'], { query: 'lustre couronne noir grand diamètre', label: 'Lustre' }),
   G('objets', 'voiture', 'Voiture de sport rouge', 198, 460, 120, 0, P('sportsCar'), ['google'], { query: 'voiture de sport rouge', label: 'Déco du garage, non comptée' }),
+  G('deco', 'art', 'Grand tableau encre sur toile', 160, 6, 180, 690, P('bigArt', { style: 'ink' }), DECO, { query: 'grand tableau abstrait encre', wall: true, z: 95, label: 'Art' }),
+  G('deco', 'art', 'Tapisserie de forêt', 180, 6, 240, 1290, P('bigArt', { style: 'tapestry', frameColor: '#3a2a1b' }), DECO, { query: 'grande tapisserie verdure ancienne', wall: true, z: 60, label: 'Art' }),
+  G('deco', 'art', 'Grande toile terre et ocre', 200, 6, 140, 790, P('bigArt', { style: 'earth', frameColor: '#6b4a2e' }), DECO, { query: 'grand tableau abstrait ocre', wall: true, z: 105, label: 'Art' }),
+  G('salon', 'bibliotheque', 'Bibliothèque sur mesure jusqu’au plafond', 300, 38, 280, 6900, P('libraryWall'), BTP, { query: 'bibliothèque noyer sur mesure', label: 'Sur mesure' }),
+  G('chambre', 'armoire', 'Dressing sur mesure en noyer', 300, 60, 260, 7200, P('dressingWall'), BTP, { query: 'dressing noyer sur mesure', label: 'Sur mesure' }),
+  G('repas', 'table', 'Table en noyer massif', 320, 110, 76, 4900, P('solidTable'), DECO, { query: 'table bois massif noyer 320', label: 'Table de ferme' }),
+  G('deco', 'vase', 'Vase et branches feuillues', 45, 45, 90, 79, P('branchVase'), DECO, { query: 'grand vase céramique branches' }),
+  G('deco', 'coussin', 'Série de coussins', 200, 20, 50, 160, P('cushionSet'), DECO, { query: 'coussins velours lin' }),
+  G('deco', 'lampe', 'Applique laiton', 8, 4, 60, 189, P('sconce'), DECO, { query: 'applique murale laiton', wall: true, z: 150, label: 'Applique' }),
+  G('deco', 'suspension', 'Suspension dôme en laiton', 60, 60, 90, 290, P('domePendant'), DECO, { query: 'suspension dôme laiton', ceiling: true, label: 'Suspension' }),
+  G('cuisine', 'meuble', 'Linéaire noyer et marbre', 400, 62, 92, 11900, P('cabinetRun'), BTP, { query: 'cuisine noyer marbre sur mesure', label: 'Sur mesure' }),
+  G('cuisine', 'meuble', 'Linéaire noyer et marbre avec meubles hauts', 560, 62, 240, 16900, P('cabinetRun', { upper: true, gap: 1.5 }), BTP, { query: 'cuisine noyer marbre sur mesure', label: 'Sur mesure' }),
+  G('cuisine', 'meuble', 'Colonnes noyer et laiton', 300, 65, 275, 9200, P('tallCabinets'), BTP, { query: 'colonnes cuisine noyer poignées laiton', label: 'Sur mesure' }),
+  G('cuisine', 'ilot', 'Îlot noyer et marbre', 300, 120, 94, 9800, P('marbleIsland'), BTP, { query: 'îlot central marbre noyer', label: 'Sur mesure' }),
+  G('cuisine', 'electro', 'Piano de cuisson et hotte habillée', 120, 65, 270, 8900, P('rangeHood'), ELEC, { query: 'piano de cuisson noir laiton 120', label: 'Piano' }),
+  G('sdb', 'baignoire', 'Baignoire îlot ovale', 180, 85, 58, 1790, P('ovalTub'), BTP, { query: 'baignoire îlot ovale' }),
+  G('sdb', 'meuble-vasque', 'Double vasque noyer et pierre', 220, 55, 86, 3400, P('stoneVanity'), BTP, { query: 'meuble double vasque noyer pierre', label: 'Sur mesure' }),
+  G('exterieur', 'mobilier', 'Bain de soleil rayé jaune', 70, 195, 60, 390, P('stripedLounger'), DECO, { query: 'bain de soleil bois rayé jaune' }),
+  G('exterieur', 'parasol', 'Parasol vintage rayé', 280, 280, 270, 490, P('vintageParasol'), DECO, { query: 'parasol vintage rayé jaune blanc' }),
+  G('exterieur', 'plantation', 'Cyprès', 110, 110, 800, 190, P('cypress'), BTP, { query: 'cyprès de Provence' }),
+  G('exterieur', 'plantation', 'Pin parasol', 1000, 1000, 1200, 890, P('umbrellaPine'), BTP, { query: 'pin parasol grand sujet' }),
   G('bureau', 'sport', 'Banc de musculation réglable', 135, 50, 48, 249, P('slab', { color: '#25262a' }), ['decathlon', 'google'].filter((s) => s === 'google'), { query: 'banc de musculation réglable' }),
   G('bureau', 'sport', 'Rangement haltères', 180, 40, 140, 399, P('bookcase', { color: '#2b2b2e' }), ['google'], { query: 'rack haltères' }),
   G('bureau', 'sport', 'Tapis de course', 180, 80, 130, 899, P('slab', { color: '#1f2023' }), ['google'], { query: 'tapis de course' }),
@@ -359,7 +380,7 @@ export function purchaseLinks(item) {
   return out;
 }
 
-export const DOOR_TYPES = ['door', 'entry', 'sliding-door', 'pocket', 'double', 'garage', 'passage'];
+export const DOOR_TYPES = ['door', 'entry', 'sliding-door', 'pocket', 'double', 'garage', 'passage', 'arch'];
 export const isDoorType = (t) => DOOR_TYPES.includes(t);
 
 const D = (name, width, height = 204, extra = {}) => ({ group: 'Portes', type: 'door', name, width, height, sill: 0, ...extra });
@@ -378,6 +399,7 @@ export const OPENINGS = [
   D('Passage ouvert', 120, 215, { type: 'passage' }), D('Grand passage', 240, 225, { type: 'passage' }),
   D('Porte de garage 2,40 m', 240, 200, { type: 'garage' }), D('Porte de garage 3 m', 300, 215, { type: 'garage' }), D('Porte de garage double 5 m', 500, 215, { type: 'garage' }),
   W('Fenêtre 1 vantail', 60, 115, 100, 'window1'), W('Petite fenêtre', 45, 60, 130, 'window1'), W('Fenêtre 2 vantaux', 120, 135, 90), W('Fenêtre 2 vantaux large', 140, 135, 90), W('Fenêtre 3 vantaux', 180, 135, 90, 'bay'),
+  { group: 'Portes', type: 'arch', name: 'Grande arche', width: 240, height: 280, sill: 0 }, { group: 'Portes', type: 'arch', name: 'Arche', width: 140, height: 240, sill: 0 },
   { group: 'Fenêtres anglaises', type: 'window2', name: 'Fenêtre anglaise', width: 140, height: 200, sill: 70, muntins: [2, 4] }, { group: 'Fenêtres anglaises', type: 'window2', name: 'Grande fenêtre anglaise', width: 200, height: 230, sill: 40, muntins: [3, 5] }, { group: 'Fenêtres anglaises', type: 'window2', name: 'Porte-fenêtre anglaise', width: 180, height: 240, sill: 0, muntins: [2, 5] }, { group: 'Fenêtres anglaises', type: 'bay', name: 'Grande baie anglaise', width: 400, height: 250, sill: 0, muntins: [2, 4] },
   W('Fenêtre haute', 200, 50, 190, 'fixed'), W('Bandeau vitré', 300, 60, 150, 'glasswall'), W('Fenêtre fixe', 100, 100, 110, 'fixed'), W('Fenêtre carrée', 60, 60, 120, 'fixed'),
   W('Verrière atelier', 200, 150, 90, 'atelier'), W('Verrière toute hauteur', 240, 215, 0, 'atelier'),

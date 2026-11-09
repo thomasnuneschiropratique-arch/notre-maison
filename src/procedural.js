@@ -1,6 +1,7 @@
 // Meubles paramétriques : générés aux dimensions exactes du produit. Origine au sol, largeur en X, façade vers +Z, unités en mètres.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { solid, fabric, wood, glass, mirror, ceramic, chrome, blackMetal, brass, emissive, finishFromColor, texturedMaterial } from './materials.js';
 
 /** UV en mètres par projection sur l'axe dominant, pour que les textures gardent leur échelle réelle. */
@@ -640,7 +641,7 @@ function classicStairs(p) {
   const xA = -w / 2 + f / 2, xB = w / 2 - f / 2;
   const step = (x, z, sx, sz, i, depthAxis) => {
     B(g, sx, 0.045, sz, walnut, x, rise * (i + 1) - 0.045, z, 0.008);
-    if (depthAxis > 0) B(g, sx, rise, 0.02, white, x, rise * i, z + sz / 2 - 0.01); else B(g, sx, rise, 0.02, white, x, rise * i, z - sz / 2 + 0.01);
+    if (depthAxis > 0) B(g, sx - 0.01, rise - 0.045, 0.02, white, x, rise * i, z + sz / 2 - 0.04); else B(g, sx - 0.01, rise - 0.045, 0.02, white, x, rise * i, z - sz / 2 + 0.04);
   };
   for (let i = 0; i < nA; i++) step(xA, d / 2 - runA * (i + 0.5), f, runA + 0.02, i, 1);
   B(g, w, 0.05, land, walnut, 0, rise * (nA + 1) - 0.05, -d / 2 + land / 2, 0.008);
@@ -936,12 +937,243 @@ function sportsCar(p) {
   return g;
 }
 
+function canvasMap(W, H, draw) {
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  draw(cv.getContext('2d'), W, H);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const brushRnd = (s) => () => (s = (s * 48271) % 2147483647) / 2147483647;
+
+/** Grand tableau encadré : encre sur fond sable, tapisserie de forêt, ou abstrait terreux. */
+function bigArt(p) {
+  const g = new THREE.Group(), { w = 1.6, h = 1.8, style = 'ink', frameColor = '#1c1a18' } = p, rnd = brushRnd(style.length * 977 + Math.round(w * 100));
+  const map = canvasMap(512, Math.round((512 * h) / w), (c, W, H) => {
+    if (style === 'tapestry') {
+      c.fillStyle = '#2c3528'; c.fillRect(0, 0, W, H); c.fillStyle = '#c4b184'; c.fillRect(0, H * 0.45, W, H * 0.2);
+      for (let i = 0; i < 900; i++) { c.fillStyle = ['#23301f', '#3d4d2e', '#596338', '#8a7a45', '#1b2419'][Math.floor(rnd() * 5)]; const x = rnd() * W, y = rnd() * H * (rnd() > 0.3 ? 0.62 : 1); c.beginPath(); c.ellipse(x, y, 5 + rnd() * 22, 4 + rnd() * 15, rnd() * 3, 0, 7); c.fill(); }
+      c.strokeStyle = '#2a1e14'; c.lineWidth = 16; c.beginPath(); c.moveTo(W * 0.35, H); c.bezierCurveTo(W * 0.3, H * 0.7, W * 0.42, H * 0.5, W * 0.36, H * 0.25); c.stroke();
+    } else if (style === 'earth') {
+      c.fillStyle = '#d9c7a6'; c.fillRect(0, 0, W, H);
+      for (const [col, y0] of [['#7e4a2a', 0.15], ['#b07a45', 0.4], ['#3a2f27', 0.68]]) { c.fillStyle = col; c.beginPath(); c.moveTo(0, H * y0); for (let x = 0; x <= W; x += 24) c.lineTo(x, H * y0 + Math.sin(x * 0.02 + y0 * 9) * 40 + rnd() * 14); c.lineTo(W, H * (y0 + 0.2)); c.lineTo(0, H * (y0 + 0.22)); c.fill(); }
+    } else {
+      c.fillStyle = '#c9ad85'; c.fillRect(0, 0, W, H); c.strokeStyle = '#17130f'; c.lineCap = 'round';
+      const branch = (x, y, a, l, t) => { if (l < 14) return; const X = x + Math.cos(a) * l, Y = y + Math.sin(a) * l; c.lineWidth = t; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo((x + X) / 2 + rnd() * 26 - 13, (y + Y) / 2 + rnd() * 26 - 13, X, Y); c.stroke(); branch(X, Y, a + 0.3 + rnd() * 0.7, l * 0.74, t * 0.72); branch(X, Y, a - 0.3 - rnd() * 0.7, l * 0.68, t * 0.68); };
+      branch(W * 0.5, H, -1.57, H * 0.26, 24); branch(0, H * 0.45, -0.1, W * 0.22, 18); branch(W, H * 0.3, 3.0, W * 0.22, 16);
+    }
+  });
+  B(g, w + 0.08, h + 0.08, 0.05, solid(frameColor, 0.4), 0, -0.04, 0);
+  const art = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map, roughness: 0.92 }));
+  art.position.set(0, h / 2, 0.028); art.receiveShadow = true; g.add(art);
+  return g;
+}
+
+/** Bibliothèque sur mesure jusqu'au plafond, garnie de livres et d'objets. */
+function libraryWall(p) {
+  const g = new THREE.Group(), { w = 3, h = 2.8, d = 0.38, clothes } = p, wd = walnutMat(), bays = Math.max(1, Math.round(w / 0.95)), bw = w / bays, shelves = Math.max(3, Math.round(h / 0.42)), sh = (h - 0.72) / shelves, rnd = brushRnd(Math.round(w * 137 + h * 71));
+  B(g, w, h, 0.02, wd, 0, 0, -d / 2 + 0.01); B(g, w, 0.08, d, wd, 0, h - 0.08, 0); B(g, w, 0.72, d, wd, 0, 0, 0);
+  for (let i = 0; i <= bays; i++) B(g, 0.035, h, d, wd, -w / 2 + i * bw, 0, 0);
+  for (let i = 0; i < bays; i++) { const cx = -w / 2 + (i + 0.5) * bw; B(g, 0.012, 0.11, 0.012, brass(), cx - 0.05, 0.42, d / 2 + 0.01); B(g, 0.012, 0.11, 0.012, brass(), cx + 0.05, 0.42, d / 2 + 0.01); B(g, 0.01, 0.62, 0.006, solid('#2e1f15', 0.6), cx, 0.05, d / 2 + 0.002, 0); }
+  const parts = [], colors = ['#7b2e23', '#2f3c33', '#c9b28d', '#1f2a3a', '#8a6236', '#e8dfcc', '#3b2b20', '#a68a58', '#5a6b5d'], color = new THREE.Color();
+  const add = (geo, hex) => { color.set(hex); const n = geo.attributes.position.count, cols = new Float32Array(n * 3); for (let k = 0; k < n; k++) { cols[k * 3] = color.r; cols[k * 3 + 1] = color.g; cols[k * 3 + 2] = color.b; } geo.setAttribute('color', new THREE.BufferAttribute(cols, 3)); geo.deleteAttribute('uv'); parts.push(geo); };
+  for (let i = 0; i < bays; i++) for (let j = 0; j < shelves; j++) {
+    const y = 0.72 + j * sh; B(g, bw, 0.028, d, wd, -w / 2 + (i + 0.5) * bw, y + sh - 0.014, 0);
+    if (clothes) continue;
+    let x = -w / 2 + i * bw + 0.05; const end = x + bw - 0.1, stopAt = rnd() > 0.72 ? x + bw * (0.35 + rnd() * 0.3) : end;
+    while (x < stopAt) { const t = 0.022 + rnd() * 0.035, tall = sh * (0.55 + rnd() * 0.3), dp = 0.16 + rnd() * 0.08; add(new THREE.BoxGeometry(t, tall, dp).translate(x + t / 2, y + tall / 2, 0.02), colors[Math.floor(rnd() * colors.length)]); x += t + 0.002; }
+  }
+  if (parts.length) { const m = new THREE.Mesh(mergeGeometries(parts), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82 })); m.castShadow = m.receiveShadow = true; g.add(m); parts.forEach((q) => q.dispose()); }
+  return g;
+}
+
+/** Dressing en noyer : penderies garnies, étagères, tiroirs à poignées laiton. */
+function dressingWall(p) {
+  const g = new THREE.Group(), { w = 3, h = 2.6, d = 0.6 } = p, wd = walnutMat(), bays = Math.max(1, Math.round(w / 1.05)), bw = w / bays, rnd = brushRnd(Math.round(w * 311));
+  B(g, w, h, 0.02, wd, 0, 0, -d / 2 + 0.01); B(g, w, 0.07, d, wd, 0, h - 0.07, 0); B(g, w, 0.08, d, wd, 0, 0, 0);
+  const tones = ['#ece6d8', '#2b2a2c', '#7c6a55', '#b8a78d', '#39465a', '#d9d2c2'];
+  for (let i = 0; i <= bays; i++) B(g, 0.03, h, d, wd, -w / 2 + i * bw, 0, 0);
+  for (let i = 0; i < bays; i++) {
+    const cx = -w / 2 + (i + 0.5) * bw;
+    if (i % 3 === 2) { for (let j = 0; j < 3; j++) { B(g, bw - 0.05, 0.22, d - 0.05, wd, cx, 0.1 + j * 0.24, 0.02); B(g, 0.2, 0.014, 0.018, brass(), cx, 0.2 + j * 0.24, d / 2 + 0.01); } for (let j = 0; j < 4; j++) { B(g, bw, 0.025, d, wd, cx, 0.86 + j * 0.42, 0); B(g, 0.28, 0.2, 0.26, solid(tones[(i + j) % tones.length], 0.8), cx, 0.885 + j * 0.42, 0, 0.01); } continue; }
+    B(g, bw - 0.04, 0.025, d, wd, cx, h - 0.42, 0); const rod = C(g, 0.012, 0.012, bw - 0.05, brass(), cx, h - 0.54, 0, 10); rod.rotation.z = Math.PI / 2;
+    for (let k = 0; k < 9; k++) { const x = cx - bw / 2 + 0.08 + (k * (bw - 0.16)) / 8, long = 0.8 + rnd() * 0.65; B(g, 0.05, long, 0.4, fabric(tones[Math.floor(rnd() * tones.length)], 'lin'), x, h - 0.56 - long, 0, 0.012); }
+  }
+  return g;
+}
+
+/** Table de ferme en bois massif, plateau épais et piétement en poutres. */
+function solidTable(p) {
+  const g = new THREE.Group(), { w = 3.2, d = 1.1, h = 0.76 } = p, wd = texturedMaterial('american_walnut_veneer', 1.4, { tint: '#e0a56b', gain: 1.35 });
+  B(g, w, 0.09, d, wd, 0, h - 0.09, 0, 0.012);
+  for (const s of [-1, 1]) { B(g, 0.14, h - 0.09, d * 0.74, wd, s * w * 0.34, 0, 0, 0.01); B(g, 0.22, 0.06, d * 0.84, wd, s * w * 0.34, 0, 0, 0.01); }
+  B(g, w * 0.68, 0.1, 0.09, wd, 0, 0.28, 0, 0.008);
+  return g;
+}
+
+/** Vase garni de branches feuillues. */
+function branchVase(p) {
+  const g = new THREE.Group(), { w = 0.45, h = 0.85 } = p, r = w * 0.32, rnd = brushRnd(Math.round(h * 991 + w * 53)), leaf = solid('#536b3c', 0.8), wood_ = solid('#4f3a28', 0.8), body = ceramic('#d9d2c4');
+  S(g, r, body, 0, r * 1.05, 0, 1, 1.1, 1);
+  C(g, r * 0.32, r * 0.4, r * 0.5, body, 0, r * 2.05, 0, 16);
+  for (let i = 0; i < 9; i++) { const a = rnd() * 6.28, lean = 0.1 + rnd() * 0.3, L = h * (0.55 + rnd() * 0.3), m = mesh(new THREE.CylinderGeometry(0.004, 0.006, L, 5), wood_, Math.cos(a) * L * lean * 0.5, r * 2.2 + L * 0.45, Math.sin(a) * L * lean * 0.5); m.rotation.z = -Math.cos(a) * lean; m.rotation.x = Math.sin(a) * lean; g.add(m); for (let k = 0; k < 5; k++) { const t = 0.45 + k * 0.12; S(g, 0.022 + rnd() * 0.018, leaf, Math.cos(a) * L * lean * t + rnd() * 0.05, r * 2.2 + L * t * 0.95, Math.sin(a) * L * lean * t + rnd() * 0.05, 1.5, 0.5, 1); } }
+  return g;
+}
+
+/** Série de coussins posés sur un canapé. */
+function cushionSet(p) {
+  const g = new THREE.Group(), { w = 2, colors = ['#d7c8ad', '#7a4a2c', '#e8dfcf'] } = p, n = Math.max(2, Math.round(w / 0.42));
+  for (let i = 0; i < n; i++) { const s = (i % 2 ? 0.42 : 0.5), m = B(g, s, s, 0.14, fabric(colors[i % colors.length], 'lin'), -w / 2 + ((i + 0.5) * w) / n, 0, 0, 0.055); m.rotation.x = -0.3; m.rotation.z = i % 2 ? 0.08 : -0.06; }
+  return g;
+}
+
+function sconce(p) {
+  const g = new THREE.Group(), { h = 0.6 } = p;
+  B(g, 0.07, h, 0.03, brass(), 0, 0, 0, 0.01); B(g, 0.05, h - 0.06, 0.02, emissive('#ffd9a3', 2.6), 0, 0.03, 0.018, 0.008);
+  return g;
+}
+
+function domePendant(p) {
+  const g = new THREE.Group(), { w = 0.6, h = 0.9 } = p, metal = brass();
+  const dome = mesh(new THREE.SphereGeometry(w / 2, 28, 12, 0, 6.3, 0, 1.45), metal.clone(), 0, 0.02, 0); dome.material.side = THREE.DoubleSide; g.add(dome);
+  S(g, 0.05, emissive('#ffe2b8', 4), 0, 0.03, 0); C(g, 0.006, 0.006, h, metal, 0, w / 2, 0, 8);
+  return g;
+}
+
+let marbleCache = null;
+/** Marbre clair veiné de brun, comme sur les photos de cuisine. */
+const marbleMat = () => {
+  if (marbleCache) return marbleCache;
+  const rnd = brushRnd(4441);
+  const map = canvasMap(1024, 1024, (c, W, H) => {
+    c.fillStyle = '#efe9df'; c.fillRect(0, 0, W, H);
+    for (let i = 0; i < 46; i++) {
+      c.strokeStyle = ['#6d4a3a', '#9b7a68', '#b9aca0', '#3f2c26', '#c6b9ab'][Math.floor(rnd() * 5)]; c.globalAlpha = 0.25 + rnd() * 0.6; c.lineWidth = 0.8 + rnd() * rnd() * 9;
+      let x = rnd() * W, y = rnd() * H, a = rnd() * 6.28; c.beginPath(); c.moveTo(x, y);
+      for (let k = 0; k < 22; k++) { a += (rnd() - 0.5) * 1; x += Math.cos(a) * 38; y += Math.sin(a) * 38; c.lineTo(x, y); }
+      c.stroke();
+    }
+    c.globalAlpha = 1;
+  });
+  map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(0.55, 0.55);
+  marbleCache = new THREE.MeshStandardMaterial({ map, roughness: 0.22 });
+  return marbleCache;
+};
+const brassBar = (g, x, y, z, len, vertical) => B(g, vertical ? 0.018 : len, vertical ? len : 0.018, 0.022, brass(), x, y, z);
+
+/** Linéaire de cuisine sur mesure : noyer sombre, plan en marbre, poignées laiton. */
+function cabinetRun(p) {
+  const g = new THREE.Group(), { w = 4, d = 0.62, h = 0.92, upper, gap = 0 } = p, wd = walnutMat(), n = Math.max(1, Math.round(w / 0.6)), ew = w / n;
+  B(g, w, 0.1, d - 0.08, solid('#17130f', 0.8), 0, 0, -0.04);
+  for (let i = 0; i < n; i++) { const x = -w / 2 + (i + 0.5) * ew; B(g, ew - 0.008, h - 0.14, d - 0.03, wd, x, 0.1, 0); B(g, ew - 0.13, h - 0.3, 0.012, wd, x, 0.17, d / 2 - 0.008); brassBar(g, x, h - 0.2, d / 2 + 0.008, 0.2); }
+  B(g, w + 0.03, 0.05, d + 0.04, marbleMat(), 0, h - 0.04, 0, 0.012);
+  if (upper) {
+    B(g, w, 1.46 - 0.92, 0.02, marbleMat(), 0, h + 0.01, -d / 2 + 0.01);
+    const uh = 0.92, left = (w - gap) / 2;
+    for (const s of [-1, 1]) { if (left <= 0.1) continue; const cx = s * (gap / 2 + left / 2), un = Math.max(1, Math.round(left / 0.6)), uw = left / un; for (let i = 0; i < un; i++) { const x = cx - left / 2 + (i + 0.5) * uw; B(g, uw - 0.008, uh, 0.36, wd, x, 1.46, -d / 2 + 0.18); B(g, uw - 0.12, uh - 0.14, 0.012, solid('#b9b6a8', 0.25, 0.2), x, 1.53, -d / 2 + 0.365); brassBar(g, x + uw / 2 - 0.06, 1.6, -d / 2 + 0.385, 0.34, true); } }
+  }
+  return g;
+}
+
+/** Colonnes de cuisine toute hauteur, longues poignées en laiton. */
+function tallCabinets(p) {
+  const g = new THREE.Group(), { w = 3, d = 0.65, h = 2.75 } = p, wd = walnutMat(), n = Math.max(1, Math.round(w / 0.75)), ew = w / n;
+  B(g, w, 0.1, d - 0.08, solid('#17130f', 0.8), 0, 0, -0.04);
+  for (let i = 0; i < n; i++) { const x = -w / 2 + (i + 0.5) * ew; B(g, ew - 0.008, h - 0.1, d, wd, x, 0.1, 0); B(g, ew - 0.14, h - 0.34, 0.012, wd, x, 0.22, d / 2 + 0.002); brassBar(g, x + (i % 2 ? -1 : 1) * (ew / 2 - 0.07), 0.55, d / 2 + 0.014, 1.5, true); }
+  B(g, w + 0.06, 0.09, d + 0.06, wd, 0, h, 0);
+  return g;
+}
+
+/** Îlot en noyer et grand plateau de marbre, côté assises dégagé. */
+function marbleIsland(p) {
+  const g = new THREE.Group(), { w = 3, d = 1.2, h = 0.94 } = p, wd = walnutMat(), n = Math.max(2, Math.round(w / 0.7));
+  B(g, w - 0.1, h - 0.06, d - 0.32, wd, 0, 0, -0.1);
+  for (let i = 0; i < n; i++) { const x = -w / 2 + 0.05 + (i + 0.5) * ((w - 0.1) / n); B(g, (w - 0.1) / n - 0.1, h - 0.3, 0.012, wd, x, 0.12, -0.1 - (d - 0.32) / 2 - 0.004); brassBar(g, x, h - 0.2, -0.1 - (d - 0.32) / 2 - 0.016, 0.2); }
+  B(g, w + 0.05, 0.07, d, marbleMat(), 0, h - 0.07, 0, 0.02);
+  B(g, 0.45, 0.012, 0.36, chrome(), -w * 0.22, h, -0.1); const tap = mesh(new THREE.TorusGeometry(0.1, 0.012, 8, 20, Math.PI), brass(), -w * 0.22, h + 0.2, -0.32); g.add(tap); C(g, 0.012, 0.012, 0.2, brass(), -w * 0.22 + 0.1, h, -0.32, 8);
+  return g;
+}
+
+/** Piano de cuisson noir et laiton avec sa hotte habillée. */
+function rangeHood(p) {
+  const g = new THREE.Group(), { w = 1.2, d = 0.65, h = 2.7 } = p, wd = walnutMat(), dark = solid('#16161a', 0.4, 0.3);
+  B(g, w, 0.9, d, dark, 0, 0.02, 0, 0.012); B(g, w * 0.86, 0.46, 0.02, solid('#0d0d10', 0.25, 0.4), 0, 0.14, d / 2); brassBar(g, 0, 0.66, d / 2 + 0.03, w * 0.8);
+  for (let i = 0; i < 6; i++) C(g, 0.022, 0.022, 0.03, brass(), -w * 0.34 + i * w * 0.136, 0.77, d / 2 + 0.02, 12).rotation.x = Math.PI / 2;
+  B(g, w + 0.02, 0.03, d, solid('#101013', 0.3, 0.3), 0, 0.92, 0);
+  B(g, w + 0.24, h - 1.72, d * 0.7, wd, 0, 1.72, -d * 0.15); B(g, w + 0.32, 0.1, d * 0.8, wd, 0, 1.68, -d * 0.1); B(g, w + 0.28, 0.022, 0.012, brass(), 0, 1.74, d * 0.3);
+  return g;
+}
+
+/** Baignoire îlot ovale et sa colonne de robinetterie. */
+function ovalTub(p) {
+  const g = new THREE.Group(), { w = 1.8, d = 0.85, h = 0.58 } = p, white = ceramic('#f4f1ea');
+  const body = C(g, 0.5, 0.42, h, white, 0, 0, 0, 48); body.scale.set(w, 1, d);
+  const rim = mesh(new THREE.TorusGeometry(0.47, 0.04, 12, 48), white, 0, h, 0); rim.rotation.x = Math.PI / 2; rim.scale.set(w, d, 1); g.add(rim);
+  const water = C(g, 0.45, 0.45, 0.005, solid('#dce7e6', 0.08), 0, h - 0.1, 0, 40); water.scale.set(w, 1, d);
+  C(g, 0.016, 0.016, 1.05, brass(), w / 2 + 0.12, 0, 0, 10); B(g, 0.26, 0.02, 0.024, brass(), w / 2 - 0.0, 1.04, 0);
+  return g;
+}
+
+/** Meuble vasque double en noyer, plateau de pierre, robinets muraux laiton. */
+function stoneVanity(p) {
+  const g = new THREE.Group(), { w = 2.2, d = 0.55, h = 0.86 } = p, wd = walnutMat(), stone = texturedMaterial('large_sandstone_blocks', 1.2, { tint: '#e9dfca', gain: 1.3 });
+  B(g, w, h - 0.26, d - 0.03, wd, 0, 0.18, 0, 0.006);
+  for (const s of [-1, 1]) for (let j = 0; j < 2; j++) { B(g, w / 2 - 0.06, (h - 0.3) / 2 - 0.02, 0.012, wd, s * w / 4, 0.2 + j * ((h - 0.3) / 2), d / 2 - 0.012); B(g, 0.2, 0.014, 0.02, brass(), s * w / 4, 0.42 + j * ((h - 0.3) / 2), d / 2 + 0.005); }
+  B(g, w + 0.04, 0.08, d + 0.03, stone, 0, h - 0.08, 0, 0.01);
+  for (const s of [-1, 1]) { const b = C(g, 0.21, 0.17, 0.02, ceramic('#efeae0'), s * w / 4, h, 0, 32); b.scale.set(1.15, 1, 0.82); B(g, 0.02, 0.02, 0.2, brass(), s * w / 4, h + 0.26, -d / 2 + 0.1); }
+  return g;
+}
+
+/** Bain de soleil vintage : structure en bois, matelas à rayures. */
+function stripedLounger(p) {
+  const g = new THREE.Group(), { w = 0.7, d = 1.95, color = '#e7b52e' } = p;
+  const map = canvasMap(256, 64, (c, W, H) => { const n = 8; for (let i = 0; i < n; i++) { c.fillStyle = i % 2 ? '#f6f1e3' : color; c.fillRect((i * W) / n, 0, W / n + 1, H); } });
+  map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(1, 1);
+  const cloth = new THREE.MeshStandardMaterial({ map, roughness: 0.9 }), frame = wood('chene');
+  const seat = d * 0.68, back = d - seat, y = 0.3;
+  const pad = (L) => new THREE.Mesh(new THREE.BoxGeometry(w - 0.04, 0.1, L, 1, 1, 1), cloth);
+  const a = pad(seat); a.position.set(0, y + 0.05, d / 2 - seat / 2); a.castShadow = a.receiveShadow = true; g.add(a);
+  B(g, w, 0.04, seat, frame, 0, y - 0.04, d / 2 - seat / 2);
+  const hinge = new THREE.Group(); hinge.position.set(0, y + 0.02, -d / 2 + back); hinge.rotation.x = 0.62; g.add(hinge);
+  const b2 = pad(back); b2.position.set(0, 0.05, -back / 2); b2.castShadow = true; hinge.add(b2);
+  B(hinge, w, 0.04, back, frame, 0, -0.04, -back / 2);
+  for (const sz of [0.82, 0.1]) for (const sx of [-1, 1]) B(g, 0.05, y - 0.04, 0.05, frame, sx * (w / 2 - 0.05), 0, (d / 2) * sz);
+  return g;
+}
+
+function vintageParasol(p) {
+  const g = new THREE.Group(), { w = 2.8, h = 2.7, color = '#e7b52e' } = p;
+  const map = canvasMap(512, 32, (c, W, H) => { const n = 16; for (let i = 0; i < n; i++) { c.fillStyle = i % 2 ? '#f6f1e3' : color; c.fillRect((i * W) / n, 0, W / n + 1, H); } });
+  const cloth = new THREE.MeshStandardMaterial({ map, roughness: 0.92, side: THREE.DoubleSide });
+  C(g, 0.024, 0.03, h, wood('chene'), 0, 0, 0, 10);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(w / 2, 0.62, 16, 1, true), cloth); roof.position.y = h - 0.18; roof.castShadow = true; g.add(roof);
+  const fringe = new THREE.Mesh(new THREE.CylinderGeometry(w / 2, w / 2, 0.14, 16, 1, true), cloth); fringe.position.y = h - 0.56; g.add(fringe);
+  S(g, 0.05, wood('chene'), 0, h + 0.15, 0);
+  C(g, 0.3, 0.34, 0.08, solid('#d4cbb8', 0.8), 0, 0, 0, 24);
+  return g;
+}
+
+function cypress(p) {
+  const g = new THREE.Group(), { w = 1.1, h = 8 } = p, leaf = texturedMaterial('forrest_ground_01', 0.5, { tint: '#8fbf72', gain: 1.5 });
+  C(g, 0.08, 0.12, h * 0.1, wood('noyer'), 0, 0, 0, 8);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 18, 26), leaf); body.scale.set(w, h * 0.96, w); body.position.y = h * 0.53; body.castShadow = true; g.add(body);
+  return g;
+}
+
+function umbrellaPine(p) {
+  const g = new THREE.Group(), { w = 10, h = 12 } = p, leaf = texturedMaterial('forrest_ground_01', 0.7, { tint: '#55763e' }), bark = wood('noyer'), rnd = brushRnd(7211);
+  C(g, 0.22, 0.42, h * 0.78, bark, 0, 0, 0, 14);
+  for (const a of [0.5, 2.6, 4.7]) { const m = mesh(new THREE.CylinderGeometry(0.08, 0.2, w * 0.4, 8), bark, Math.cos(a) * w * 0.16, h * 0.78, Math.sin(a) * w * 0.16); m.rotation.z = -Math.cos(a) * 1; m.rotation.x = Math.sin(a) * 1; g.add(m); }
+  for (let i = 0; i < 16; i++) { const a = rnd() * 6.28, r = rnd() * w * 0.42; leafBlob(g, leaf, Math.cos(a) * r, h * (0.86 + rnd() * 0.07), Math.sin(a) * r, w * (0.17 + rnd() * 0.1), h * 0.055, w * (0.17 + rnd() * 0.1), i * 1.7); }
+  return g;
+}
+
 export const PROC = {
   sofa, armchair, tvBench, tv, bookcase, table, chair, barStool, bed, mattress: mattressOnly, drawers, wardrobe, desk, officeChair,
   kitchenBase, kitchenWall, kitchenTall, oven, sinkUnit, hob, hood, fridge, dishwasher, washer, worktop, island,
   bathtub, shower, vanity, wc, towelRadiator, mirrorWall, mirrorCabinet, rug, curtain, pendant, floorLamp, tableLamp, picture,
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
+  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */
