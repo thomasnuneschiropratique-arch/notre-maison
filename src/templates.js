@@ -366,9 +366,13 @@ function stretch(p, axis, at, delta) {
   for (const z of p.roofs || []) { const lo = `${K}0`, hi = `${K}1`; if (z[lo] > at) z[lo] += delta; if (z[hi] > at) z[hi] += delta; }
 }
 
+/** À augmenter à chaque refonte : les anciennes copies enregistrées proposent alors la nouvelle version. */
+export const MANOR_VERSION = 2;
+
 /** Grande maison à l'américaine. Le nord (haut du plan) est l'arrivée, le sud le jardin. */
 function houseManor() {
   const p = newProject('Maison anglaise');
+  p.tplVersion = MANOR_VERSION;
   p.style = { facade: 'facade_pierre_blonde', roof: 'roof_ardoise', joinery: '#1c1d1f' };
   p.roof = { type: 'none', pitch: 45, overhang: 35, ridge: 'auto' };
   p.site.env = 'campagne';

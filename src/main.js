@@ -4,7 +4,7 @@ import { Plan2D } from './plan2d.js';
 import { allItems, getItem, CATEGORIES, subLabel, purchaseLinks, OPENINGS, setCustom, catalogStats, isHerStyle, isDoorType, loadMore, needsMore } from './catalog.js';
 import { ensureTerrain, commitTerrain, shapeTerrain, seatHouse, flattenAround, applyBrush, heightAt, TERRAIN_SHAPES, SLOPE_DEFAULT, DIRECTIONS, BRUSHES, ENVIRONMENTS } from './terrain.js';
 import { FLOORS, PAINTS, WALL_FINISHES, FACADES, ROOFS, GROUNDS, materialInfo, buyLinks } from './materials-data.js';
-import { TEMPLATES, windowsOf, facing, boxOf } from './templates.js';
+import { TEMPLATES, MANOR_VERSION, windowsOf, facing, boxOf } from './templates.js';
 import { runChecks, surfaces } from './advice.js';
 import { fullBudget, budgetSettings, GAMMES, MODES, MARKET, BUDGET_SOURCES } from './budget.js';
 import { dist, analyzeLevel } from './geometry.js';
@@ -1319,6 +1319,28 @@ function templatePicker() {
   }; });
 }
 
+/** Une ancienne copie de la maison anglaise ne se met pas à jour seule : on propose la dernière, sans rien effacer. */
+function offerLatestManor(p) {
+  const key = `nm-manor-seen-${MANOR_VERSION}`;
+  let seen = false;
+  try { seen = !!localStorage.getItem(key); } catch { /* navigation privée */ }
+  if (seen || p.name !== 'Maison anglaise' || (p.tplVersion || 0) >= MANOR_VERSION) return false;
+  const remember = () => { try { localStorage.setItem(key, '1'); } catch { /* navigation privée */ } };
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="box"><h2 class="t">Nouvelle version de la maison</h2><p class="muted small">Vous regardez une ancienne copie. La dernière version a la Ferrari et la Porsche au garage, un rendu plus réaliste et le jardin vivant. Votre copie actuelle reste enregistrée dans Projets.</p><div class="btnrow"><button class="btn" id="mkeep">Garder celle-ci</button><button class="btn pri" id="mlatest">Ouvrir la nouvelle</button></div></div>`;
+  document.body.append(m);
+  $('#mkeep', m).onclick = () => { remember(); m.remove(); };
+  $('#mlatest', m).onclick = async () => {
+    remember();
+    await store.save();
+    await loadMore().catch(() => {});
+    openProject(TEMPLATES.find((t) => t.id === 'manoir').make());
+    await store.save();
+    m.remove(); fillLevels(); render();
+  };
+  return true;
+}
+
 function openProject(p) {
   // Les projets créés avec l'ancien réglage par défaut passent sur Toulouse.
   if (p.site?.city === 'Albi') Object.assign(p.site, { lat: 43.6, lon: 1.44, city: 'Périphérie de Toulouse' });
@@ -1376,6 +1398,7 @@ store.addEventListener('level', () => { fillLevels(); render(); });
   setView('plan');
   render();
   document.getElementById('splash')?.remove();
+  offerLatestManor(store.project);
   // Évite que l'appareil efface le projet en cas de manque de place.
   navigator.storage?.persist?.().catch(() => {});
   if (isEnabled()) connect(knownCode(), knownName(), syncHooks);

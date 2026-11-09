@@ -371,7 +371,9 @@ export function setCustom(list) {
   for (const c of custom) byId.set(c.id, c);
 }
 export const allItems = () => [...items, ...custom];
-export const getItem = (id) => byId.get(id);
+// Articles renommés : les maisons déjà enregistrées doivent continuer à les afficher.
+const RENAMED = { 'g-voiture-voiture-de-sport-rouge': 'g-voiture-ferrari-rouge' };
+export const getItem = (id) => byId.get(RENAMED[id] || id);
 /** Prix d'un article posé : une terrasse, une haie ou une clôture suit sa taille réelle. */
 export function itemPrice(it, def) {
   const p = def.price || 0;
