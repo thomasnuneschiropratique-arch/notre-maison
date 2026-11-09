@@ -156,7 +156,7 @@ export function analyzeLevel(level) {
         inner -= (dist(nodes[h.from], nodes[h.to]) * h.wall.thickness) / 2;
       }
     }
-    rooms.push({ poly, area: Math.max(inner, 0) / 10000, grossArea: area / 10000, perimeter: poly.reduce((s, p, i) => s + dist(p, poly[(i + 1) % poly.length]), 0) / 100, wallIds: [...seen], center: interiorPoint(poly) });
+    rooms.push({ poly, area: Math.max(inner, 0) / 10000, grossArea: area / 10000, perimeter: poly.reduce((s, p, i) => s + dist(p, poly[(i + 1) % poly.length]), 0) / 100, wallIds: [...seen], nodeIds: ids, center: interiorPoint(poly) });
   }
   return { rooms, sideRoom, walls, out };
 }

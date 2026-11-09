@@ -8,9 +8,10 @@ import { TEMPLATES } from './templates.js';
 import { runChecks } from './advice.js';
 import { fullBudget, budgetSettings, GAMMES, MODES, MARKET, BUDGET_SOURCES } from './budget.js';
 import { dist } from './geometry.js';
+import { isGroup, newGroup, isEmptyGroup, addLevel, addHouse, addGarden, addSameSpot, stats as groupStats, moveBy, rotate as rotateGroup, duplicate as duplicateGroup } from './group.js';
 
 const ICONS = {
-  select: '<path d="M5 3l14 8-6 2-2 6z"/>', wall: '<path d="M3 7h18M3 12h18M3 17h18M9 7v5M15 12v5M6 12v5M18 7v5"/>', room: '<rect x="4" y="5" width="16" height="14" rx="1"/><path d="M4 12h6"/>',
+  select: '<path d="M5 3l14 8-6 2-2 6z"/>', zone: '<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="M12 8v8M8 12h8"/>', wall: '<path d="M3 7h18M3 12h18M3 17h18M9 7v5M15 12v5M6 12v5M18 7v5"/>', room: '<rect x="4" y="5" width="16" height="14" rx="1"/><path d="M4 12h6"/>',
   door: '<path d="M6 21V4a1 1 0 011-1h10a1 1 0 011 1v17M3 21h18"/><circle cx="14.5" cy="12" r=".6"/>', measure: '<path d="M3 16l13-13 5 5L8 21z"/><path d="M7 12l2 2M10 9l2 2M13 6l2 2"/>',
   undo: '<path d="M9 7L4 12l5 5"/><path d="M4 12h11a5 5 0 010 10h-3"/>', redo: '<path d="M15 7l5 5-5 5"/><path d="M20 12H9a5 5 0 000 10h3"/>',
   plan: '<path d="M4 4h16v16H4zM4 12h7V4M11 20v-4h9"/>', cube: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>', sofa: '<path d="M5 11V8a2 2 0 012-2h10a2 2 0 012 2v3"/><path d="M3 13a2 2 0 014 0v2h10v-2a2 2 0 014 0v5H3zM6 18v2M18 18v2"/>', euro: '<path d="M17 6a7 7 0 100 12M4 10h10M4 14h9"/>', more: '<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
@@ -37,6 +38,7 @@ document.getElementById('app').innerHTML = `
     <div class="layer" id="planLayer"><canvas id="plan"></canvas>
       <div class="rail" id="rail">
         <button data-t="select">${icon('select')}Choisir</button>
+        <button data-t="zone">${icon('zone')}Groupe</button>
         <button data-t="room">${icon('room')}Pièce</button>
         <button data-t="wall">${icon('wall')}Mur</button>
         <button data-t="door">${icon('door')}Ouvrir</button>
@@ -243,8 +245,15 @@ $('#openPop').onclick = (e) => {
 const HINTS = { wall: 'Touche pour poser chaque angle. Double-touche pour finir.', room: 'Fais glisser pour tracer une pièce rectangulaire.', opening: 'Touche un mur pour y placer l’ouverture.', measure: 'Fais glisser entre deux points.' };
 store.addEventListener('tool', (e) => {
   const h = $('#hint'), txt = HINTS[e.detail];
-  h.classList.toggle('hidden', !txt);
-  if (txt) { h.innerHTML = `<span>${txt}</span><button id="hintEnd">Terminer</button>`; $('#hintEnd').onclick = () => plan.setTool('select'); }
+  h.classList.toggle('hidden', !txt && e.detail !== 'zone');
+  h.classList.toggle('multi', e.detail === 'zone');
+  if (e.detail === 'zone') {
+    const levels = store.project.levels.length > 1;
+    h.innerHTML = `<span>Encadre ce que tu veux déplacer, ou touche des pièces.</span><button id="zLevel">${levels ? 'Ce niveau' : 'Toute la maison'}</button>${levels ? '<button id="zHouse">Toute la maison</button>' : ''}<button id="hintEnd">Terminer</button>`;
+    $('#zLevel').onclick = () => selectAll(!levels);
+    if (levels) $('#zHouse').onclick = () => selectAll(true);
+    $('#hintEnd').onclick = () => { store.select(null); plan.setTool('select'); };
+  } else if (txt) { h.innerHTML = `<span>${txt}</span><button id="hintEnd">Terminer</button>`; $('#hintEnd').onclick = () => plan.setTool('select'); }
   syncChrome();
 });
 
@@ -496,15 +505,37 @@ for (const [sel, pos] of [['#plan', (e) => { const r = $('#plan').getBoundingCli
 }
 
 // ——— Actions rapides sur la sélection ———
-function rotateSel() { const s = store.selection, it = s?.type === 'item' && store.level.items.find((i) => i.id === s.id); if (it) { live(() => { it.rot = ((it.rot || 0) + 90) % 360; }); render(); } }
-function dupSel() { const s = store.selection, it = s?.type === 'item' && store.level.items.find((i) => i.id === s.id); if (!it) return; const id = uid('it'); store.mutate((p, lv) => lv.items.push({ ...it, id, x: it.x + 30, y: it.y + 30 })); store.select({ type: 'item', id }); }
+function selectAll(house) {
+  const g = newGroup();
+  if (house) addHouse(g, store.project); else addLevel(g, store.level);
+  if (isEmptyGroup(g)) { toast('Il n’y a encore rien à sélectionner.'); return; }
+  store.select(g);
+  toast('Fais glisser le cadre pour déplacer le tout.');
+}
+function rotateSel(deg = 90) {
+  const g = store.selection;
+  if (isGroup(g)) { store.mutate((p) => rotateGroup(p, g, deg)); render(); return; }
+  rotateOne();
+}
+function dupSel() {
+  const g = store.selection;
+  if (!isGroup(g)) { dupOne(); return; }
+  let copy;
+  store.mutate((p) => { copy = duplicateGroup(p, g); });
+  store.select(copy);
+  toast({ text: 'Copie posée juste à côté.', undo: true });
+}
+function rotateOne() { const s = store.selection, it = s?.type === 'item' && store.level.items.find((i) => i.id === s.id); if (it) { live(() => { it.rot = ((it.rot || 0) + 90) % 360; }); render(); } }
+function dupOne() { const s = store.selection, it = s?.type === 'item' && store.level.items.find((i) => i.id === s.id); if (!it) return; const id = uid('it'); store.mutate((p, lv) => lv.items.push({ ...it, id, x: it.x + 30, y: it.y + 30 })); store.select({ type: 'item', id }); }
 
 function renderSelbar() {
   const bar = $('#selbar'), s = store.selection;
+  $('#hint').classList.toggle('behind', !!s);
   if (!s || !narrow()) { bar.classList.add('hidden'); $('#viewLayer').classList.remove('selecting'); return; }
   const lv = store.level;
   let name = 'Sélection', acts = '';
-  if (s.type === 'item') { const it = lv.items.find((i) => i.id === s.id); name = getItem(it?.cat)?.name || 'Meuble'; acts = '<button data-a="rot">Tourner</button><button data-a="dup">Dupliquer</button><button data-a="del">Retirer</button><button data-a="more" class="pri">Détails</button>'; }
+  if (s.type === 'group') { const st = groupStats(store.project, s); name = st.house ? 'Maison' : groupTitle(st); acts = '<button data-a="rot">Tourner</button><button data-a="dup">Copier</button><button data-a="del">Suppr.</button><button data-a="more" class="pri">Détails</button>'; }
+  else if (s.type === 'item') { const it = lv.items.find((i) => i.id === s.id); name = getItem(it?.cat)?.name || 'Meuble'; acts = '<button data-a="rot">Tourner</button><button data-a="dup">Dupliquer</button><button data-a="del">Retirer</button><button data-a="more" class="pri">Détails</button>'; }
   else if (s.type === 'room') { name = lv.rooms.find((r) => r.id === s.id)?.name || 'Pièce'; acts = '<button data-a="more" class="pri">Modifier</button>'; }
   else if (s.type === 'wall') { name = 'Mur'; acts = '<button data-a="del">Supprimer</button><button data-a="more" class="pri">Modifier</button>'; }
   else if (s.type === 'opening') { name = lv.walls.find((w) => w.id === s.wallId)?.openings.find((o) => o.id === s.id)?.name || 'Ouverture'; acts = '<button data-a="del">Retirer</button><button data-a="more" class="pri">Modifier</button>'; }
@@ -515,7 +546,7 @@ function renderSelbar() {
 }
 $('#selbar').onclick = (e) => {
   const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
-  if (a === 'rot') rotateSel();
+  if (a === 'rot') rotateSel(90);
   if (a === 'dup') dupSel();
   if (a === 'del') plan.deleteSelection();
   if (a === 'more') setPanel(true);
@@ -525,11 +556,13 @@ $('#selbar').onclick = (e) => {
 // Raccourcis clavier sur ordinateur
 addEventListener('keydown', (e) => {
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-  const s = store.selection, it = s?.type === 'item' && store.level.items.find((i) => i.id === s.id);
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') { if (it) { e.preventDefault(); dupSel(); } return; }
-  if (e.metaKey || e.ctrlKey || !it || view?.mode === 'walk') return;
-  if (e.key.toLowerCase() === 'r') rotateSel();
+  const s = store.selection, it = s?.type === 'item' && store.level.items.find((i) => i.id === s.id), g = isGroup(s);
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a' && ui.view === 'plan') { e.preventDefault(); selectAll(false); return; }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') { if (it || g) { e.preventDefault(); dupSel(); } return; }
+  if (e.metaKey || e.ctrlKey || (!it && !g) || view?.mode === 'walk') return;
+  if (e.key.toLowerCase() === 'r') rotateSel(90);
   const step = e.shiftKey ? 1 : 5, delta = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+  if (delta && g) { e.preventDefault(); store.mutate((p) => moveBy(p, s, delta[0], delta[1])); return; }
   if (delta) { e.preventDefault(); live(() => { it.x += delta[0]; it.y += delta[1]; }); }
 });
 
@@ -540,6 +573,7 @@ function centerOfView() {
 
 function renderSelection(body, s) {
   const lv = store.level;
+  if (s.type === 'group') return groupPanel(body, s);
   if (s.type === 'item') return itemPanel(body, lv.items.find((i) => i.id === s.id));
   if (s.type === 'room') { const i = lv.rooms.findIndex((r) => r.id === s.id); return roomPanel(body, lv.rooms[i], i, s.part); }
   if (s.type === 'wall') return wallPanel(body, lv.walls.find((w) => w.id === s.id), s);
@@ -553,6 +587,49 @@ function renderSelection(body, s) {
 const closeSel = () => { store.select(null); if (narrow()) setPanel(false); };
 function header(title, sub) { return `<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><h2 class="t">${esc(title)}</h2><div class="muted small">${esc(sub || '')}</div></div><button class="iconbtn" id="closeSel" aria-label="Fermer">${icon('close')}</button></div>`; }
 function live(fn) { store.snapshot(); fn(); store.commit(); }
+
+const countOf = (n, one, many) => (n ? `${n} ${n > 1 ? many : one}` : '');
+function groupSummary(st) {
+  return [countOf(st.rooms, 'pièce', 'pièces'), countOf(st.walls, 'mur', 'murs'), countOf(st.items, 'meuble', 'meubles'), st.levels > 1 ? `${st.levels} niveaux` : ''].filter(Boolean).join(' · ') || 'Angles de murs';
+}
+function groupTitle(st) {
+  if (st.house) return 'Toute la maison';
+  return st.rooms ? countOf(st.rooms, 'pièce', 'pièces') : countOf(st.walls + st.items, 'élément', 'éléments') || 'Sélection';
+}
+
+function groupPanel(body, s) {
+  const st = groupStats(store.project, s), several = store.project.levels.length > 1;
+  body.innerHTML = `${header(groupTitle(st), groupSummary(st))}
+    <div class="note">Fais glisser le cadre sur le plan pour tout déplacer.${st.house ? ' Le terrain ne bouge pas : la maison se repose sur le relief à son nouvel emplacement.' : ''}</div>
+    <h3 class="s">Déplacer précisément (cm)</h3>
+    <div class="dims"><div><label>Vers la droite</label><input type="number" id="gx" step="5" value="0"/></div><div><label>Vers le bas</label><input type="number" id="gy" step="5" value="0"/></div><div><label>&nbsp;</label><button class="btn pri block" id="gmove">Déplacer</button></div></div>
+    <h3 class="s">Tourner autour du centre</h3>
+    <div class="btnrow" id="gturn"><button class="btn" data-r="-90">−90°</button><button class="btn" data-r="-15">−15°</button><button class="btn" data-r="15">+15°</button><button class="btn" data-r="90">+90°</button></div>
+    ${st.border ? `<h3 class="s">Murs reliés au reste de la maison</h3><div class="chips wrap" id="gdetach"><button class="chip ${s.detach ? '' : 'on'}" data-d="0">Ils s’allongent</button><button class="chip ${s.detach ? 'on' : ''}" data-d="1">Ils restent en place</button></div>` : ''}
+    <h3 class="s">Étendre la sélection</h3>
+    <div class="btnrow">${several ? '<button class="btn" id="gsame">Ajouter les autres niveaux à cet endroit</button><button class="btn" id="glevel">Tout ce niveau</button>' : ''}<button class="btn" id="ghouse">Toute la maison</button>${st.garden ? `<button class="btn" id="ggarden">Ajouter le jardin (${st.garden})</button>` : ''}</div>
+    <div class="btnrow"><button class="btn" id="gdup">${icon('copy')}Copier à côté</button><button class="btn danger" id="gdel">${icon('trash')}Supprimer</button></div>`;
+  $('#closeSel', body).onclick = closeSel;
+  $('#gmove', body).onclick = () => {
+    const dx = Number($('#gx', body).value) || 0, dy = Number($('#gy', body).value) || 0;
+    if (!dx && !dy) return;
+    let m;
+    store.mutate((p) => { m = moveBy(p, s, dx, dy); });
+    if (m?.limited) toast('Arrêté au bord du terrain.');
+    render();
+  };
+  $('#gturn', body).onclick = (e) => { const r = Number(e.target.closest('[data-r]')?.dataset.r); if (r) rotateSel(r); };
+  const det = $('#gdetach', body);
+  if (det) det.onclick = (e) => { const d = e.target.closest('[data-d]')?.dataset.d; if (d !== undefined) { s.detach = d === '1'; render(); } };
+  const same = $('#gsame', body), lvl = $('#glevel', body);
+  if (same) same.onclick = () => { addSameSpot(s, store.project); store.select(s); };
+  if (lvl) lvl.onclick = () => selectAll(false);
+  $('#ghouse', body).onclick = () => selectAll(true);
+  const garden = $('#ggarden', body);
+  if (garden) garden.onclick = () => { addGarden(s, store.project); store.select(s); };
+  $('#gdup', body).onclick = dupSel;
+  $('#gdel', body).onclick = () => plan.deleteSelection();
+}
 
 function itemPanel(body, it) {
   if (!it) return closeSel();

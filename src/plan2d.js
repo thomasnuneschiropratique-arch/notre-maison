@@ -3,6 +3,7 @@ import { store, addNode, addWall, splitWall, uid } from './state.js';
 import { projectOnSegment, dist, itemCorners, wallCorners, polygonCentroid } from './geometry.js';
 import { getItem, OPENINGS } from './catalog.js';
 import { terrainOf, T_N } from './terrain.js';
+import { isGroup, newGroup, isEmptyGroup, addRect, toggleItem, toggleNodes, toggleRoom, bounds, capture, apply, finish, clampMove, remove } from './group.js';
 
 const INK = '#26231e', ACCENT = '#b5532f', SOFT = 'rgba(38,35,30,.5)';
 
@@ -79,6 +80,12 @@ export class Plan2D {
 
   deleteSelection() {
     const s = store.selection; if (!s) return;
+    if (isGroup(s)) {
+      store.mutate((p) => remove(p, s));
+      store.select(null);
+      store.emit('toast', { text: 'Sélection supprimée.', undo: true });
+      return;
+    }
     store.mutate((p, lv) => {
       if (s.type === 'item') lv.items = lv.items.filter((i) => i.id !== s.id);
       if (s.type === 'wall') lv.walls = lv.walls.filter((w) => w.id !== s.id);
@@ -129,6 +136,7 @@ export class Plan2D {
     this.pointers.set(e.pointerId, { sx, sy });
     if (this.pointers.size === 2) {
       if (this.drag?.type === 'brush') store.brushStroke.end();
+      if (this.drag?.type === 'group' && this.drag.began) { if (this.drag.session) finish(this.drag.session); store.commit({ rebuild: true }); }
       this.drag = null; this.pressMoved = true;
       const [a, b] = [...this.pointers.values()];
       this.pinch = { d: Math.hypot(a.sx - b.sx, a.sy - b.sy), cx: (a.sx + b.sx) / 2, cy: (a.sy + b.sy) / 2 };
@@ -139,7 +147,8 @@ export class Plan2D {
     const p = this.toWorld(sx, sy);
     if (store.brush) { this.drag = { type: 'brush' }; this.brushPos = p; store.brushStroke.begin(p); this.draw(); return; }
     this.touch = e.pointerType === 'touch';
-    if (this.tool === 'select') this.beginSelectDrag(p, sx, sy);
+    if (this.tool === 'zone' || (this.tool === 'select' && e.shiftKey)) this.beginZone(p, e.shiftKey);
+    else if (this.tool === 'select') { if (this.overGroup(p)) this.drag = { type: 'group', p0: p }; else this.beginSelectDrag(p, sx, sy); }
     else this.drag = { type: 'pan', vx: this.view.x, vy: this.view.y, sx, sy, passive: true };
     if (this.tool === 'room') this.drag = { type: 'room', a: this.snap(p), b: this.snap(p) };
     if (this.tool === 'measure') this.drag = { type: 'measure', a: this.snap(p), b: this.snap(p) };
@@ -213,6 +222,37 @@ export class Plan2D {
 
   beginOnce() { if (!this.drag.began) { store.snapshot(); this.drag.began = true; } }
 
+  // ——— Sélection de plusieurs éléments ———
+  overGroup(p) {
+    const s = store.selection; if (!isGroup(s)) return false;
+    const b = bounds(store.project, s), m = 10 / this.view.k;
+    return !!b && p.x >= b.x0 - m && p.x <= b.x1 + m && p.y >= b.y0 - m && p.y <= b.y1 + m;
+  }
+
+  beginZone(p, add) {
+    if (!add && this.overGroup(p)) { this.drag = { type: 'group', p0: p }; return; }
+    this.drag = { type: 'zone', a: p, b: p, add };
+  }
+
+  finishZone(d) {
+    const sel = d.add && isGroup(store.selection) ? store.selection : newGroup();
+    addRect(sel, store.level, { x0: Math.min(d.a.x, d.b.x), x1: Math.max(d.a.x, d.b.x), y0: Math.min(d.a.y, d.b.y), y1: Math.max(d.a.y, d.b.y) });
+    if (isEmptyGroup(sel)) { store.select(null); store.emit('toast', 'Rien dans ce cadre : englobe des angles de murs ou le centre des meubles.'); return; }
+    store.select(sel);
+  }
+
+  /** Une touche sur un élément l'ajoute à la sélection, une seconde touche l'en retire. */
+  zoneTap(p, add) {
+    const hit = this.hitTest(p);
+    if (!hit || hit.type === 'stairBelow' || hit.type === 'rotate') { if (!add) store.select(null); return; }
+    const lv = store.level, sel = isGroup(store.selection) ? store.selection : newGroup();
+    if (hit.type === 'item') toggleItem(sel, lv, hit.item.id);
+    if (hit.type === 'room') toggleRoom(sel, lv, lv.rooms.indexOf(hit.room));
+    if (hit.type === 'wall' || hit.type === 'opening') toggleNodes(sel, lv, [hit.wall.a, hit.wall.b]);
+    if (hit.type === 'node') toggleNodes(sel, lv, [hit.id]);
+    store.select(isEmptyGroup(sel) ? null : sel);
+  }
+
   move(e) {
     const { sx, sy } = this.pos(e);
     if (this.pointers.has(e.pointerId)) this.pointers.set(e.pointerId, { sx, sy });
@@ -238,12 +278,19 @@ export class Plan2D {
     }
     if (['door', 'opening'].includes(this.tool)) { this.hover = this.openingAt(p); this.draw(); }
     const d = this.drag;
+    if (!d && e.pointerType === 'mouse' && isGroup(store.selection)) this.canvas.style.cursor = this.overGroup(p) ? 'move' : this.tool === 'select' ? 'default' : 'crosshair';
     if (!d || !this.pressMoved) return;
     const lv = store.level;
     if (d.type === 'pan') { this.view.x = d.vx + sx - d.sx; this.view.y = d.vy + sy - d.sy; this.draw(); return; }
     if (d.type === 'room' || d.type === 'measure') { d.b = this.snap(p, { from: d.a }); this.draw(); return; }
+    if (d.type === 'zone') { d.b = p; this.draw(); return; }
     this.beginOnce();
-    if (d.type === 'node') {
+    if (d.type === 'group') {
+      d.session ||= capture(store.project, store.selection);
+      const m = clampMove(store.project, d.session.box, Math.round((p.x - d.p0.x) / 5) * 5, Math.round((p.y - d.p0.y) / 5) * 5);
+      d.delta = m;
+      apply(d.session, (q) => ({ x: q.x + m.dx, y: q.y + m.dy }));
+    } else if (d.type === 'node') {
       const s = this.snap(p, { ignore: d.id, from: d.start });
       lv.nodes[d.id].x = s.x; lv.nodes[d.id].y = s.y; d.snapNode = s.node;
     } else if (d.type === 'wall') {
@@ -307,9 +354,21 @@ export class Plan2D {
     if (d?.type === 'brush') { store.brushStroke.end(); return; }
     if (d?.type === 'room') { this.finishRoom(d); this.draw(); return; }
     if (d?.type === 'measure') { this.measure = tap ? null : d; this.draw(); return; }
+    if (d?.type === 'zone') { if (tap) this.zoneTap(p, d.add); else this.finishZone(d); this.draw(); return; }
     if (d?.began) {
       if (d.type === 'node' && d.snapNode && d.snapNode !== d.id) mergeNodes(lv, d.id, d.snapNode);
+      if (d.type === 'group' && d.session) finish(d.session);
       store.commit({ rebuild: true });
+      if (d.type === 'group') {
+        store.emit('select');
+        if (d.delta?.limited) store.emit('toast', 'Arrêté au bord du terrain.');
+      }
+      return;
+    }
+    if (d?.type === 'group' && tap) {
+      if (this.tool === 'zone') this.zoneTap(p, false);
+      else { const hit = this.hitTest(p); store.select(hit && hit.type !== 'stairBelow' && hit.type !== 'rotate' ? selectionOf(hit) : null); }
+      this.draw();
       return;
     }
     if (tap) {
@@ -513,21 +572,21 @@ export class Plan2D {
   }
 
   drawRooms(lv, analysis) {
-    const c = this.ctx, sel = store.selection;
+    const c = this.ctx, sel = store.selection, g = isGroup(sel) ? sel.parts[lv.id] : null;
     analysis.rooms.forEach((r, i) => {
       const info = lv.rooms[i];
       c.beginPath(); r.poly.forEach((p, j) => (j ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y))); c.closePath();
-      c.fillStyle = sel?.type === 'room' && sel.id === info?.id ? 'rgba(181,83,47,.14)' : '#fffdf8';
+      c.fillStyle = (sel?.type === 'room' && sel.id === info?.id) || (g && r.nodeIds.every((id) => g.nodes.has(id))) ? 'rgba(181,83,47,.14)' : '#fffdf8';
       c.fill();
     });
   }
 
   drawWalls(lv, analysis) {
-    const c = this.ctx, corners = wallCorners(lv, analysis), sel = store.selection;
+    const c = this.ctx, corners = wallCorners(lv, analysis), sel = store.selection, g = isGroup(sel) ? sel.parts[lv.id] : null;
     for (const w of analysis.walls) {
       const q = corners.get(w.id); if (!q) continue;
       c.beginPath(); c.moveTo(q.aL.x, q.aL.y); c.lineTo(q.bL.x, q.bL.y); c.lineTo(q.bR.x, q.bR.y); c.lineTo(q.aR.x, q.aR.y); c.closePath();
-      c.fillStyle = sel?.type === 'wall' && sel.id === w.id ? ACCENT : INK;
+      c.fillStyle = (sel?.type === 'wall' && sel.id === w.id) || (g?.nodes.has(w.a) && g.nodes.has(w.b)) ? ACCENT : INK;
       c.fill();
     }
     for (const w of analysis.walls) for (const o of w.openings) this.drawOpening(lv, w, o);
@@ -571,7 +630,7 @@ export class Plan2D {
   drawItem(it) {
     const def = getItem(it.cat); if (!def) return;
     const c = this.ctx, w = it.w ?? def.w, d = it.d ?? def.d;
-    const selected = store.selection?.type === 'item' && store.selection.id === it.id;
+    const selected = (store.selection?.type === 'item' && store.selection.id === it.id) || (isGroup(store.selection) && store.selection.parts[store.level.id]?.items.has(it.id));
     c.save(); c.translate(it.x, it.y); c.rotate(((it.rot || 0) * Math.PI) / 180);
     const col = it.color || def.color || '#d9d0c0';
     c.fillStyle = col + (col.length === 7 ? 'cc' : ''); c.strokeStyle = selected ? ACCENT : 'rgba(38,35,30,.65)';
@@ -640,6 +699,11 @@ export class Plan2D {
       c.fillStyle = 'rgba(181,83,47,.16)'; c.strokeStyle = ACCENT; c.lineWidth = 2 / this.view.k;
       c.fillRect(a.x, a.y, b.x - a.x, b.y - a.y); c.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
     }
+    if (this.drag?.type === 'zone') {
+      const { a, b } = this.drag, k = this.view.k;
+      c.fillStyle = 'rgba(181,83,47,.1)'; c.strokeStyle = ACCENT; c.lineWidth = 1.5 / k; c.setLineDash([7 / k, 5 / k]);
+      c.fillRect(a.x, a.y, b.x - a.x, b.y - a.y); c.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y); c.setLineDash([]);
+    }
     const m = this.drag?.type === 'measure' ? this.drag : this.measure;
     if (m) {
       c.strokeStyle = ACCENT; c.lineWidth = 2 / this.view.k; c.setLineDash([6 / this.view.k, 5 / this.view.k]);
@@ -662,10 +726,30 @@ export class Plan2D {
     if (s?.type === 'node' && lv.nodes[s.id]) {
       const n = lv.nodes[s.id]; c.fillStyle = ACCENT; c.beginPath(); c.arc(n.x, n.y, 8 / this.view.k, 0, 7); c.fill();
     }
-    if (this.tool === 'select' && this.view.k > 0.35) {
+    if ((this.tool === 'select' || this.tool === 'zone') && this.view.k > 0.35) {
       c.fillStyle = '#fffdf8'; c.strokeStyle = 'rgba(38,35,30,.5)'; c.lineWidth = 1 / this.view.k;
       for (const n of Object.values(lv.nodes)) { c.beginPath(); c.arc(n.x, n.y, 3.6 / this.view.k, 0, 7); c.fill(); c.stroke(); }
     }
+    if (isGroup(s)) this.drawGroupFrame(lv, s);
+  }
+
+  /** Cadre pointillé autour de la sélection, avec une poignée de déplacement au centre. */
+  drawGroupFrame(lv, s) {
+    const c = this.ctx, k = this.view.k, b = bounds(store.project, s), g = s.parts[lv.id];
+    if (!b) return;
+    if (g) { c.fillStyle = ACCENT; for (const id of g.nodes) { const n = lv.nodes[id]; if (n) { c.beginPath(); c.arc(n.x, n.y, 4.5 / k, 0, 7); c.fill(); } } }
+    const m = 10 / k;
+    c.strokeStyle = ACCENT; c.lineWidth = 1.5 / k; c.setLineDash([7 / k, 5 / k]);
+    c.strokeRect(b.x0 - m, b.y0 - m, b.x1 - b.x0 + m * 2, b.y1 - b.y0 + m * 2); c.setLineDash([]);
+    const x = (b.x0 + b.x1) / 2, y = (b.y0 + b.y1) / 2, r = 16 / k, a = 9 / k, h = 3.5 / k;
+    c.fillStyle = ACCENT; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+    c.strokeStyle = '#fff'; c.lineWidth = 1.8 / k; c.beginPath();
+    for (const [u, v] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const ex = x + u * a, ey = y + v * a;
+      c.moveTo(x, y); c.lineTo(ex, ey);
+      c.moveTo(ex - u * h - v * h, ey - v * h + u * h); c.lineTo(ex, ey); c.lineTo(ex - u * h + v * h, ey - v * h - u * h);
+    }
+    c.stroke();
   }
 
   drawRoomLabels(lv, analysis) {
@@ -708,6 +792,12 @@ export class Plan2D {
     if (s?.type === 'wall') {
       const w = lv.walls.find((x) => x.id === s.id);
       if (w) { const a = lv.nodes[w.a], b = lv.nodes[w.b]; const p = this.toScreen({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }); this.pill(`${(dist(a, b) / 100).toFixed(2).replace('.', ',')} m`, p.x, p.y); }
+    }
+    if (this.drag?.type === 'group' && this.drag.delta) {
+      const { dx, dy } = this.drag.delta, b = bounds(store.project, store.selection);
+      const f = (v) => `${(Math.abs(v) / 100).toFixed(2).replace('.', ',')} m`;
+      const txt = [dx ? `${dx > 0 ? '→' : '←'} ${f(dx)}` : '', dy ? `${dy > 0 ? '↓' : '↑'} ${f(dy)}` : ''].filter(Boolean).join('  ');
+      if (b && txt) { const p = this.toScreen({ x: (b.x0 + b.x1) / 2, y: b.y0 }); this.pill(txt, p.x, Math.max(16, p.y - 24)); }
     }
     if (this.draft && this.hover) {
       const last = this.draft.pts.at(-1), p = this.toScreen({ x: (last.x + this.hover.x) / 2, y: (last.y + this.hover.y) / 2 });

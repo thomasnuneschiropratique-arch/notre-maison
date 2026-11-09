@@ -228,7 +228,7 @@ h3.s { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color:
   .bottomnav button.on { color: var(--accent); }
   .stage { margin-bottom: calc(58px + var(--safe-b)); }
   .rail { flex-direction: row; left: 8px; top: 8px; right: auto; }
-  .rail button { width: 52px; }
+  .rail button { width: 46px; }
   .popover { left: 8px; top: 74px; }
   .v3bar { top: 8px; left: 8px; right: 8px; transform: none; justify-content: space-between; max-width: none; }
   .v3bar { gap: 5px; }
@@ -244,6 +244,10 @@ h3.s { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color:
   .levels select { max-width: 170px; font-size: 13px; padding: 7px 8px; }
   .walkgo { top: 56px; right: 8px; }
   .hint { bottom: 10px; white-space: normal; text-align: center; border-radius: 16px; }
+  .hint.multi { left: 8px; right: 8px; transform: none; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }
+  .hint.multi span { flex: 1 1 100%; }
+  .hint.behind { display: none; }
+  .hint.multi button { min-height: 32px; }
   .grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .card .b { padding: 6px 7px 7px; }
   .swatches { grid-template-columns: repeat(7, 1fr); }

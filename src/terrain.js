@@ -137,6 +137,13 @@ export function seatHouse(project) {
   if (pts.length) project.site.altitude = Math.round(Math.max(...pts.map((p) => heightAt(m, p.x, p.y))) * 100) / 100;
 }
 
+/** Point le plus haut du terrain sous le niveau d'entrée (m), ou null sans terrain. */
+export function groundTop(project) {
+  const m = terrainOf(project); if (!m) return null;
+  const pts = outline(project, project.levels[project.entry || 0]);
+  return pts.length ? Math.max(...pts.map((p) => heightAt(m, p.x, p.y))) : null;
+}
+
 /** Aplanit le terrain autour de la maison à la hauteur `alt` (m), en raccordant sur `margin` mètres. */
 export function flattenAround(project, alt, margin = 5) {
   const m = ensureTerrain(project), half = (T_N - 1) / 2, level = project.levels[project.entry || 0], pts = outline(project, level);
