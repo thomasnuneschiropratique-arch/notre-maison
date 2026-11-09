@@ -24,7 +24,7 @@ export function audit(store) {
       if (def.cat === 'exterieur' || def.sub === 'poteau' || def.sub === 'escalier' || def.sub === 'garde-corps') continue;
       if (!flatOrHung) {
         const c = itemCorners(it, def);
-        for (const wl of lv.walls) { const A = lv.nodes[wl.a], B = lv.nodes[wl.b]; let crosses = false; for (let k = 0; k < 4; k++) if (segmentsCross(c[k], c[(k + 1) % 4], A, B)) crosses = true; if (crosses && !wl.openings.some((o) => o.type === 'bay' || o.type === 'window2')) { out.crossWall.push(label); break; } }
+        for (const wl of lv.walls) { const A = lv.nodes[wl.a], B = lv.nodes[wl.b]; let crosses = false; for (let k = 0; k < 4; k++) if (segmentsCross(c[k], c[(k + 1) % 4], A, B)) crosses = true; if (crosses && !wl.openings.some((o) => o.type === 'bay' || o.type === 'window2')) { out.crossWall.push(`${label} @${Math.round(it.x)},${Math.round(it.y)}`); break; } }
       }
       if (def.sub !== 'rideau' && (def.wall || def.sub === 'art' || def.sub === 'miroir')) {
         let best = 1e9, wallHit = null, tt = 0;

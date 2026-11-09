@@ -661,6 +661,33 @@ function classicStairs(p) {
   return g;
 }
 
+/** Escalier américain à quart tournant : on arrive en haut face au palier, jamais face à un mur. */
+function classicQuarter(p) {
+  const g = new THREE.Group(), { w = 2.4, d = 4.65, h = 3.65, flight: f = 1.15 } = p, n = Math.round(h / 0.18), rise = h / n, walnut = walnutMat(), white = solid('#f1ece2', 0.5), lenA = d - f, runLen = w - f;
+  const nA = Math.round(((n - 1) * lenA) / (lenA + runLen)), nB = n - 1 - nA, runA = lenA / nA, runB = runLen / nB, xA = -w / 2 + f / 2, zB = -d / 2 + f / 2;
+  for (let i = 0; i < nA; i++) { const z = d / 2 - runA * (i + 0.5); B(g, f, 0.045, runA + 0.025, walnut, xA, rise * (i + 1) - 0.045, z, 0.008); B(g, f - 0.01, rise - 0.045, 0.02, white, xA, rise * i, z + runA / 2 - 0.03); }
+  B(g, f, 0.05, f, walnut, xA, rise * (nA + 1) - 0.05, zB, 0.008); B(g, f, rise * (nA + 1) - 0.05, 0.03, white, xA, 0, -d / 2 + 0.015); B(g, 0.03, rise * (nA + 1) - 0.05, f, white, -w / 2 + 0.015, 0, zB);
+  for (let i = 0; i < nB; i++) { const x = -w / 2 + f + runB * (i + 0.5); B(g, runB + 0.025, 0.045, f, walnut, x, rise * (nA + 2 + i) - 0.045, zB, 0.008); B(g, 0.02, rise - 0.045, f - 0.01, white, x - runB / 2 + 0.03, rise * (nA + 1 + i), zB); }
+  const sideX = xA + f / 2 + 0.02, shape = new THREE.Shape(), topA = rise * nA; shape.moveTo(-d / 2 + f, 0); shape.lineTo(d / 2, 0); shape.lineTo(d / 2, 0.02); shape.lineTo(-d / 2 + f, topA); shape.lineTo(-d / 2 + f, 0);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.04, bevelEnabled: false }); geo.rotateY(-Math.PI / 2); geo.translate(sideX, 0, 0); const side = new THREE.Mesh(geo, white); side.castShadow = side.receiveShadow = true; g.add(side);
+  const under = new THREE.Shape(); under.moveTo(-w / 2 + f, 0); under.lineTo(w / 2, 0); under.lineTo(w / 2, h); under.lineTo(-w / 2 + f, rise * (nA + 1)); under.lineTo(-w / 2 + f, 0);
+  const u2 = new THREE.ExtrudeGeometry(under, { depth: 0.04, bevelEnabled: false }); u2.translate(0, 0, -d / 2 + f + 0.0); const m2 = new THREE.Mesh(u2, white); m2.castShadow = m2.receiveShadow = true; g.add(m2);
+  const metal = blackMetal(), gl = glass();
+  railRun(g, [sideX, 0.02, d / 2], [sideX, topA, -d / 2 + f + 0.02], 0.95, 'classic', metal, gl);
+  railRun(g, [sideX, rise * (nA + 1), -d / 2 + f + 0.02], [w / 2, h, -d / 2 + f + 0.02], 0.95, 'classic', metal, gl);
+  for (const [x, y, z] of [[sideX, 0, d / 2 - 0.02], [sideX, topA, -d / 2 + f + 0.02], [w / 2 - 0.02, h, -d / 2 + f + 0.02]]) { B(g, 0.12, 1.15, 0.12, white, x, y, z, 0.012); B(g, 0.17, 0.06, 0.17, walnut, x, y + 1.15, z, 0.012); }
+  return g;
+}
+
+/** Méridienne de lecture, assise bouclée et têtière arrondie. */
+function daybed(p) {
+  const g = new THREE.Group(), { w = 2, d = 0.82, h = 0.78 } = p, cloth = fabric('#d7cdb9', 'bouclette'), wd = walnutMat();
+  B(g, w, 0.12, d, wd, 0, 0.14, 0, 0.012); for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) C(g, 0.022, 0.016, 0.14, wd, x * (w / 2 - 0.08), 0, z * (d / 2 - 0.08), 10);
+  B(g, w - 0.04, 0.2, d - 0.04, cloth, 0, 0.26, 0, 0.06); B(g, 0.26, h - 0.3, d - 0.04, cloth, -w / 2 + 0.15, 0.3, 0, 0.1);
+  const bolster = mesh(new THREE.CylinderGeometry(0.11, 0.11, d - 0.1, 22), cloth, -w / 2 + 0.38, 0.56, 0); bolster.rotation.x = Math.PI / 2; g.add(bolster);
+  return g;
+}
+
 /** Volée droite américaine le long d'un mur : le dessous est fermé par un soubassement, on ne peut pas passer dessous. */
 function classicStraight(p) {
   const g = new THREE.Group(), { w = 1.15, d = 4.6, h = 3.6, side: railSide = 1 } = p, n = Math.round(h / 0.18), rise = h / n, run = d / n, walnut = walnutMat(), white = solid('#f1ece2', 0.5), open = railSide * (w / 2 - 0.02);
@@ -701,6 +728,7 @@ function railRun(g, a, b, h, kind, metal, gl) {
 function stairs(p) {
   const g = new THREE.Group();
   const { w = 0.9, d = 3, h = 2.8, finish, shape = 'straight', open: openRiser, rail = 'metal', stone, noRail, metal: allMetal, classic } = p;
+  if (p.quarter) return classicQuarter(p);
   if (classic) return shape === 'straight' ? classicStraight(p) : classicStairs(p);
   const metal = blackMetal(), gl = glass();
   const tread = stone ? solid('#b9b5ab', 0.85) : allMetal ? metal : finish;
@@ -1241,7 +1269,7 @@ export const PROC = {
   kitchenBase, kitchenWall, kitchenTall, oven, sinkUnit, hob, hood, fridge, dishwasher, washer, worktop, island,
   bathtub, shower, vanity, wc, towelRadiator, mirrorWall, mirrorCabinet, rug, curtain, pendant, floorLamp, tableLamp, picture,
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
-  walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
+  daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
   bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine,
 };
@@ -1254,7 +1282,7 @@ export function buildProc(spec, size, color) {
   const finish = spec.p?.woodKind ? wood(spec.p.woodKind) : finishFromColor(color || spec.color, spec.slug || '');
   p.finish = finish; p.facade = p.facade || finish;
   p.worktop = p.worktop || wood('chene');
-  if (color && ['sofa', 'armchair', 'rug', 'curtain'].includes(spec.type)) p.color = color;
+  if (color && ['sofa', 'armchair', 'rug', 'curtain', 'stripedLounger', 'vintageParasol'].includes(spec.type)) p.color = color;
   if (spec.p?.bedColor) p.color = spec.p.bedColor;
   return fn(p);
 }

@@ -318,7 +318,9 @@ export function stairVoids(lower, stairDefs) {
     const w = (it.w ?? def.w) / 2, d = (it.d ?? def.d) / 2;
     const r = ((it.rot || 0) * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
     const straight = !def.model.p?.shape || def.model.p.shape === 'straight';
-    out.push([[-w - 3, -d - 3], [-w - 3, straight ? d * 0.2 : d + 3], [w + 3, straight ? d * 0.2 : d + 3], [w + 3, -d - 3]].map(([x, y]) => ({ x: it.x + x * c - y * s, y: it.y + x * s + y * c })));
+    const f = (def.model.p?.flight || 0) * 50;
+    const shape = def.model.p?.quarter ? [[-w - 3, -d - 3], [-w - 3, d * 0.2], [-w + f * 2 + 3, d * 0.2], [-w + f * 2 + 3, -d + f * 2 + 3], [w + 3, -d + f * 2 + 3], [w + 3, -d - 3]] : [[-w - 3, -d - 3], [-w - 3, straight ? d * 0.2 : d + 3], [w + 3, straight ? d * 0.2 : d + 3], [w + 3, -d - 3]];
+    out.push(shape.map(([x, y]) => ({ x: it.x + x * c - y * s, y: it.y + x * s + y * c })));
   }
   return out;
 }
@@ -450,15 +452,17 @@ export function buildRoof(project, level, baseY, zone) {
   const ov = roof.overhang;
   const alongX = roof.ridge === 'x' || (roof.ridge === 'auto' && b.x1 - b.x0 >= b.y1 - b.y0);
   // Repère local : s le long du faîtage, t en travers.
-  const s0 = (alongX ? b.x0 : b.y0) - maxT, s1 = (alongX ? b.x1 : b.y1) + maxT;
-  const t0 = (alongX ? b.y0 : b.x0) - maxT, t1 = (alongX ? b.y1 : b.x1) + maxT;
+  const sM = zone?.endCut ? 0 : maxT, s0 = (alongX ? b.x0 : b.y0) - sM, s1 = (alongX ? b.x1 : b.y1) + sM;
+  // Un pignon qui croise le toit principal ne doit jamais descendre dans les pièces : pas de débord sur ses côtés.
+  const ovT = zone?.flush ? 0 : ov, tM = zone?.flush ? 0 : maxT;
+  const t0 = (alongX ? b.y0 : b.x0) - tM, t1 = (alongX ? b.y1 : b.x1) + tM;
   const slope = Math.tan((roof.pitch * Math.PI) / 180);
   const P = (s, t, y) => (alongX ? [s * M, y, t * M] : [t * M, y, s * M]);
   const half = (t1 - t0) / 2, tm = (t0 + t1) / 2;
-  const ridgeY = top + (half + ov) * slope * M - ov * slope * M * 0 + 0.0;
-  const eaveY = top - ov * slope * M + 0.0;
-  const sA = s0 - ov, sB = s1 + ov, tA = t0 - ov, tB = t1 + ov;
-  const hipIn = roof.type === 'hip' ? half + ov : 0;
+  const ridgeY = top + (half + ovT) * slope * M;
+  const eaveY = top - ovT * slope * M;
+  const ovS = zone?.endCut ? 0 : ov, sA = s0 - ovS, sB = s1 + ovS, tA = t0 - ovT, tB = t1 + ovT;
+  const hipIn = roof.type === 'hip' ? half + ovT : 0;
   const rA = sA + hipIn, rB = sB - hipIn;
   const roofB = new QuadBatch(), gable = new QuadBatch();
 

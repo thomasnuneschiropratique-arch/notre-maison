@@ -647,7 +647,13 @@ export class View3D {
         const def = getItem(it.cat); if (def?.sub !== 'escalier') continue;
         const r = (-(it.rot || 0) * Math.PI) / 180, dx = x - it.x, dy = y - it.y, lx = dx * Math.cos(r) - dy * Math.sin(r), ly = dx * Math.sin(r) + dy * Math.cos(r);
         const w = (it.w ?? def.w) / 2, d = (it.d ?? def.d) / 2;
-        if (Math.abs(lx) <= w && Math.abs(ly) <= d) return { t: def.model?.p?.shape === 'U' ? (lx < 0 ? (0.5 * (d - ly)) / (2 * d) : 0.5 + (0.5 * (ly + d)) / (2 * d)) : (d - ly) / (2 * d), level };
+        if (Math.abs(lx) > w || Math.abs(ly) > d) continue;
+        if (def.model?.p?.quarter) {
+          const ff = (def.model.p.flight || 1.15) * 100, H = 2 * d, W = 2 * w, share = (H - ff) / (H - ff + W - ff), inA = lx < -w + ff, inB = ly < -d + ff;
+          if (!inA && !inB) continue;
+          return { t: !inB ? ((d - ly) / (H - ff)) * share : share + (Math.max(0, lx + w - ff) / (W - ff)) * (1 - share), level };
+        }
+        return { t: def.model?.p?.shape === 'U' ? (lx < 0 ? (0.5 * (d - ly)) / (2 * d) : 0.5 + (0.5 * (ly + d)) / (2 * d)) : (d - ly) / (2 * d), level };
       }
       return null;
     };

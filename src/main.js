@@ -4,7 +4,7 @@ import { Plan2D } from './plan2d.js';
 import { allItems, getItem, CATEGORIES, subLabel, purchaseLinks, OPENINGS, setCustom, catalogStats, isHerStyle, isDoorType, loadMore, needsMore } from './catalog.js';
 import { ensureTerrain, commitTerrain, shapeTerrain, seatHouse, flattenAround, applyBrush, heightAt, TERRAIN_SHAPES, SLOPE_DEFAULT, DIRECTIONS, BRUSHES, ENVIRONMENTS } from './terrain.js';
 import { FLOORS, PAINTS, WALL_FINISHES, FACADES, ROOFS, GROUNDS, materialInfo, buyLinks } from './materials-data.js';
-import { TEMPLATES } from './templates.js';
+import { TEMPLATES, windowsOf, facing, boxOf } from './templates.js';
 import { runChecks, surfaces } from './advice.js';
 import { fullBudget, budgetSettings, GAMMES, MODES, MARKET, BUDGET_SOURCES } from './budget.js';
 import { dist, analyzeLevel } from './geometry.js';
@@ -668,7 +668,7 @@ function itemPanel(body, it) {
   if (!it) return closeSel();
   const def = getItem(it.cat);
   const w = it.w ?? def.w, d = it.d ?? def.d, h = it.h ?? def.h;
-  const canColor = ['sofa', 'armchair', 'rug', 'curtain'].includes(def.model?.type);
+  const canColor = ['sofa', 'armchair', 'rug', 'curtain', 'stripedLounger', 'vintageParasol'].includes(def.model?.type);
   body.innerHTML = `${header(def.name, def.label)}
     <img class="hero" id="hero" alt="" style="margin-top:10px"/>
     <div class="price">${def.approx ? '≈ ' : ''}${euro(def.price)}</div>
@@ -694,6 +694,11 @@ function swatchRow(list, cur, kind) {
   return `<div class="swatches">${list.map((m) => `<button class="swatch ${cur === m.id ? 'on' : ''}" data-m="${m.id}" data-kind="${kind}" title="${esc(m.name)}" style="${m.hex ? `background:${m.hex}` : `background-image:url(./thumbs/t_${m.t}.webp)`}"></button>`).join('')}</div>`;
 }
 
+function roomZone(r) {
+  const lv = store.level;
+  return (store.project.roofs || []).find((z) => z.level === lv.id && (z.room === r.id || (r.x >= z.x0 && r.x <= z.x1 && r.y >= z.y0 && r.y <= z.y1 && (z.wallH > 0 || z.vault))));
+}
+
 function roomPanel(body, r, index, part) {
   if (!r) return closeSel();
   const a = store.analysis();
@@ -707,12 +712,30 @@ function roomPanel(body, r, index, part) {
     <h3 class="s">Murs de la pièce</h3>${swatchRow(PAINTS, r.paint, 'paint')}<div class="matname">${esc(materialInfo(r.paint)?.name || '')}${materialInfo(r.paint)?.brand ? ` · ${esc(materialInfo(r.paint).brand)}` : ''}</div>
     <h3 class="s">Revêtements muraux</h3>${swatchRow(WALL_FINISHES, r.paint, 'paint')}
     <h3 class="s">Plafond</h3>${swatchRow(PAINTS.slice(0, 6), r.ceiling, 'ceiling')}
+    <h3 class="s">Volume de la pièce</h3>
+    <div class="field"><label>Hauteur sous plafond (cm)</label><input type="number" id="rh" step="10" placeholder="${store.level.height}" value="${roomZone(r)?.wallH || ''}"/></div>
+    <div class="field"><label>Plafond cathédrale en bois</label><input type="checkbox" id="rv" ${roomZone(r)?.vault ? 'checked' : ''} style="width:22px;height:22px;justify-self:end"/></div>
+    <div class="btnrow"><button class="btn block" id="rcurt">Poser des rideaux à toutes les fenêtres</button></div>
     <div class="field wide"><label>Moulures</label><select id="mould">${[['none', 'Aucune'], ['crown', 'Corniche au plafond'], ['panels', 'Corniche et panneaux moulurés']].map(([k, l]) => `<option value="${k}" ${(r.moulding || 'none') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     <div class="note">Les couleurs de marque sont des teintes approchées : un écran ne remplace pas un échantillon.</div>`;
   void part;
   $('#closeSel', body).onclick = closeSel;
   $('#nm', body).onchange = (e) => live(() => { r.name = e.target.value; });
   $('#mould', body).onchange = (e) => live(() => { r.moulding = e.target.value; });
+  const applyVolume = () => live(() => {
+    const h = Number($('#rh', body).value) || 0, v = $('#rv', body).checked, p = store.project;
+    let z = roomZone(r);
+    if (!h && !v) { if (z) p.roofs = p.roofs.filter((q) => q !== z); return; }
+    if (!z) { const b = boxOf(store.level, r.name); z = { id: uid('z'), level: store.level.id, ...b, type: 'gable', pitch: 38, overhang: 30, ridge: 'auto', wallH: 0, room: r.id }; (p.roofs ||= []).push(z); }
+    z.wallH = h; z.vault = v;
+  });
+  $('#rh', body).onchange = applyVolume; $('#rv', body).onchange = applyVolume;
+  $('#rcurt', body).onclick = () => {
+    const def = allItems().find((i) => i.sub === 'rideau'), wins = windowsOf(store.level, r.name);
+    if (!def || !wins.length) { toast('Aucune fenêtre à habiller dans cette pièce.'); return; }
+    store.mutate((p, lv) => { for (const c of wins) for (const k of [-1, 1]) { const along = { x: c.n.y, y: -c.n.x }, d = c.w / 2 + 34; lv.items.push({ id: uid('it'), cat: def.id, x: c.x + along.x * k * d + c.n.x * (c.t + 12), y: c.y + along.y * k * d + c.n.y * (c.t + 12), rot: facing(c.n), w: 70, h: c.top, color: '#e8dfcf' }); } });
+    toast({ text: `${wins.length * 2} rideaux posés. Touche-les pour changer leur couleur.`, undo: true });
+  };
   $('#ty', body).onchange = (e) => live(() => { r.type = e.target.value; r.name = roomType(r.type)[1]; render(); });
   body.querySelectorAll('.swatch').forEach((b) => { b.onclick = () => { live(() => {
     r[b.dataset.kind] = b.dataset.m;
@@ -752,6 +775,7 @@ function openingPanel(body, w, o) {
     ${isDoor ? `<div class="field"><label>Ouverture (°)</label><input type="number" id="open" min="0" max="110" step="5" value="${o.open ?? 0}"/></div>
     <div class="btnrow"><button class="btn" id="flip">Inverser le sens</button><button class="btn" id="hinge">Changer le côté</button></div>` : ''}
     <div class="field"><label>Couleur</label><input type="color" id="col" value="${o.color || store.project.style.joinery}" style="height:36px;padding:2px"/></div>
+    ${isWin ? `<div class="dims" style="margin-top:8px"><div><label>Petits bois : colonnes</label><input type="number" min="1" max="8" id="mc" value="${o.muntins?.[0] ?? 1}"/></div><div><label>Rangées</label><input type="number" min="1" max="12" id="mr" value="${o.muntins?.[1] ?? 1}"/></div><div></div></div>` : ''}
     ${isWin ? `<div class="field"><label>Volet roulant</label><input type="checkbox" id="sh" ${o.shutter ? 'checked' : ''} style="width:22px;height:22px;justify-self:end"/></div>` : ''}
     <div class="btnrow"><button class="btn danger block" id="del">${icon('trash')}Retirer</button></div>
     <h3 class="s">Où l'acheter</h3>${buyLinks(o.type === 'garage' ? 'porte de garage' : isDoor ? 'bloc porte' : isWin ? 'fenêtre aluminium' : 'porte coulissante').map((l) => `<a class="buy" href="${esc(l.url)}" target="_blank" rel="noopener"><span>${esc(l.shop)}</span>${icon('ext')}</a>`).join('')}`;
@@ -768,6 +792,7 @@ function openingPanel(body, w, o) {
   $('#col', body).onchange = (e) => live(() => { o.color = e.target.value; });
   const fl = $('#flip', body); if (fl) fl.onclick = () => live(() => { o.flip = !o.flip; });
   const hg = $('#hinge', body); if (hg) hg.onclick = () => live(() => { o.hinge = o.hinge === 'right' ? 'left' : 'right'; });
+  for (const k of ['mc', 'mr']) { const el = $(`#${k}`, body); if (el) el.onchange = () => live(() => { const c = Math.max(1, Number($('#mc', body).value) || 1), r = Math.max(1, Number($('#mr', body).value) || 1); o.muntins = c === 1 && r === 1 ? undefined : [c, r]; }); }
   const sh = $('#sh', body); if (sh) sh.onchange = (e) => live(() => { o.shutter = e.target.checked; });
   $('#del', body).onclick = () => plan.deleteSelection();
 }
@@ -788,7 +813,9 @@ function renderStyle(body) {
       <div class="field"><label>Pente (°)</label><input type="number" data-f="pitch" min="5" max="60" value="${z.pitch}"/></div>
       <div class="field"><label>Débord (cm)</label><input type="number" data-f="overhang" value="${z.overhang}"/></div>
       <div class="field"><label>Murs dessous (cm)</label><input type="number" data-f="wallH" min="0" placeholder="Hauteur du niveau" value="${z.wallH || ''}"/></div>
-      <div class="field"><label>Plafond cathédrale en bois</label><input type="checkbox" data-f="vault" ${z.vault ? 'checked' : ''} style="width:22px;height:22px;justify-self:end"/></div></div>`).join('')}</div>
+      <div class="field"><label>Arrêté net contre l’étage (sans débord)</label><input type="checkbox" data-f="tight" ${z.flush && z.endCut ? 'checked' : ''} style="width:22px;height:22px;justify-self:end"/></div>
+      <div class="field"><label>Plafond cathédrale en bois</label><input type="checkbox" data-f="vault" ${z.vault ? 'checked' : ''} style="width:22px;height:22px;justify-self:end"/></div>
+      ${z.vault ? `<div class="field"><label>Bois du plafond</label><select data-f="lining">${[['wall_noyer', 'Noyer'], ['wall_bois', 'Chêne']].map(([k, l]) => `<option value="${k}" ${(z.lining || 'wall_noyer') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>` : ''}</div>`).join('')}</div>
     <div class="btnrow"><button class="btn block" id="addRoof">+ Dessiner un toit sur le plan</button></div>
     <p class="muted small" style="margin-top:6px">Pour un garage, une avancée ou la partie du bas qui dépasse de l’étage. Indique une hauteur de murs plus faible pour un volume bas, ou beaucoup plus grande pour un séjour de 6 m ou plus. Si plusieurs toits couvrent toute la maison, règle la forme du toit principal sur « Aucune ».</p>
     ${swatchRow(ROOFS, p.style.roof, 'roof')}<div class="matname">${esc(materialInfo(p.style.roof)?.name)}</div>
@@ -816,7 +843,8 @@ function renderStyle(body) {
   $('#addRoof', body).onclick = () => { plan.setTool('roof'); setView('plan'); if (narrow()) setPanel(false); };
   $('#roofs', body).onchange = (e) => {
     const f = e.target.dataset.f, z = p.roofs[Number(e.target.closest('[data-z]').dataset.z)];
-    if (f && z) live(() => { z[f] = f === 'vault' ? e.target.checked : ['type', 'ridge'].includes(f) ? e.target.value : Number(e.target.value) || 0; });
+    if (f === 'tight' && z) { live(() => { z.flush = z.endCut = e.target.checked; }); return; }
+    if (f && z) live(() => { z[f] = f === 'vault' ? e.target.checked : ['type', 'ridge', 'lining'].includes(f) ? e.target.value : Number(e.target.value) || 0; });
   };
   $('#roofs', body).onclick = (e) => {
     if (!e.target.closest('[data-del]')) return;

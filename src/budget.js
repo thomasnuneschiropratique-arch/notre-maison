@@ -100,7 +100,7 @@ function furniture(project, analyze) {
   project.levels.forEach((lv) => {
     const a = analyze(lv);
     for (const it of lv.items) {
-      const def = getItem(it.cat); if (!def) continue;
+      const def = getItem(it.cat); if (!def || def.noBudget) continue;
       const i = roomOf(a, lv, it);
       lines.push({ it, def, room: lv.rooms[i]?.name || 'Extérieur', level: lv.name, price: itemPrice(it, def) });
       const t = def.model?.type || def.sub; placed.types[t] = (placed.types[t] || 0) + 1; placed.subs[def.sub] = (placed.subs[def.sub] || 0) + 1;
@@ -189,6 +189,14 @@ function compute(project, s, analyze) {
   for (const [id, area] of m.floors) { const f = materialInfo(id); if (f?.price) { const unit = f.price * 1.1 + POSE(id); add(fin, `sol:${id}`, `Sol : ${f.name}, fourni et posé`, area, 'm²', unit, { plan: true, note: `${f.price} €/m² + 10 % de chutes + pose.` }); } }
   add(fin, 'peinture', 'Peinture des murs, fournie et posée', m.paint, 'm²', [22, 32, 50], { plan: true, est: true });
   add(fin, 'peintplaf', 'Peinture des plafonds, fournie et posée', m.plafondPaint, 'm²', [22, 32, 50], { plan: true, est: true });
+  let crown = 0, panels = 0;
+  project.levels.forEach((lv) => analyze(lv).rooms.forEach((r, i) => { const k = lv.rooms[i]?.moulding; if (k === 'crown') crown += r.perimeter; if (k === 'panels') panels += r.perimeter; }));
+  add(fin, 'corniches', 'Corniches moulurées, fournies et posées', crown + panels, 'ml', [18, 32, 60], { plan: true, est: true });
+  add(fin, 'panneaux', 'Panneaux moulurés sur les murs', panels, 'ml', [45, 80, 140], { plan: true, est: true });
+  const vaulted = (project.roofs || []).filter((z) => z.vault).reduce((t, z) => t + ((z.x1 - z.x0) * (z.y1 - z.y0)) / 10000, 0);
+  add(fin, 'cathedrale', 'Plafonds cathédrale habillés de bois', vaulted, 'm²', [90, 140, 220], { plan: true, est: true });
+  add(fin, 'arches', 'Arches maçonnées entre les pièces', m.openings.filter((o) => o.type === 'arch').length, 'u', [350, 600, 1100], { plan: true, est: true });
+  add(men, 'petitsbois', 'Petits bois des fenêtres anglaises', m.openings.filter((o) => o.muntins).length, 'u', [60, 110, 180], { plan: true, est: true });
   for (const [id, area] of m.wallFinishes) { const f = materialInfo(id); if (f?.price) add(fin, `mur:${id}`, `Mur : ${f.name}, fourni et posé`, area, 'm²', f.price * 1.1 + 50, { plan: true, est: true }); }
   add(fin, 'faience', 'Faïence douche et baignoire', m.sdbTiled * 8, 'm²', [60, 85, 130], { plan: true, est: true, note: '8 m² par salle d’eau.' });
 

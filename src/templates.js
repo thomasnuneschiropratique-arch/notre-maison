@@ -309,11 +309,11 @@ function drapes(lv, def, x, y, side, width, height, color) {
   for (const k of [-1, 1]) place(lv, def, along ? x + k * (width / 2 + off) : x + inset, along ? y + inset : y + k * (width / 2 + off), rot, { w, h: height, color });
 }
 
-function boxOf(lv, name) {
+export function boxOf(lv, name) {
   const a = syncRooms(lv), i = lv.rooms.findIndex((r) => r.name === name), poly = a.rooms[i].poly, xs = poly.map((q) => q.x), ys = poly.map((q) => q.y);
   return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
 }
-const facing = (n) => (((Math.atan2(-n.x, n.y) * 180) / Math.PI) + 360) % 360;
+export const facing = (n) => (((Math.atan2(-n.x, n.y) * 180) / Math.PI) + 360) % 360;
 const spanMid = (s) => ({ x: (s.ax + s.bx) / 2, y: (s.ay + s.by) / 2 });
 
 function roomWalls(lv, name) {
@@ -340,7 +340,7 @@ function spansOf(lv, name, side, margin = 16) {
   return spans.sort((p, q) => q.len - p.len);
 }
 
-function windowsOf(lv, name, all = false) {
+export function windowsOf(lv, name, all = false) {
   const out = [];
   for (const { w, A, ux, uy, n } of roomWalls(lv, name)) for (const o of w.openings) {
     if (!['window2', 'bay', 'fixed'].includes(o.type) || (!all && (o.sill > 90 || o.width < 100))) continue;
@@ -388,7 +388,7 @@ function houseManor() {
   open(g, 825, 0, 'window2', 90, 150, 90, ANGLAISE); open(g, 1255, 0, 'window1', 60, 90, 130, { name: 'Petite fenêtre' });
   open(g, 845, 250, 'door', 83, 215, 0); open(g, 1255, 250, 'door', 73, 215, 0);
   // Les pièces de vie communiquent par de grandes arches.
-  arch(g, 750, 480, 280, 320); arch(g, 1350, 505, 115, 250); arch(g, 1350, 695, 240, 315); arch(g, 1900, 835, 320, 315); arch(g, 2500, 900, 140, 250);
+  arch(g, 750, 480, 280, 320); arch(g, 1350, 495, 90, 250); arch(g, 1350, 760, 240, 315); arch(g, 1900, 835, 320, 315); arch(g, 2500, 900, 140, 250);
   open(g, 1050, 900, 'fixed', 420, 90, 225, { name: 'Imposte', muntins: [3, 2] });
   open(g, 0, 400, 'window2', 150, 540, 40, HAUTE_ANGLAISE); open(g, 0, 1100, 'window2', 150, 540, 40, HAUTE_ANGLAISE); open(g, 375, 1200, 'bay', 560, 420, 0, BAIE_ANGLAISE); open(g, 200, 300, 'window2', 180, 460, 50, HAUTE_ANGLAISE); open(g, 550, 300, 'window2', 180, 460, 50, HAUTE_ANGLAISE); open(g, 750, 1050, 'window2', 180, 420, 40, HAUTE_ANGLAISE);
   open(g, 1625, 1100, 'bay', 380, 265, 0, BAIE_ANGLAISE); open(g, 2130, 1100, 'bay', 340, 115, 105, { name: 'Passe-plat ouvert sur la terrasse', muntins: [1, 1] }); open(g, 2410, 1100, 'window2', 120, 250, 0, { name: 'Porte-fenêtre', muntins: [1, 5] }); open(g, 2650, 1100, 'window2', 120, 130, 110, ANGLAISE);
@@ -413,23 +413,6 @@ function houseManor() {
   setRoom(g, 2550, 115, 'garage', 'Garage', { floor: 'concrete_floor', paint: 'paint_skimming' });
   clad(g, 375, 750, 'wall_pierre_blonde', 'o');
 
-  // ——— Étage ———
-  const u = newLevel('Étage', 290);
-  outline(u, [[750, 0], [2800, 0], [2800, 1100], [1350, 1100], [1350, 900], [750, 900]], 30);
-  partition(u, 1100, 0, 1100, 450); partition(u, 1100, 450, 1350, 450); partition(u, 1350, 450, 1350, 900); partition(u, 1350, 450, 2200, 450); partition(u, 1350, 640, 2200, 640); partition(u, 2200, 0, 2200, 1100); partition(u, 2200, 450, 2800, 450); partition(u, 2450, 0, 2450, 450); partition(u, 1800, 640, 1800, 1100); partition(u, 1850, 0, 1850, 450); partition(u, 2050, 0, 2050, 450);
-  open(u, 925, 0, 'window2', 220, 220, 40, ANGLAISE);  open(u, 1575, 1100, 'window2', 260, 220, 40, ANGLAISE); open(u, 2000, 1100, 'window2', 240, 220, 40, ANGLAISE); open(u, 2500, 1100, 'bay', 440, 235, 0, BAIE_ANGLAISE); open(u, 1600, 0, 'window2', 240, 200, 60, ANGLAISE); open(u, 1950, 0, 'window2', 110, 120, 110, ANGLAISE); open(u, 2125, 0, 'window1', 60, 80, 140, { name: 'Petite fenêtre' }); open(u, 2625, 0, 'window2', 300, 170, 80, ANGLAISE); open(u, 2325, 0, 'window2', 120, 140, 90, ANGLAISE);
-  arch(u, 1350, 545, 170, 235); open(u, 1600, 450, 'door', 93, 215, 0); open(u, 1950, 450, 'door', 83, 215, 0); open(u, 2125, 450, 'door', 73, 215, 0); open(u, 1575, 640, 'door', 93, 215, 0); open(u, 2000, 640, 'door', 93, 215, 0); open(u, 2200, 545, 'double', 160, 230, 0, { name: 'Double porte de la suite' }); arch(u, 2325, 450, 130, 230); open(u, 2625, 450, 'pocket', 120, 225, 0, { name: 'Porte à galandage' });
-  setRoom(u, 900, 300, 'couloir', 'Palier', { floor: 'dark_planks', paint: warm, moulding: 'panels' });
-  setRoom(u, 1800, 545, 'couloir', 'Couloir', { floor: 'dark_planks', paint: warm, moulding: 'crown' });
-  setRoom(u, 1600, 225, 'chambre', 'Chambre 4', { floor: oak, paint: 'paint_mizzle', moulding: 'panels' });
-  setRoom(u, 1575, 870, 'chambre', 'Chambre 3', { floor: oak, paint: 'paint_skimming', moulding: 'panels' });
-  setRoom(u, 2000, 870, 'enfant', 'Chambre 2 (bébé)', { floor: oak, paint: 'paint_all_white', moulding: 'panels' });
-  setRoom(u, 1950, 225, 'douche', "Salle d'eau", { floor: 'tile_marble', paint: lin });
-  setRoom(u, 2125, 225, 'wc', 'WC', { floor: stone, paint: lin });
-  setRoom(u, 2500, 775, 'parentale', 'Suite parentale', { floor: 'dark_planks', paint: 'wall_noyer', moulding: 'panels' });
-  setRoom(u, 2325, 225, 'dressing', 'Dressing', { floor: 'dark_planks', paint: 'wall_noyer', moulding: 'crown' });
-  setRoom(u, 2625, 225, 'sdb', 'Salle de bain parentale', { floor: stone, paint: 'wall_pierre_blonde' });
-
   // ——— Mobilier et décoration ———
   const N = named, sofa = pick('canape', ['bouclé.*(pablian|shirina|eracli)', 'bouclé', 'lin', 'chenille'], (i) => i.w >= 200 && i.w <= 290 && i.d <= 110);
   const arm = pick('fauteuil', ['bouclé', 'noyer', 'velours']), arm2 = pick('fauteuil', ['bois', 'teck', 'cannage', 'cuir']) || arm, rug = pick('tapis', ['laine', 'jute', 'sisal'], (i) => Math.max(i.w, i.d) >= 220);
@@ -444,30 +427,14 @@ function houseManor() {
   // Entrée et penderie.
   place(g, N('Dressing sur mesure en noyer'), 845, 40, 0, { w: 170, h: 280, d: 55 }); place(g, N('Vasque monobloc en marbre'), 1255, 32, 0, { w: 130 }); place(g, wc, 1320, 150, 90);
   // Hall : grand escalier, bibliothèques de part et d'autre de la porte-fenêtre, fauteuils au fond.
-  place(g, N('Escalier américain droit (rampe à gauche)'), 1122, 840, 90);
   // Arrière-cuisine et buanderie, reliées à la cuisine.
-  place(g, G_('g-electro-lave-linge-60-cm'), 2760, 620, 90); place(g, G_('g-electro-s-che-linge-60-cm'), 2760, 690, 90); place(g, N('Linéaire noyer et marbre'), 2755, 860, 90, { w: 200 }); place(g, books, 2525, 960, 270, { w: 120, h: 280 }); place(g, plant, 2740, 1060, 0);
+  place(g, G_('g-electro-lave-linge-60-cm'), 2760, 605, 90); place(g, G_('g-electro-s-che-linge-60-cm'), 2760, 725, 90); place(g, N('Linéaire noyer et marbre'), 2755, 860, 90, { w: 200 }); place(g, books, 2525, 960, 270, { w: 120, h: 280 }); place(g, plant, 2740, 1060, 0);
   // Pièce modulable, salle d'eau, sport, garage.
   place(g, books, 1372, 170, 270, { w: 240, h: 280 }); place(g, rug, 1620, 220, 0, { w: 300, d: 220 }); place(g, N('Table en noyer massif'), 1620, 90, 0, { w: 200, d: 85 }); place(g, pick('siege', ['cuir', 'tissu']), 1620, 150, 180);
   place(g, sofa, 1620, 372, 180); pillows(g, 1620, 395, 180, 180);
   place(g, shower, 2070, 75, 0); place(g, N('Double vasque noyer et pierre'), 2112, 260, 90, { w: 150 }); place(g, wc, 1890, 80, 270);
   place(g, G_('g-sport-rangement-halt-res'), 3000, 480, 0, { w: 280 }); place(g, G_('g-sport-banc-de-musculation-r-glable'), 2960, 830, 0); place(g, G_('g-sport-tapis-de-course'), 3110, 650, 0); place(g, rug, 3000, 830, 0, { w: 240, d: 300, color: '#3a3733' }); place(g, plant, 3155, 1130, 0);
   place(g, N('Voiture de sport rouge'), 2350, 110, 180);
-
-  // Étage : palier.
-  const rail = N('Garde-corps bois classique');
-  place(u, books, 790, 450, 270, { w: 300, h: 280 }); place(u, arm, 860, 180, 90); place(u, rug, 925, 200, 0, { w: 220, d: 180 });
-  // Suite parentale.
-  place(u, rug, 2460, 790, 0, { w: 320, d: 300 }); place(u, bed, 2670, 775, 90); pillows(u, 2725, 775, 90, 170); place(u, chevet, 2765, 640, 90); place(u, chevet, 2765, 910, 90); place(u, lamp, 2765, 640, 0, { z: top(chevet) }); place(u, lamp, 2765, 910, 0, { z: top(chevet) });
-  place(u, bench, 2510, 775, 90); place(u, ring, 2470, 775, 0, { z: 180, w: 120, d: 120, h: 98 }); place(u, arm, 2280, 1020, 135); place(u, arm2, 2280, 870, 60); place(u, side, 2270, 945, 0); place(u, plant, 2750, 1060, 0);
-  // Dressing bois, salle de bain en pierre.
-  place(u, N('Dressing sur mesure en noyer'), 2325, 38, 0, { w: 230, h: 275 }); place(u, N('Dressing sur mesure en noyer'), 2234, 250, 270, { w: 180, h: 275, d: 50 }); place(u, bench, 2340, 245, 0); place(u, rug, 2345, 300, 0, { w: 180, d: 200, color: '#b9a98e' });
-  place(u, N('Baignoire îlot ovale'), 2625, 110, 0); place(u, N('Double vasque noyer et pierre'), 2770, 300, 90, { w: 200 }); place(u, shower, 2520, 380, 0, { w: 110 }); place(u, plant, 2765, 60, 0); place(u, side, 2492, 110, 0); place(u, dome, 2625, 110, 0, { h: 100 });
-  // Chambres.
-  const kid = pick('lit-enfant', ['']) || bed;
-  [[1670, 870, bed, 1575, EARTH], [2075, 870, kid, 2000, INK]].forEach(([x, y, b, win, a]) => { place(u, rug, x - 130, y, 90, { w: 240, d: 300 }); place(u, b, x, y, 90); pillows(u, x + 60, y, 90, 130); place(u, chevet, x + 90, 700, 90); place(u, lamp, x + 90, 700, 0, { z: top(chevet) }); });
-  place(u, rug, 1600, 240, 0, { w: 260, d: 230 }); place(u, bed, 1725, 225, 90); pillows(u, 1775, 225, 90, 150); place(u, chevet, 1805, 90, 90); place(u, lamp, 1805, 90, 0, { z: top(chevet) }); place(u, arm, 1440, 90, 135);
-  place(u, shower, 1950, 80, 0, { w: 110 }); place(u, N('Double vasque noyer et pierre'), 1950, 415, 180, { w: 130 }); place(u, wc, 2125, 45, 0);
 
   // ——— Dehors ———
   const out = (d, x, y, rot, extra) => place(g, d, x, y, rot, extra), slab = G_('g-terrasse-terrasse-pierre'), hedge = allItems().find((i) => i.name === 'Haie (3 m)'), ball = N('Buis taillé en boule'), post = N('Poteau en pierre'), pine = N('Pin parasol'), cyp = N('Cyprès'), oakT = G_('g-plantation-arbre'), sun = N('Bain de soleil rayé jaune'), par = N('Parasol vintage rayé');
@@ -480,7 +447,7 @@ function houseManor() {
   out(N('Cheminée d’extérieur en pierre'), 2465, 1450, 90, { w: 240, h: 320, d: 70 }); out(N('Cuisine d’été en pierre 4 m'), 1560, 1150, 0, { w: 320 });
   for (const x of [2040, 2130, 2220]) out(stool, x, 1160, 180);
   out(rug, 2140, 1500, 0, { w: 360, d: 280, color: '#c9bda8' }); out(lounge, 2290, 1500, 90); out(lounge, 2140, 1390, 0); out(lounge, 2140, 1620, 180); out(lounge, 1990, 1500, 270); out(low, 2140, 1500, 0);
-  out(N('Table en noyer massif'), 1560, 1490, 0, { w: 220, d: 90 }); for (const x of [1480, 1560, 1640]) { out(outChair, x, 1425, 0); out(outChair, x, 1555, 180); } out(vase, 1560, 1490, 0, { z: 76 });
+  out(N('Table en noyer massif'), 1560, 1490, 0, { w: 220, d: 90 }); for (const x of [1470, 1560, 1730]) { out(outChair, x, 1425, 0); out(outChair, x, 1555, 180); } out(vase, 1560, 1490, 0, { z: 76 });
   // Patio entre le salon et la terrasse.
   out(slab, 1050, 1150, 0, { w: 600, d: 500 }); out(plant, 830, 960, 0); out(plant, 1270, 960, 0);
   // Piscine, bains de soleil rayés, parasols vintage, foyer.
@@ -495,25 +462,68 @@ function houseManor() {
   for (const y of [-2500, -3000, -3500, -4000, -4500, -5000, -5500]) { out(cyp, 620, y, 0); out(cyp, 1480, y, 0); }
   for (let i = 0; i < 7; i++) { out(hedge, -1050 + i * 300, -2100, 0); out(hedge, 1450 + i * 300, -2100, 0); }
   out(post, 800, -2100, 0, { w: 70, d: 70, h: 260 }); out(post, 1300, -2100, 0, { w: 70, d: 70, h: 260 });
-  out(post, -60, 700, 0, { w: 150, d: 70, h: 1500 });
+  out(N('Conduit de cheminée en pierre'), -60, 700, 0, { w: 150, d: 70, h: 1500 });
 
-  p.levels.push(u);
   p.entry = 0;
-  syncRooms(g); syncRooms(u);
+  syncRooms(g);
 
   const R = (lv, x0, y0, x1, y1, type, ridge, pitch, extra = {}) => ({ id: uid('z'), level: lv.id, x0, y0, x1, y1, type, pitch, overhang: 35, ridge, wallH: 0, ...extra });
   p.roofs = [
-    R(u, 750, 0, 2800, 1100, 'gable', 'x', 45), R(u, 800, 0, 1300, 900, 'gable', 'y', 45), R(u, 2200, 0, 2800, 1100, 'gable', 'y', 45),
     R(g, 0, 300, 750, 1200, 'gable', 'x', 42, { wallH: 720, vault: true }),
-    R(g, 750, -380, 1650, 0, 'gable', 'x', 24, { vault: true, lining: 'wall_bois' }), R(g, 880, -440, 1220, 0, 'gable', 'y', 45),
-    R(g, 2800, 440, 3200, 1180, 'gable', 'y', 42), R(g, 2150, -210, 2950, 440, 'gable', 'y', 42, { wallH: 270 }),
+    R(g, 750, -380, 1650, 0, 'gable', 'x', 24, { vault: true, lining: 'wall_bois' }), R(g, 880, -440, 1220, 0, 'gable', 'y', 30),
+    R(g, 2800, 440, 3200, 1180, 'gable', 'y', 42), 
     R(g, 1350, 1100, 2500, 1750, 'gable', 'x', 24, { vault: true, lining: 'wall_bois' }),
   ];
 
   // De l'air entre les zones : on élargit les pièces sur des lignes qui ne coupent aucun meuble.
-  for (const [at, delta] of [[2470, 60], [1930, 60], [1880, 60], [1400, 60], [600, 60], [170, 40]]) stretch(p, 'x', at, delta);
-  for (const [at, delta] of [[700, 40], [505, 30]]) stretch(p, 'y', at, delta);
+  for (const [at, delta] of [[3000, -60], [2650, -50], [2200, 30], [1620, -100], [1000, -30], [430, -100]]) stretch(p, 'x', at, delta);
+  for (const [at, delta] of [[650, -50], [520, -20], [150, -60]]) stretch(p, 'y', at, delta);
   p.levels.forEach(syncRooms);
+
+  // ——— Étage, tracé sur le plan définitif du rez-de-chaussée ———
+  const Hb0 = boxOf(g, 'Hall'), Kb0 = boxOf(g, 'Cuisine'), xL = Hb0.x0, xH = Hb0.x1, yH = Hb0.y1, yS = Kb0.y1, xR = xH + 1150, yC0 = 400, yC1 = 540, yE = 430;
+  const u = newLevel('Étage', 290);
+  outline(u, [[xL, 0], [xR, 0], [xR, yS], [xH, yS], [xH, yH], [xL, yH]], 30);
+  partition(u, xH, 0, xH, yH); partition(u, xH, yC0, xH + 720, yC0); partition(u, xH, yC1, xH + 720, yC1); partition(u, xH + 720, 0, xH + 720, yS); partition(u, xH + 720, yE, xR, yE); partition(u, xH + 360, yC1, xH + 360, yS);
+  for (const x of [400, 600]) partition(u, xH + x, 0, xH + x, yC0); partition(u, xH + 890, 0, xH + 890, yE); partition(u, xH + 600, 200, xH + 720, 200);
+  open(u, (xL + xH) / 2, 0, 'window2', 280, 185, 90, ANGLAISE); open(u, xH + 180, yS, 'window2', 220, 220, 40, ANGLAISE); open(u, xH + 540, yS, 'window2', 220, 220, 40, ANGLAISE); open(u, xH + 935, yS, 'bay', 300, 235, 0, BAIE_ANGLAISE); open(u, xH + 200, 0, 'window2', 220, 200, 60, ANGLAISE); open(u, xH + 500, 0, 'window2', 100, 120, 110, ANGLAISE); open(u, xH + 660, 0, 'window1', 60, 80, 140, { name: 'Petite fenêtre' }); open(u, xH + 805, 0, 'window2', 100, 130, 100, ANGLAISE); open(u, xH + 1020, 0, 'window2', 150, 150, 90, ANGLAISE);
+  arch(u, xH, (yC0 + yC1) / 2, 125, 235); open(u, xH + 200, yC0, 'door', 93, 215, 0); open(u, xH + 500, yC0, 'door', 83, 215, 0); open(u, xH + 660, yC0, 'door', 73, 215, 0); open(u, xH + 600, 100, 'door', 73, 215, 0); open(u, xH + 180, yC1, 'door', 93, 215, 0); open(u, xH + 540, yC1, 'door', 93, 215, 0); open(u, xH + 720, 485, 'door', 93, 225, 0, { name: 'Porte de la suite' }); arch(u, xH + 805, yE, 120, 230); open(u, xH + 1020, yE, 'pocket', 100, 225, 0, { name: 'Porte à galandage' });
+  setRoom(u, xL + 200, 200, 'couloir', 'Palier', { floor: 'oak_natural', paint: warm, moulding: 'panels' });
+  setRoom(u, xH + 300, (yC0 + yC1) / 2, 'couloir', 'Couloir', { floor: 'oak_natural', paint: warm, moulding: 'crown' });
+  setRoom(u, xH + 200, 200, 'chambre', 'Chambre 4', { floor: oak, paint: 'paint_mizzle', moulding: 'panels' });
+  setRoom(u, xH + 180, yC1 + 200, 'chambre', 'Chambre 3', { floor: oak, paint: 'paint_skimming', moulding: 'panels' });
+  setRoom(u, xH + 540, yC1 + 200, 'enfant', 'Chambre 2 (bébé)', { floor: oak, paint: 'paint_all_white', moulding: 'panels' });
+  setRoom(u, xH + 500, 200, 'douche', "Salle d'eau", { floor: 'tile_marble', paint: lin });
+  setRoom(u, xH + 660, 300, 'wc', 'WC', { floor: 'tile_marble', paint: lin });
+  setRoom(u, xH + 660, 100, 'cellier', 'Lingerie', { floor: 'tile_marble', paint: lin });
+  setRoom(u, xH + 935, yE + 280, 'parentale', 'Suite parentale', { floor: 'oak_natural', paint: 'wall_noyer', moulding: 'panels' });
+  setRoom(u, xH + 805, 200, 'dressing', 'Dressing', { floor: 'oak_natural', paint: 'wall_noyer', moulding: 'crown' });
+  setRoom(u, xH + 1020, 200, 'sdb', 'Salle de bain parentale', { floor: stone, paint: 'wall_pierre_blonde' });
+  p.levels.push(u); p.entry = 0; syncRooms(u);
+  const R2 = (x0, y0, x1, y1, type, ridge, pitch, extra = {}) => ({ id: uid('z'), level: u.id, x0, y0, x1, y1, type, pitch, overhang: 35, ridge, wallH: 0, ...extra });
+  p.roofs.push(R2(xL, 0, xR, yS, 'gable', 'x', 45), R2(xL + 60, 0, xH - 60, yH, 'gable', 'y', 45, { flush: true }), R2(xH + 720, 0, xR, yS, 'gable', 'y', 45, { flush: true }));
+  const Ar = boxOf(g, 'Arrière-cuisine');
+  const GB = boxOf(g, 'Garage'), lowRoof = (x0, y0, x1, y1, ridge, extra) => ({ id: uid('z'), level: g.id, x0, y0, x1, y1, type: 'gable', pitch: 42, overhang: 30, ridge, wallH: 0, ...extra });
+  // Les toits du bas s'arrêtent net contre les murs de l'étage : rien ne traverse les pièces du haut.
+  p.roofs.push(lowRoof(xR, boxOf(g, 'Couloir').y0, Ar.x1, yS, 'x', { endCut: true }), lowRoof(GB.x0, GB.y0, xR, 0, 'x', { flush: true, endCut: true }), lowRoof(xR, GB.y0, GB.x1, GB.y1, 'y', { flush: true }));
+
+  // Étage : palier avec grande bibliothèque et méridienne devant la fenêtre.
+  const Pa = boxOf(u, 'Palier');
+  place(u, books, Pa.x0 + 34, Pa.y0 + 280, 270, { w: 500, h: 285, d: 38 });
+  place(u, N('Méridienne en bouclette'), (Pa.x0 + Pa.x1) / 2, 62, 0); place(u, cush, (Pa.x0 + Pa.x1) / 2 + 60, 40, 0, { w: 110, z: 44 }); place(u, side, (Pa.x0 + Pa.x1) / 2 + 125, 75, 0); place(u, lamp, (Pa.x0 + Pa.x1) / 2 + 125, 75, 0, { z: top(side) }); place(u, rug, (Pa.x0 + Pa.x1) / 2, 150, 0, { w: 280, d: 180 });
+  // Suite parentale, plus intime.
+  const Sb = boxOf(u, 'Suite parentale'), scy = (Sb.y0 + Sb.y1) / 2 - 10;
+  place(u, rug, Sb.x1 - 200, scy, 0, { w: 260, d: 280 }); place(u, bed, Sb.x1 - 120, scy, 90); place(u, cush, Sb.x1 - 62, scy, 90, { w: 165, z: 62 }); place(u, chevet, Sb.x1 - 40, scy - 125, 90); place(u, chevet, Sb.x1 - 40, scy + 125, 90); place(u, lamp, Sb.x1 - 40, scy - 125, 0, { z: top(chevet) }); place(u, lamp, Sb.x1 - 40, scy + 125, 0, { z: top(chevet) }); place(u, bench, Sb.x1 - 275, scy, 90); place(u, arm, Sb.x0 + 60, Sb.y1 - 70, 135); place(u, dome, Sb.x1 - 200, scy, 0, { h: 90 });
+  // Dressing bois, salle de bain en pierre.
+  const Db = boxOf(u, 'Dressing'), Bb = boxOf(u, 'Salle de bain parentale');
+  place(u, N('Dressing sur mesure en noyer'), Db.x0 + 30, (Db.y0 + Db.y1) / 2, 270, { w: Db.y1 - Db.y0 - 35, h: 275, d: 55 });
+  place(u, N('Baignoire îlot ovale'), (Bb.x0 + Bb.x1) / 2, Bb.y0 + 62, 0, { w: 170, d: 78 }); place(u, N('Double vasque noyer et pierre'), Bb.x1 - 32, Bb.y0 + 240, 90, { w: 130 }); place(u, wc, Bb.x0 + 35, Bb.y0 + 300, 270);
+  // Chambres.
+  for (const [n, b] of [['Chambre 3', bed], ['Chambre 2 (bébé)', pick('lit-enfant', ['']) || bed]]) { const q = boxOf(u, n), y = (q.y0 + q.y1) / 2 + 25, x = q.x1 - 120; place(u, rug, x - 90, y, 90, { w: 220, d: 280 }); place(u, b, x, y, 90); place(u, cush, x + 58, y, 90, { w: 120, z: 62 }); place(u, chevet, q.x1 - 40, q.y0 + 50, 90); place(u, lamp, q.x1 - 40, q.y0 + 50, 0, { z: top(chevet) }); }
+  const C4 = boxOf(u, 'Chambre 4'), c4y = (C4.y0 + C4.y1) / 2; place(u, rug, C4.x1 - 200, c4y, 0, { w: 220, d: 200 }); place(u, bed, C4.x1 - 120, c4y, 90); place(u, cush, C4.x1 - 62, c4y, 90, { w: 130, z: 62 }); place(u, chevet, C4.x1 - 38, c4y - 125, 90);
+  const Se = boxOf(u, "Salle d'eau"); place(u, shower, (Se.x0 + Se.x1) / 2, Se.y0 + 55, 0, { w: 100, d: 90 }); place(u, N('Double vasque noyer et pierre'), Se.x0 + 30, Se.y0 + 250, 270, { w: 100 }); const Wc = boxOf(u, 'WC'); place(u, wc, (Wc.x0 + Wc.x1) / 2, Wc.y0 + 40, 0);
+  // Couloir du bas : tapis de passage, console et lumières douces.
+  const Co = boxOf(g, 'Couloir'), cy0 = (Co.y0 + Co.y1) / 2; for (const k of [0.3, 0.68]) place(g, rug, Co.x0 + (Co.x1 - Co.x0) * k, cy0, 90, { w: 90, d: 320, color: '#8a7a68' });
 
   // ——— Compositions posées sur les vrais murs, une fois le plan définitif ———
   const hang = (lv, room, side, name, w, h, z) => { const sp = spansOf(lv, room, side)[0]; if (!sp) return null; const W = Math.min(w, sp.len - 30), H = (h * W) / w, c = spanMid(sp); place(lv, N(name), c.x + sp.n.x * (sp.t + 2), c.y + sp.n.y * (sp.t + 2), facing(sp.n), { w: W, h: H, z: z ?? 150 - H / 2 }); return sp; };
@@ -538,15 +548,15 @@ function houseManor() {
   compose(g, 'Grand salon', 'e', buffet, EARTH, 190, 130); curtains(g, 'Grand salon', cream);
 
   // Hall : table ronde et brassée de fleurs, tapis, deux tabourets, console et grand tableau.
-  const Hb = boxOf(g, 'Hall'), hx = (Hb.x0 + Hb.x1) / 2, hy = 560;
-  place(g, rug, hx, hy, 0, { w: 330, d: 300, color: '#b7a282' }); place(g, N('Table piédestal en plâtre'), hx, hy, 0); place(g, N('Grande jarre et branches fleuries'), hx, hy, 0, { z: 80 });
+  const Hb = boxOf(g, 'Hall'), hx = (Hb.x0 + Hb.x1) / 2, hy = Hb.y0 + 330;
+  place(g, rug, hx, hy, 0, { w: 280, d: 240, color: '#b7a282' }); place(g, N('Table piédestal en plâtre'), hx, hy, 0); place(g, N('Grande jarre et branches fleuries'), hx, hy, 0, { z: 80 });
   place(g, stool, hx - 115, hy + 60, 45); place(g, stool, hx + 115, hy - 60, 225); place(g, ring, hx, hy, 0, { z: 215, w: 150, d: 150, h: 118 });
-  compose(g, 'Hall', 'o', bench, TAP, 110, 150, false);
+  compose(g, 'Hall', 'n', bench, TAP, 110, 150, false);
 
   // Salle à manger : grande table de bois massif, murs moulurés, buffet et tableau.
   const D = boxOf(g, 'Salle à manger'), dx = (D.x0 + D.x1) / 2, dy = (D.y0 + D.y1) / 2 + 30;
-  place(g, rug, dx, dy, 0, { w: 440, d: 320 }); place(g, N('Table en noyer massif'), dx, dy, 0, { w: 320, d: 110 });
-  for (const k of [-1.5, -0.5, 0.5, 1.5]) { place(g, chair, dx + k * 80, dy - 85, 0); place(g, chair, dx + k * 80, dy + 85, 180); }
+  place(g, rug, dx, dy, 0, { w: 440, d: 320 }); place(g, N('Table en noyer massif'), dx, dy, 0, { w: 270, d: 105 });
+  for (const k of [-1.2, -0.4, 0.4, 1.2]) { place(g, chair, dx + k * 80, dy - 85, 0); place(g, chair, dx + k * 80, dy + 85, 180); }
   for (const k of [-1, 1]) place(g, vase, dx + k * 90, dy, 0, { z: 76, w: 32, d: 32, h: 66 });
   place(g, ring, dx, dy, 0, { z: 205, w: 180, d: 180, h: 128 }); place(g, plant, D.x1 - 55, D.y1 - 55, 0);
   compose(g, 'Salle à manger', 'n', buffet, INK, 200, 130); curtains(g, 'Salle à manger', cream);
@@ -556,22 +566,24 @@ function houseManor() {
   place(g, N('Linéaire noyer et marbre avec crédence'), kx - 15, K.y0 + 40, 0, { w: runW });
   place(g, N('Piano de cuisson et hotte habillée'), kx, K.y0 + 44, 0, { w: 130, h: 300 });
   place(g, N('Colonnes noyer et laiton'), K.x1 - 42, K.y0 + 260, 90, { w: 220, h: 300 });
-  const island = K.y0 + 245; place(g, N('Îlot noyer et marbre'), kx - 30, island, 0, { w: 340, d: 130 });
-  for (const k of [-2, -1, 0, 1, 2]) place(g, stool, kx - 30 + k * 66, island + 95, 180);
+  const island = K.y0 + 225; place(g, N('Îlot noyer et marbre'), kx - 30, island, 0, { w: 340, d: 120 });
+  for (const k of [-2, -1, 0, 1, 2]) place(g, stool, kx - 30 + k * 66, island + 82, 180);
   for (const k of [-1, 1]) place(g, N('Lanterne laiton et verre'), kx - 30 + k * 95, island, 0, { h: 150 });
   place(g, vase, kx + 90, island - 15, 0, { z: 94, w: 30, d: 30, h: 60 });
   const pass = windowsOf(g, 'Cuisine', true).find((c) => c.sill > 90);
-  if (pass) place(g, N('Linéaire noyer et marbre'), pass.x + pass.n.x * 46, pass.y + pass.n.y * 46, facing(pass.n), { w: pass.w + 40 });
-  place(g, plant, K.x0 + 55, K.y1 - 55, 0);
+  if (pass) place(g, N('Linéaire noyer et marbre'), pass.x + pass.n.x * 38, pass.y + pass.n.y * 38, facing(pass.n), { w: pass.w + 40, d: 45 });
 
   // Art et rideaux des autres pièces.
-  hang(g, 'Couloir', 'n', INK, 120, 90); hang(g, 'Bureau, jeux ou chambre', 'e', EARTH, 160, 110); hang(g, 'WC', 'o', INK, 80, 100, 115);
+  hang(g, 'Couloir', 'n', INK, 150, 100); hang(g, 'Couloir', 's', EARTH, 150, 100); hang(g, 'Bureau, jeux ou chambre', 'e', EARTH, 160, 110); hang(g, 'WC', 'o', INK, 80, 100, 115);
   hang(g, 'Salle de sport', 'o', EARTH, 200, 130); curtains(g, 'Bureau, jeux ou chambre', cream);
-  hang(u, 'Suite parentale', 'e', EARTH, 170, 100, 160); hang(u, 'Suite parentale', 'o', INK, 140, 170); curtains(u, 'Suite parentale', bronze);
-  hang(u, 'Chambre 3', 'e', EARTH, 130, 90, 155); hang(u, 'Chambre 2 (bébé)', 'e', INK, 110, 90, 155); hang(u, 'Chambre 4', 'o', TAP, 100, 130); hang(u, 'Couloir', 'n', EARTH, 120, 90); hang(u, 'Palier', 'n', TAP, 120, 160);
+  hang(u, 'Suite parentale', 'e', EARTH, 170, 100, 160); curtains(u, 'Suite parentale', bronze);
+  hang(u, 'Chambre 3', 'e', EARTH, 130, 90, 155); hang(u, 'Chambre 2 (bébé)', 'e', INK, 110, 90, 155); hang(u, 'Chambre 4', 'o', TAP, 100, 130); hang(u, 'Couloir', 'n', EARTH, 120, 90); hang(u, 'Palier', 'e', TAP, 120, 160);
   for (const r of ['Chambre 3', 'Chambre 2 (bébé)', 'Chambre 4']) curtains(u, r, cream);
-  const rail2 = N('Garde-corps bois classique'), st = g.items.find((i) => i.cat === N('Escalier américain droit (rampe à gauche)').id);
-  place(u, rail2, st.x - 10, st.y - 62, 0, { w: 300 }); place(u, rail2, st.x - 160, st.y, 90, { w: 115 });
+  const rail2 = N('Garde-corps bois classique'), SQ = N('Escalier américain quart tournant'), stx = Hb.x1 - 105 - SQ.d / 2, sty = Hb.y1 - SQ.w / 2 - 2;
+  place(g, SQ, stx, sty, 270);
+  const ry = sty + SQ.w / 2 - 115, xw = stx - SQ.d / 2 + 115, xe = stx + SQ.d * 0.1;
+  place(u, rail2, (xw + xe) / 2, ry - 4, 0, { w: xe - xw });
+  place(u, rail2, xe, ry + 57, 90, { w: 115 });
 
   shapeTerrain(p, 'flat', {});
   const m = ensureTerrain(p), half = (T_N - 1) / 2, cx = 1300, cy = -600;

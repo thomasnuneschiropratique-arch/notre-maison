@@ -8,6 +8,13 @@ import { isGroup, newGroup, isEmptyGroup, addRect, toggleItem, toggleNodes, togg
 
 const INK = '#26231e', ACCENT = '#b5532f', SOFT = 'rgba(38,35,30,.5)';
 
+/** Marches d'un escalier à quart tournant, vues de dessus. */
+function quarterTreads(c, w, d, f) {
+  for (let y = -d / 2 + f; y < d / 2; y += 26) { c.moveTo(-w / 2, y); c.lineTo(-w / 2 + f, y); }
+  for (let x = -w / 2 + f; x < w / 2; x += 26) { c.moveTo(x, -d / 2); c.lineTo(x, -d / 2 + f); }
+  c.moveTo(-w / 2, -d / 2); c.lineTo(-w / 2 + f, -d / 2 + f);
+}
+
 export class Plan2D {
   tool = 'select'; view = { x: 0, y: 0, k: 0.9 }; pointers = new Map(); draft = null; drag = null; openingPreset = OPENINGS[0]; hover = null;
   wallThickness = 20; bgImages = new Map();
@@ -50,7 +57,8 @@ export class Plan2D {
   fit() {
     if (!store.project || !this.w) return;
     const lv = store.level;
-    const pts = [...Object.values(lv.nodes), ...(parcelOf(store.project)?.pts || [])];
+    // On cadre la maison ; le terrain ne sert que tant que rien n'est dessiné.
+    const nodes = Object.values(lv.nodes), pts = nodes.length ? nodes : parcelOf(store.project)?.pts || [];
     if (!pts.length) { this.view = { x: this.w / 2, y: this.h / 2, k: 0.6 }; return; }
     this.fitted = true;
     const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
@@ -623,7 +631,8 @@ export class Plan2D {
     c.save(); c.translate(it.x, it.y); c.rotate(((it.rot || 0) * Math.PI) / 180);
     c.fillStyle = 'rgba(181,83,47,.1)'; c.strokeStyle = ACCENT; c.lineWidth = 1.2 / k; c.setLineDash([6 / k, 4 / k]);
     c.fillRect(-w / 2, -d / 2, w, d); c.strokeRect(-w / 2, -d / 2, w, d); c.setLineDash([]);
-    if (!def.model?.p?.shape || def.model.p.shape === 'straight') { const n = Math.round(d / 25); c.beginPath(); for (let i = 1; i < n; i++) { c.moveTo(-w / 2, -d / 2 + (i * d) / n); c.lineTo(w / 2, -d / 2 + (i * d) / n); } c.stroke(); }
+    if (def.model?.p?.quarter) { c.beginPath(); quarterTreads(c, w, d, (def.model.p.flight || 1.15) * 100); c.stroke(); }
+    else if (!def.model?.p?.shape || def.model.p.shape === 'straight') { const n = Math.round(d / 25); c.beginPath(); for (let i = 1; i < n; i++) { c.moveTo(-w / 2, -d / 2 + (i * d) / n); c.lineTo(w / 2, -d / 2 + (i * d) / n); } c.stroke(); }
     c.restore();
     const p = this.toScreen(it);
     void p;
@@ -747,6 +756,8 @@ export class Plan2D {
       c.beginPath(); c.roundRect(-w * 0.3, -d * 0.28, w * 0.6, d * 0.56, 6); c.stroke();
     } else if (t === 'hob') {
       for (const [x, y] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { c.beginPath(); c.arc((x * w) / 4, (y * d) / 4, Math.min(w, d) * 0.15, 0, Math.PI * 2); c.stroke(); }
+    } else if (t === 'stairs' && def.model?.p?.quarter) {
+      c.beginPath(); quarterTreads(c, w, d, (def.model.p.flight || 1.15) * 100); c.stroke();
     } else if (t === 'stairs') {
       const n = Math.round(d / 25);
       for (let i = 1; i < n; i++) L(-w / 2, -d / 2 + (i * d) / n, w / 2, -d / 2 + (i * d) / n);
