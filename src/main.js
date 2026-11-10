@@ -10,6 +10,7 @@ import { fullBudget, budgetSettings, GAMMES, MODES, MARKET, BUDGET_SOURCES } fro
 import { dist, analyzeLevel } from './geometry.js';
 import { parcelOf, parcelArea, checkParcel, setbackOf, metres } from './parcel.js';
 import { tourSeen, startTour } from './tour.js';
+import { QUALITY_PREF, AUTO_LOW, setQuality } from './quality.js';
 import { sync, connect, disconnect, queuePush, removeShared, knownCode, knownName, isEnabled } from './sync.js';
 import { isGroup, newGroup, isEmptyGroup, addLevel, addHouse, addGarden, addSameSpot, stats as groupStats, moveBy, rotate as rotateGroup, duplicate as duplicateGroup } from './group.js';
 
@@ -1083,6 +1084,7 @@ store.addEventListener('sync', () => {
 function syncBlock() {
   if (sync.state !== 'off' && sync.col) return `<div class="syncstate ${sync.state}" id="syncState"><i></i><span>${esc(sync.detail || SYNC_LABEL[sync.state])}</span></div>
     <p class="muted small">Tous tes projets sont communs avec les appareils connectés au même foyer. La dernière modification enregistrée l’emporte : évitez de changer la même maison au même moment.</p>
+    <p class="muted small">Pour vérifier : déplace un meuble sur un téléphone, il bouge sur l’autre en quelques secondes, avec ton prénom affiché.</p>
     <div class="btnrow"><button class="btn" id="syncOff">Arrêter sur cet appareil</button></div>`;
   return `<p class="muted small">Le même code du foyer que dans Table de saison, sur chaque téléphone. Tes projets deviennent communs, et chaque changement arrive chez l’autre.</p>
     ${sync.state === 'error' ? `<div class="syncstate error" id="syncState"><i></i><span>${esc(sync.detail || '')}</span></div>` : '<div id="syncState" hidden><i></i><span></span></div>'}
@@ -1102,6 +1104,50 @@ function bindSync(body) {
     const ok = await connect(code, name, syncHooks);
     render();
     if (ok) toast('Partage activé.');
+  };
+}
+
+// ——— Cet appareil : affichage et installation ———
+let installPrompt = null;
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; });
+addEventListener('appinstalled', () => { installPrompt = null; toast('Notre Maison est sur l’écran d’accueil.'); });
+const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+function deviceBlock() {
+  const auto = AUTO_LOW ? 'léger' : 'complet';
+  const opt = (v, l) => `<option value="${v}" ${QUALITY_PREF === v ? 'selected' : ''}>${l}</option>`;
+  return `<h3 class="s">Affichage sur cet appareil</h3>
+  <div class="field wide"><label>Qualité de la 3D</label><select id="quality">${opt('auto', `Automatique (ici : ${auto})`)}${opt('light', 'Léger : plus fluide, moins de détails')}${opt('full', 'Complet : le plus beau, plus lourd')}</select></div>
+  <p class="muted small">Le mode léger retire les reflets, la lumière des fenêtres et les objets lointains. Utile sur un téléphone ou un ordinateur ancien.</p>
+  ${installed() ? '' : `<h3 class="s">Installer sur l’écran d’accueil</h3>
+  <p class="muted small">L’appli s’ouvre alors en plein écran, comme une vraie appli, et plus vite.</p>
+  <div class="btnrow"><button class="btn block" id="install">Installer Notre Maison</button></div>`}`;
+}
+
+function installHelp() {
+  const m = document.createElement('div'); m.className = 'modal';
+  const steps = isIOS()
+    ? ['Ouvre ce lien dans <b>Safari</b>.', 'Touche le bouton <b>Partager</b> (le carré avec une flèche vers le haut).', 'Choisis <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b>.']
+    : ['Ouvre ce lien dans <b>Chrome</b>.', 'Touche le menu <b>⋮</b> en haut à droite.', 'Choisis <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>.'];
+  m.innerHTML = `<div class="box"><h2 class="t">Installer sur l’écran d’accueil</h2><ol class="small" style="padding-left:20px;line-height:1.6">${steps.map((x) => `<li>${x}</li>`).join('')}</ol>
+  <p class="muted small">Sur ordinateur, Chrome et Edge proposent aussi d’installer l’appli depuis la barre d’adresse.</p>
+  <div class="btnrow"><button class="btn pri block" id="ix">Compris</button></div></div>`;
+  document.body.append(m);
+  $('#ix', m).onclick = () => m.remove();
+}
+
+function bindDevice(body) {
+  const q = $('#quality', body), ins = $('#install', body);
+  if (q) q.onchange = async () => {
+    setQuality(q.value);
+    await store.save();
+    toast('Réglage enregistré, l’appli redémarre…');
+    setTimeout(() => location.reload(), 600);
+  };
+  if (ins) ins.onclick = async () => {
+    if (installPrompt) { installPrompt.prompt(); const r = await installPrompt.userChoice.catch(() => null); installPrompt = null; if (r?.outcome === 'accepted') render(); return; }
+    installHelp();
   };
 }
 
@@ -1228,11 +1274,12 @@ async function renderPhotos(body) {
 
 async function renderProjects(body) {
   const list = (await dbAll('projects')).map((x) => x.value).sort((a, b) => b.updated - a.updated);
-  body.innerHTML = `<h2 class="t">Projets</h2><p class="muted small">Crée plusieurs versions pour comparer vos idées.</p><div style="margin-top:10px">${list.map((p) => `<div class="proj ${p.id === store.project.id ? 'on' : ''}"><button class="m" data-open="${p.id}"><b>${esc(p.name)}</b><div class="muted small">Modifié le ${new Date(p.updated).toLocaleDateString('fr-FR')} à ${new Date(p.updated).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${p.tplVersion ? ' · dernière version' : ''}</div></button><button class="iconbtn" data-copy="${p.id}" title="Dupliquer">${icon('copy')}</button><button class="iconbtn" data-del="${p.id}" title="Supprimer">${icon('trash')}</button></div>`).join('')}</div>
+  body.innerHTML = `<h2 class="t">Projets</h2><p class="muted small">Crée plusieurs versions pour comparer vos idées.</p><div style="margin-top:10px">${list.map((p) => `<div class="proj ${p.id === store.project.id ? 'on' : ''}"><button class="m" data-open="${p.id}"><b>${esc(p.name)}</b><div class="muted small">Modifié le ${new Date(p.updated).toLocaleDateString('fr-FR')} à ${new Date(p.updated).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${p.by && p.byAt === p.updated ? ` par ${esc(p.by)}` : ''}${p.tplVersion ? ' · dernière version' : ''}</div></button><button class="iconbtn" data-copy="${p.id}" title="Dupliquer">${icon('copy')}</button><button class="iconbtn" data-del="${p.id}" title="Supprimer">${icon('trash')}</button></div>`).join('')}</div>
   <div class="btnrow"><button class="btn pri block" id="new">Nouveau projet</button></div>
   <div class="btnrow"><button class="btn" id="cmp">Comparer deux versions</button><button class="btn" id="pdf">Plan coté en PDF</button></div>
   <h3 class="s">Partager entre vos téléphones</h3>
   ${syncBlock()}
+  ${deviceBlock()}
   <h3 class="s">Passer d'un appareil à l'autre</h3>
   <p class="muted small">Envoie le fichier du projet à ton autre appareil, puis ouvre-le ici.</p>
   <div class="btnrow"><button class="btn" id="exp">Envoyer ce projet</button><label class="btn">Ouvrir un fichier<input type="file" id="imp" accept=".json,.maison,application/json" hidden/></label></div>
@@ -1250,6 +1297,7 @@ async function renderProjects(body) {
   };
   $('#tourAgain', body).onclick = () => { if (narrow()) setPanel(false); startTour(); };
   bindSync(body);
+  bindDevice(body);
   $('#pname', body).onchange = (e) => { live(() => { store.project.name = e.target.value; }); fillLevels(); };
   $('#exp', body).onclick = async () => {
     const name = `${store.project.name}.maison.json`;

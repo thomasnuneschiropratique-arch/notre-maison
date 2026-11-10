@@ -84,6 +84,7 @@ async function receive(id, doc) {
   if (local && local.updated >= doc.updated) { if (local.updated > doc.updated) queuePush(id); return; }
   if (id === store.project?.id && (busy() || store.saveTimer)) { pending.set(id, doc); retryLater(); return; }
   const incoming = keepBackgrounds(JSON.parse(doc.json), local);
+  if (doc.name && doc.by !== device) { incoming.by = doc.name; incoming.byAt = incoming.updated; }
   await dbPut('projects', id, incoming);
   if (id === store.project?.id) { sync.hooks.reload?.(incoming); store.emit('toast', doc.name ? `${doc.name} a modifié ce projet.` : 'Projet mis à jour depuis l’autre appareil.'); }
   sync.hooks.listChanged?.();

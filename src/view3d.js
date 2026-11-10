@@ -16,7 +16,7 @@ import { buildLevel, buildRoof, stairVoids } from './build.js';
 import { buildProc } from './procedural.js';
 import { getItem } from './catalog.js';
 import { getMaterial, configureTextures, materialInfo, glass } from './materials.js';
-import { isPhone, LOW } from './quality.js';
+import { isPhone, LOW, QUALITY_PREF } from './quality.js';
 import { tickLife } from './foliage.js';
 import { TerrainView } from './terrain3d.js';
 import { terrainOf, heightAt, levelBase } from './terrain.js';
@@ -438,6 +438,13 @@ export class View3D {
   clearProbes() { for (const p of this.probes.values()) p.rt.dispose(); this.probes.clear(); this.probeDirty = this.interior; }
 
   /** Téléphone, en visite : seuls les meubles de l'étage où l'on est, et les petits objets proches, sont dessinés. */
+  /** Une seule fois : si l'appareil peine, proposer le mode léger. */
+  slowHint() {
+    if (QUALITY_PREF !== 'auto') return;
+    try { if (localStorage.getItem('nm:slowHint')) return; localStorage.setItem('nm:slowHint', '1'); } catch { return; }
+    store.emit('toast', 'Cet appareil peine un peu. Le mode léger (Projets, Affichage) rendra la 3D plus fluide.');
+  }
+
   cullItems() {
     const li = store.levelIndex, cam = this.camera.position, v = new THREE.Vector3();
     let changed = false;
@@ -1035,7 +1042,7 @@ export class View3D {
       this.lifeT = t; tickLife(t / 1000);
       if (!this.needsRender && this.composer && !this.pending) {
         this.composer.render(); this.finalPending = false;
-        if (gap < 500) { this.lifeAvg = (this.lifeAvg ?? gap) * 0.95 + gap * 0.05; if (this.lifeAvg > 130) this.lifeOff = true; }
+        if (gap < 500) { this.lifeAvg = (this.lifeAvg ?? gap) * 0.95 + gap * 0.05; if (this.lifeAvg > 130) { this.lifeOff = true; this.slowHint(); } }
         return;
       }
       this.needsRender = true;
