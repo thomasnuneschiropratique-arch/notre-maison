@@ -63,6 +63,38 @@ function mergeStatic(root) {
   return root;
 }
 
+/** Regroupe les enfants directs d'un groupe qui partagent matière et rôle : beaucoup moins d'objets à dessiner, sélection intacte. */
+function mergeChildren(group) {
+  const buckets = new Map();
+  for (const m of group.children) {
+    if (!m.isMesh || m.isInstancedMesh || Array.isArray(m.material) || m.material.vertexColors || m.userData.noMerge || !m.visible) continue;
+    m.updateMatrix();
+    if (m.matrix.determinant() <= 0) continue;
+    const key = `${m.material.uuid}|${m.castShadow}|${m.receiveShadow}|${m.renderOrder}|${JSON.stringify(m.userData)}`;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(m);
+  }
+  for (const list of buckets.values()) {
+    if (list.length < 2) continue;
+    const parts = list.map((m) => {
+      const g = m.geometry.clone();
+      for (const name of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(name)) g.deleteAttribute(name);
+      if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+      if (!g.attributes.normal) g.computeVertexNormals();
+      if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]);
+      g.morphAttributes = {};
+      return g.applyMatrix4(m.matrix);
+    });
+    const merged = mergeGeometries(parts, false);
+    parts.forEach((g) => g.dispose());
+    if (!merged) continue;
+    const first = list[0], mesh = new THREE.Mesh(merged, first.material);
+    mesh.castShadow = first.castShadow; mesh.receiveShadow = first.receiveShadow; mesh.renderOrder = first.renderOrder; mesh.userData = { ...first.userData };
+    for (const m of list) { m.geometry.dispose(); m.removeFromParent(); }
+    group.add(mesh);
+  }
+}
+
 function disposeItem(obj) {
   if (obj.userData.ownGeometry) obj.traverse((m) => { if (m.isMesh) m.geometry.dispose(); });
 }
@@ -120,7 +152,8 @@ export class View3D {
     // Le jour qui entre par les vraies fenêtres : un panneau lumineux par baie proche.
     RectAreaLightUniformsLib.init();
     this.windowLights = new THREE.Group(); this.windowLights.visible = false;
-    for (let i = 0; i < (LOW ? 2 : 5); i++) this.windowLights.add(new THREE.RectAreaLight('#e8eff8', 0, 1, 1));
+    // Sur téléphone, ces lumières coûtent trop cher : la lumière du ciel suffit.
+    if (!LOW) for (let i = 0; i < 5; i++) this.windowLights.add(new THREE.RectAreaLight('#e8eff8', 0, 1, 1));
     this.scene.add(this.windowLights);
     this.probes = new Map(); this.interior = false; this.roomKey = null;
 
@@ -159,7 +192,7 @@ export class View3D {
     this.gtao._overrideVisibility = () => { baseHide(); this.scene.traverse((o) => { if (o.visible && (o.userData.noAO || (o.isMesh && o.material?.transmission > 0))) { o.visible = false; cache.push(o); } }); };
     this.composer.addPass(this.gtao);
     // Léger halo autour des fenêtres et des lampes, comme sur une vraie photo.
-    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(320, 320), 0.14, 0.55, 2.2));
+    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(320, 320), 0.08, 0.3, 4.5));
     this.composer.addPass(new OutputPass());
   }
 
@@ -256,6 +289,7 @@ export class View3D {
       if (i >= 0) this.house.add(buildRoof(p, p.levels[i], this.baseOf(i) + (z.wallH > 0 ? z.wallH : p.levels[i].height) * M, z));
     }
     this.drawParcel(p);
+    { const groups = []; this.house.traverse((o) => { if (!o.isMesh && o.children.length > 1) groups.push(o); }); groups.forEach(mergeChildren); }
     this.wallGroups = [];
     this.house.traverse((o) => { if (o.userData.kind === 'wallGroup') this.wallGroups.push(o); });
 
@@ -396,12 +430,25 @@ export class View3D {
   useEnvironment() {
     const s = this.scene, probe = this.interior && !this.photo ? this.probes.get(this.probeKey())?.tex : null;
     if (probe) { s.environment = probe; s.environmentRotation.set(0, 0, 0); s.environmentIntensity = 1; }
-    else if (this.sky) { s.environment = this.sky.tex; s.environmentRotation.set(0, this.sky.rotY, 0); s.environmentIntensity = this.interior && !this.photo ? 0.3 : this.sky.intensity; }
+    else if (this.sky) { s.environment = this.sky.tex; s.environmentRotation.set(0, this.sky.rotY, 0); s.environmentIntensity = this.interior && !this.photo ? (LOW ? 0.5 : 0.3) : this.sky.intensity; }
   }
 
   probeKey() { return this.roomKey; }
 
   clearProbes() { for (const p of this.probes.values()) p.rt.dispose(); this.probes.clear(); this.probeDirty = this.interior; }
+
+  /** Téléphone, en visite : seuls les meubles de l'étage où l'on est, et les petits objets proches, sont dessinés. */
+  cullItems() {
+    const li = store.levelIndex, cam = this.camera.position, v = new THREE.Vector3();
+    let changed = false;
+    for (const o of this.itemObjs.values()) {
+      if (o.userData.r === undefined) { const s = new THREE.Box3().setFromObject(o).getSize(v); o.userData.r = Math.max(s.x, s.y, s.z); }
+      const lvl = o.userData.level ?? 0, big = o.userData.r > 2.2;
+      const want = this.levelVisible(lvl) && (lvl === li || (big && !this.interior)) && (big || o.position.distanceTo(cam) < 18);
+      if (o.visible !== want) { o.visible = want; changed = true; }
+    }
+    if (changed) this.needsRender = true;
+  }
 
   /** Suit la pièce où l'on marche : éclairage, reflets et exposition s'adaptent. */
   trackRoom() {
@@ -457,7 +504,7 @@ export class View3D {
   captureProbe() {
     this.probeDirty = false;
     const key = this.roomKey;
-    if (!key || this.photo || this.probes.has(key) || !this.sky) return;
+    if (!key || LOW || this.photo || this.probes.has(key) || !this.sky) return;
     const [li, ri] = key.split(':').map(Number), c = store.analysis(store.project.levels[li]).rooms[ri].center, s = this.scene;
     const size = LOW ? 64 : 192;
     this.cubeRT ||= new THREE.WebGLCubeRenderTarget(size, { type: THREE.HalfFloatType, generateMipmaps: false });
@@ -496,7 +543,7 @@ export class View3D {
     list.sort((a, b) => a.d - b.d);
     this.lampLights.children.forEach((pl, i) => {
       const e = list[i];
-      pl.intensity = e ? e.l.intensity * (this.interior && this.darkRoom ? 1.8 : 0.55 + 0.45 * (this.nightFactor ?? 0)) : 0;
+      pl.intensity = e ? e.l.intensity * (this.interior && this.darkRoom ? 1.8 : 0.3 + 0.7 * (this.nightFactor ?? 0)) : 0;
       if (e) { pl.color.set(e.l.color); pl.position.copy(e.v); }
     });
     this.invalidate(false);
@@ -710,6 +757,7 @@ export class View3D {
     this.applyLighting();
     this.useEnvironment();
     this.frame();
+    this.applyVisibility();
     store.emit('walk', false);
   }
 
@@ -974,6 +1022,7 @@ export class View3D {
     if (this.lampsDirty) this.applyLamps();
     if (this.photo) { this.photoFrame(); return; }
     if (this.mode === 'walk') {
+      if (LOW && t - (this.cullT || 0) > 300) { this.cullT = t; this.cullItems(); }
       this.trackRoom();
       if (this.lampsDirty) this.applyLamps();
       if (this.probeDirty && !this.pending) this.captureProbe();

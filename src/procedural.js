@@ -43,7 +43,9 @@ function C(g, r1, r2, h, mat, x, y, z, seg = 24) {
 }
 
 function S(g, r, mat, x, y, z, sx = 1, sy = 1, sz = 1) {
-  const m = mesh(new THREE.SphereGeometry(r, 24, 16), mat, x, y, z);
+  // Le détail suit la taille réelle : une feuille ou une ampoule n'a pas besoin de 768 triangles.
+  const size = r * Math.max(sx, sy, sz), [ws, hs] = size < 0.03 ? [7, 5] : size < 0.08 ? [12, 8] : size < 0.25 ? [18, 12] : [24, 16];
+  const m = mesh(new THREE.SphereGeometry(r, ws, hs), mat, x, y, z);
   m.scale.set(sx, sy, sz);
   g.add(m);
   return m;

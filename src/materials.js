@@ -15,8 +15,9 @@ function loadTex(dir, name, srgb) {
   const key = `${dir}/${name}`;
   if (texCache.has(key)) return texCache.get(key);
   const url = `./${LOW ? 'textures-s' : 'textures'}/${key}.webp`;
-  const retry = (n) => loader.load(url, (r) => { t.image = r.image; t.needsUpdate = true; onTexture(); }, undefined, () => { if (n < 3) setTimeout(() => retry(n + 1), 1200 * n); });
-  const t = loader.load(url, () => onTexture(), undefined, () => setTimeout(() => retry(1), 1200));
+  const ready = () => { for (const c of t.userData.clones || []) c.needsUpdate = true; t.userData.clones = null; onTexture(); };
+  const retry = (n) => loader.load(url, (r) => { t.image = r.image; t.needsUpdate = true; ready(); }, undefined, () => { if (n < 3) setTimeout(() => retry(n + 1), 1200 * n); });
+  const t = loader.load(url, ready, undefined, () => setTimeout(() => retry(1), 1200));
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.anisotropy = anisotropy;
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
@@ -27,7 +28,8 @@ function loadTex(dir, name, srgb) {
 function scaled(tex, s) {
   const c = tex.clone();
   c.repeat.set(1 / s, 1 / s);
-  c.needsUpdate = true;
+  // Image pas encore arrivée : la copie sera prévenue au chargement, sans avertissement à chaque image.
+  if (tex.image?.width) c.needsUpdate = true; else (tex.userData.clones ||= []).push(c);
   return c;
 }
 
@@ -40,8 +42,8 @@ export function texturedMaterial(dir, s, opts = {}) {
   const m = new THREE.MeshStandardMaterial({
     map: scaled(loadTex(dir, 'diff', true), s),
     normalMap: scaled(loadTex(dir, 'nor', false), s),
-    roughnessMap: scaled(loadTex(dir, 'rough', false), s),
-    roughness: opts.roughness ?? 1,
+    roughnessMap: LOW ? null : scaled(loadTex(dir, 'rough', false), s),
+    roughness: opts.roughness ?? (LOW ? 0.8 : 1),
     metalness: 0,
     color: opts.tint ? new THREE.Color(opts.tint).multiplyScalar(opts.gain ?? 1) : 0xffffff,
   });
@@ -82,7 +84,7 @@ export function fabric(color, kind = 'lin') {
   const m = new THREE.MeshStandardMaterial({
     color: new THREE.Color(color), roughness: 1, metalness: 0,
     normalMap: scaled(loadTex(f.t, 'nor', false), f.s),
-    roughnessMap: scaled(loadTex(f.t, 'rough', false), f.s),
+    roughnessMap: LOW ? null : scaled(loadTex(f.t, 'rough', false), f.s),
   });
   m.normalScale.set(0.9, 0.9);
   matCache.set(key, m);
@@ -96,8 +98,8 @@ export function wood(kind = 'chene', tint) {
   const m = new THREE.MeshStandardMaterial({
     map: scaled(loadTex(dir, 'diff', true), 0.9),
     normalMap: scaled(loadTex(dir, 'nor', false), 0.9),
-    roughnessMap: scaled(loadTex(dir, 'rough', false), 0.9),
-    roughness: 0.85,
+    roughnessMap: LOW ? null : scaled(loadTex(dir, 'rough', false), 0.9),
+    roughness: LOW ? 0.7 : 0.85,
     color: tint ? new THREE.Color(tint) : 0xffffff,
   });
   m.normalScale.set(0.35, 0.35);

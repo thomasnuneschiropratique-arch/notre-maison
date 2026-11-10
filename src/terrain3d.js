@@ -97,7 +97,8 @@ function farGeometry(hAt, env, cx, cz) {
   const n = Math.round((2 * R) / step) + 1, base = new THREE.Color(env.far).multiplyScalar(0.44), field = new THREE.Color(env.far).lerp(new THREE.Color('#b09a5e'), 0.5).multiplyScalar(0.5), rock = new THREE.Color('#6b685f'), snow = new THREE.Color('#f2f4f6'), haze = new THREE.Color('#b4c3d0');
   const c = new THREE.Color();
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
-    const x = cx - R + i * step, z = cz - R + j * step, y = hAt(x, z);
+    const x = cx - R + i * step, z = cz - R + j * step, under = Math.abs(x - cx) < inner + 2 && Math.abs(z - cz) < inner + 2, y = hAt(x, z) - (under ? 4 : 0);
+    // Sous le terrain détaillé, le paysage lointain s'enfonce : il ne traverse jamais la maison, même avec une grille grossière.
     pos.push(x, y, z);
     c.copy(base).lerp(field, Math.max(0, Math.min(1, (fbm(x * 0.012 + 5, z * 0.012, 3) - 0.42) * 7))).multiplyScalar(0.8 + fbm(x * 0.05, z * 0.05, 2) * 0.45);
     if (env.snow) { if (y > 170) c.lerp(snow, Math.min(1, (y - 170) / 50)); else if (y > 90) c.lerp(rock, (y - 90) / 80); }

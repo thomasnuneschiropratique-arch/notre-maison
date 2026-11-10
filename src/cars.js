@@ -78,7 +78,7 @@ function bodyFn(spec) {
 }
 
 function bodyGeometry(spec, f) {
-  const NZ = LOW ? 110 : 230, pos = [], uv = [], idx = [], H = spec.L / 2, cols = NV * 2 + 1;
+  const NZ = LOW ? 90 : 160, pos = [], uv = [], idx = [], H = spec.L / 2, cols = NV * 2 + 1;
   for (let i = 0; i <= NZ; i++) {
     // Plus de points aux extrémités, où la forme se referme.
     const s = i / NZ, z = -H * Math.cos(Math.PI * s) * 0.5 + (-H + 2 * H * s) * 0.5;

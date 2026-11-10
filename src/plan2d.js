@@ -63,8 +63,12 @@ export class Plan2D {
     this.fitted = true;
     const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
     const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-    const k = Math.min((this.w - 90) / (x1 - x0 + 60), (this.h - 130) / (y1 - y0 + 60), 1.6);
-    this.view = { k, x: this.w / 2 - ((x0 + x1) / 2) * k, y: this.h / 2 - ((y0 + y1) / 2) * k };
+    // La barre d'outils couvre un bord du plan : on cadre dans la place qui reste.
+    let left = 0, top = 0;
+    try { const r = document.querySelector('.rail')?.getBoundingClientRect(), c = this.canvas.getBoundingClientRect(); if (r?.width) { if (r.height > r.width) left = Math.max(0, r.right - c.left); else top = Math.max(0, r.bottom - c.top); } } catch { /* sans barre */ }
+    const W = this.w - left, Hh = this.h - top;
+    const k = Math.min((W - 60) / (x1 - x0 + 60), (Hh - 100) / (y1 - y0 + 60), 1.6);
+    this.view = { k, x: left + W / 2 - ((x0 + x1) / 2) * k, y: top + Hh / 2 - ((y0 + y1) / 2) * k };
     this.draw();
   }
 
@@ -849,11 +853,25 @@ export class Plan2D {
     analysis.rooms.forEach((r, i) => {
       const info = lv.rooms[i]; if (!info) return;
       const p = this.toScreen(r.center);
-      if (this.view.k < 0.22) return;
-      c.fillStyle = INK; c.font = '600 12.5px ui-sans-serif, -apple-system, system-ui, sans-serif';
-      c.fillText(info.name, p.x, p.y - 8);
-      c.fillStyle = SOFT; c.font = '11.5px ui-sans-serif, -apple-system, system-ui, sans-serif';
-      c.fillText(`${r.area.toFixed(1).replace('.', ',')} m²`, p.x, p.y + 8);
+      if (this.view.k < 0.07) return;
+      // Le nom tient dans la pièce : plus petit, sur deux lignes, ou raccourci.
+      const xs = r.poly.map((q) => q.x), ys = r.poly.map((q) => q.y), room = (Math.max(...xs) - Math.min(...xs)) * this.view.k - 10, tall = (Math.max(...ys) - Math.min(...ys)) * this.view.k;
+      if (room < 24) return;
+      let size = 12.5, lines = [info.name];
+      const font = (s) => { c.font = `600 ${s}px ui-sans-serif, -apple-system, system-ui, sans-serif`; };
+      font(size);
+      while (size > 9 && c.measureText(info.name).width > room) font((size -= 0.5));
+      if (c.measureText(info.name).width > room) {
+        const cut = info.name.includes(', ') ? info.name.indexOf(', ') + 1 : info.name.lastIndexOf(' ', Math.ceil(info.name.length / 2) + 4);
+        if (cut > 0) lines = [info.name.slice(0, cut).trim(), info.name.slice(cut).trim()];
+        // Toujours trop large : le premier mot seul, sinon rien plutôt qu'un nom coupé.
+        if (lines.some((l) => c.measureText(l).width > room)) { const w = info.name.split(/[ ,]/)[0]; if (c.measureText(w).width > room) return; lines = [w]; }
+      }
+      const lh = size + 2, top = p.y - 8 - ((lines.length - 1) * lh) / 2;
+      c.fillStyle = INK;
+      lines.forEach((l, k) => c.fillText(l, p.x, top + k * lh));
+      c.font = '11.5px ui-sans-serif, -apple-system, system-ui, sans-serif';
+      if (tall > 34 + lines.length * lh && c.measureText('00,0 m²').width < room) { c.fillStyle = SOFT; c.fillText(`${r.area.toFixed(1).replace('.', ',')} m²`, p.x, top + lines.length * lh + 2); }
     });
   }
 

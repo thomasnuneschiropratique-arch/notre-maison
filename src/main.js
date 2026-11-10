@@ -1228,7 +1228,7 @@ async function renderPhotos(body) {
 
 async function renderProjects(body) {
   const list = (await dbAll('projects')).map((x) => x.value).sort((a, b) => b.updated - a.updated);
-  body.innerHTML = `<h2 class="t">Projets</h2><p class="muted small">Crée plusieurs versions pour comparer vos idées.</p><div style="margin-top:10px">${list.map((p) => `<div class="proj ${p.id === store.project.id ? 'on' : ''}"><button class="m" data-open="${p.id}"><b>${esc(p.name)}</b><div class="muted small">Modifié le ${new Date(p.updated).toLocaleDateString('fr-FR')}</div></button><button class="iconbtn" data-copy="${p.id}" title="Dupliquer">${icon('copy')}</button><button class="iconbtn" data-del="${p.id}" title="Supprimer">${icon('trash')}</button></div>`).join('')}</div>
+  body.innerHTML = `<h2 class="t">Projets</h2><p class="muted small">Crée plusieurs versions pour comparer vos idées.</p><div style="margin-top:10px">${list.map((p) => `<div class="proj ${p.id === store.project.id ? 'on' : ''}"><button class="m" data-open="${p.id}"><b>${esc(p.name)}</b><div class="muted small">Modifié le ${new Date(p.updated).toLocaleDateString('fr-FR')} à ${new Date(p.updated).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${p.tplVersion ? ' · dernière version' : ''}</div></button><button class="iconbtn" data-copy="${p.id}" title="Dupliquer">${icon('copy')}</button><button class="iconbtn" data-del="${p.id}" title="Supprimer">${icon('trash')}</button></div>`).join('')}</div>
   <div class="btnrow"><button class="btn pri block" id="new">Nouveau projet</button></div>
   <div class="btnrow"><button class="btn" id="cmp">Comparer deux versions</button><button class="btn" id="pdf">Plan coté en PDF</button></div>
   <h3 class="s">Partager entre vos téléphones</h3>
