@@ -66,8 +66,9 @@ document.getElementById('app').innerHTML = `
       <div class="navpad" id="navpad"><button data-n="left" aria-label="Aller à gauche">◄</button><button data-n="up" aria-label="Avancer">▲</button><button data-n="down" aria-label="Reculer">▼</button><button data-n="right" aria-label="Aller à droite">►</button><button data-n="turnL" aria-label="Tourner à gauche">↺</button><button data-n="turnR" aria-label="Tourner à droite">↻</button><button data-n="tiltU" aria-label="Regarder plus du dessus">⤒</button><button data-n="tiltD" aria-label="Regarder plus de face">⤓</button><button data-n="in" aria-label="Zoomer">+</button><button data-n="out" aria-label="Dézoomer">−</button></div>
       <div class="ab hidden" id="abView"><img id="abImg" alt="Avant"/><div class="abhandle" id="abHandle"><i></i></div><span class="abl l">Avant</span><span class="abl r">Après</span>
         <div class="abbar"><button class="chip" id="abNew">Nouvel avant</button><button class="chip on" id="abClose">Fermer</button></div></div>
+      <div class="measpill hidden" id="measPill"></div>
       <div class="loadpill hidden" id="loadPill"><i></i><span></span></div>
-      <div class="walkgo hidden" id="walkgo"><select id="walkRoom" aria-label="Aller dans une pièce"></select><button class="chip abwalk" id="abWalk">Avant / après</button></div>
+      <div class="walkgo hidden" id="walkgo"><select id="walkRoom" aria-label="Aller dans une pièce"></select><button class="chip abwalk" id="abWalk">Avant / après</button><button class="chip measwalk" id="measWalk">Mesurer</button></div>
       <div class="joy hidden" id="joy"><i></i></div>
       <div class="photoHud hidden" id="photoHud">
         <div style="display:flex;justify-content:space-between;gap:10px"><b id="phTitle">Préparation…</b><small id="phCount"></small></div>
@@ -1146,7 +1147,10 @@ function shoppingData() {
 
 // ——— Achats en deux temps : ce qu'il faut pour emménager, ce qui peut attendre ———
 const LATER_BY_DEFAULT = ['deco', 'objets', 'exterieur'];
-const stageOf = (def) => store.project?.stages?.[def.id] || (LATER_BY_DEFAULT.includes(def.cat) ? 'later' : 'now');
+// Ce qui se construit (terrasse, piscine, allées) se fait avant d'emménager, même dehors.
+const BUILT = ['terrasse', 'piscine', 'cloture', 'marches', 'soutenement', 'poteau', 'pergola', 'cheminee'];
+const defaultStage = (def) => (LATER_BY_DEFAULT.includes(def.cat) && !BUILT.includes(def.sub) ? 'later' : 'now');
+const stageOf = (def) => store.project?.stages?.[def.id] || defaultStage(def);
 const STAGE_LABEL = { now: 'Emménagement', later: 'Plus tard' };
 function stageTotals(shops) {
   const t = { now: { total: 0, left: 0 }, later: { total: 0, left: 0 } };
@@ -1168,7 +1172,7 @@ function renderShopping(body) {
   body.innerHTML = `<h2 class="t">Liste d’achats</h2>
     <div class="price">${euro(left)} <span class="muted small">restent à acheter sur ${euro(total)}</span></div>
     ${all.length ? `<div class="stages"><button class="stg ${ui.shopStage === 'now' ? 'on' : ''}" data-stage="now"><b>Emménagement</b><span>${euro(st.now.left)} à acheter</span><small>sur ${euro(st.now.total)}</small></button><button class="stg ${ui.shopStage === 'later' ? 'on' : ''}" data-stage="later"><b>Plus tard</b><span>${euro(st.later.left)} à acheter</span><small>sur ${euro(st.later.total)}</small></button></div>
-    <p class="muted small">Touche une étape pour ne voir qu’elle. Sur chaque ligne, « Plus tard » ou « Emménagement » la fait changer d’étape. Par défaut, la déco, les objets et l’extérieur attendent.</p>` : ''}
+    <p class="muted small">Touche une étape pour ne voir qu’elle. Sur chaque ligne, « Plus tard » ou « Emménagement » la fait changer d’étape. Par défaut, la déco, les objets et le mobilier d’extérieur attendent ; la terrasse et la piscine se font avant.</p>` : ''}
     ${shops.length ? `<div class="chips wrap" id="shopF"><button class="chip ${ui.shopAll ? 'on' : ''}" data-all="1">Tout</button><button class="chip ${ui.shopAll ? '' : 'on'}" data-all="0">À acheter</button></div>
     <div class="btnrow"><button class="btn block" id="shopShare">${icon('copy')}Envoyer la liste</button></div>
     ${shops.map((g) => `<div class="shop"><h4><span>${esc(g.name)}</span><span>${euro(g.total)}</span></h4>${g.rows.filter((r) => ui.shopAll || r.its.some((i) => !i.bought)).map((r) => { const done = r.its.every((i) => i.bought), link = purchaseLinks(r.def)[0]; return `<label class="shopline ${done ? 'done' : ''}"><input type="checkbox" data-id="${esc(r.def.id)}" ${done ? 'checked' : ''}/><span class="nm">${r.its.length > 1 ? `${r.its.length} × ` : ''}${esc(r.def.name)}<small>${esc([...r.rooms].join(', '))} · ${r.def.approx ? '≈ ' : ''}${euro(r.total)}</small><button class="stagebtn ${stageOf(r.def)}" data-stg="${esc(r.def.id)}">${STAGE_LABEL[stageOf(r.def)]}</button></span>${link ? `<a href="${esc(link.url)}" target="_blank" rel="noopener">Voir</a>` : '<span></span>'}</label>`; }).join('')}</div>`).join('')}
@@ -1177,7 +1181,7 @@ function renderShopping(body) {
   body.querySelectorAll('[data-stg]').forEach((b) => { b.onclick = (e) => {
     e.preventDefault(); e.stopPropagation();
     const def = getItem(b.dataset.stg), t = $('#pbody').scrollTop, next = stageOf(def) === 'now' ? 'later' : 'now';
-    live(() => { const m = store.project.stages ||= {}; if (next === (LATER_BY_DEFAULT.includes(def.cat) ? 'later' : 'now')) delete m[def.id]; else m[def.id] = next; });
+    live(() => { const m = store.project.stages ||= {}; if (next === defaultStage(def)) delete m[def.id]; else m[def.id] = next; });
     render(); $('#pbody').scrollTop = t;
   }; });
   const f = $('#shopF', body);
@@ -1468,6 +1472,7 @@ async function renderProjects(body) {
   body.innerHTML = `<h2 class="t">Projets</h2><p class="muted small">Crée plusieurs versions pour comparer vos idées.</p><div style="margin-top:10px">${list.map((p) => `<div class="proj ${p.id === store.project.id ? 'on' : ''}"><button class="m" data-open="${p.id}"><b>${esc(p.name)}</b><div class="muted small">Modifié le ${new Date(p.updated).toLocaleDateString('fr-FR')} à ${new Date(p.updated).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${p.by && p.byAt === p.updated ? ` par ${esc(p.by)}` : ''}${p.tplVersion ? ' · dernière version' : ''}</div></button><button class="iconbtn" data-copy="${p.id}" title="Dupliquer">${icon('copy')}</button><button class="iconbtn" data-del="${p.id}" title="Supprimer">${icon('trash')}</button></div>`).join('')}</div>
   <div class="btnrow"><button class="btn pri block" id="new">Nouveau projet</button></div>
   <div class="btnrow"><button class="btn" id="cmp">Comparer deux versions</button><button class="btn" id="pdf">Plan coté en PDF</button></div>
+  <div class="btnrow"><button class="btn block" id="dossierP">Dossier complet en PDF</button></div>
   <h3 class="s">Partager entre vos téléphones</h3>
   ${syncBlock()}
   ${deviceBlock()}
@@ -1486,6 +1491,7 @@ async function renderProjects(body) {
     if (!blob) { toast('Trace d’abord des murs.'); return; }
     await shareFile(new File([blob], `${store.project.name} - plan.pdf`, { type: 'application/pdf' }));
   };
+  $('#dossierP', body).onclick = (e) => makeDossier(e.currentTarget);
   $('#tourAgain', body).onclick = () => { if (narrow()) setPanel(false); startTour(); };
   bindSync(body);
   bindDevice(body);
@@ -1550,6 +1556,7 @@ function roomSheets() {
       const rect = r.poly.length === 4 && Math.abs(r.area * 10000 - L * l) / (L * l) < 0.08;
       const doors = [], wins = [];
       for (const w of walls) for (const o of w.openings) (isDoorType(o.type) ? doors : wins).push(o.width);
+      const light = daylight(lv, a, i, r);
       const items = lv.items.filter((it) => pointInPolygon({ x: it.x, y: it.y }, r.poly)).map((it) => ({ it, def: getItem(it.cat) })).filter((x) => x.def);
       const obs = items.filter((x) => isObstacle(x.it, x.def)).map((x) => ({ ...x, poly: itemCorners(x.it, x.def) }));
       const used = obs.reduce((t, x) => t + ((x.it.w ?? x.def.w) * (x.it.d ?? x.def.d)) / 10000, 0);
@@ -1566,14 +1573,42 @@ function roomSheets() {
         const toWall = Math.min(...big[x].poly.flatMap((p) => r.poly.map((q, k) => segPointDist(p, q, r.poly[(k + 1) % r.poly.length])))) - th / 2;
         consider(toWall, `${nm(big[x].def)} et le mur`, 45);
       }
-      out.push({ level: lv.name, name: info.name, area: r.area, L: Math.max(L, l), l: Math.min(L, l), rect, height: lv.height, doors, wins, items, obs, free, used, narrow });
+      out.push({ level: lv.name, name: info.name, light, area: r.area, L: Math.max(L, l), l: Math.min(L, l), rect, height: lv.height, doors, wins, items, obs, free, used, narrow });
     });
   });
   return out;
 }
 
+// Lumière du jour : surface vitrée vers l'extérieur rapportée au sol, pondérée par l'orientation.
+const COMPASS = ['nord', 'nord-est', 'est', 'sud-est', 'sud', 'sud-ouest', 'ouest', 'nord-ouest'];
+function daylight(lv, a, i, r) {
+  const north = ((store.project.site?.north || 0) * Math.PI) / 180, N = { x: Math.sin(north), y: -Math.cos(north) }, E = { x: Math.cos(north), y: Math.sin(north) };
+  let eff = 0, glass = 0;
+  const dirs = new Map();
+  for (const w of lv.walls) for (const [s, o] of [['L', 'R'], ['R', 'L']]) {
+    if (a.sideRoom.get(`${w.id}:${s}`) !== i || a.sideRoom.has(`${w.id}:${o}`)) continue;
+    const A = lv.nodes[w.a], B = lv.nodes[w.b], L = Math.hypot(B.x - A.x, B.y - A.y) || 1;
+    // Normale vers l'extérieur de la pièce.
+    let n = { x: -(B.y - A.y) / L, y: (B.x - A.x) / L }; if (s === 'L') n = { x: -n.x, y: -n.y };
+    const mid = { x: (A.x + B.x) / 2 + n.x * 30, y: (A.y + B.y) / 2 + n.y * 30 };
+    if (pointInPolygon(mid, r.poly)) n = { x: -n.x, y: -n.y };
+    const az = ((Math.atan2(n.x * E.x + n.y * E.y, n.x * N.x + n.y * N.y) * 180) / Math.PI + 360) % 360;
+    const f = az > 112 && az < 248 ? 1 : az > 45 && az < 315 ? 0.8 : 0.55;
+    for (const op of w.openings) {
+      if (isDoorType(op.type) && !op.glazed) continue;
+      const m2 = (op.width * op.height) / 10000;
+      glass += m2; eff += m2 * f;
+      const d = COMPASS[Math.round(az / 45) % 8]; dirs.set(d, (dirs.get(d) || 0) + m2);
+    }
+  }
+  const ratio = r.area ? eff / r.area : 0;
+  const [label, cls] = ratio >= 0.25 ? ['Très lumineuse', 'ok'] : ratio >= 0.15 ? ['Lumineuse', 'ok'] : ratio >= 0.08 ? ['Correcte', 'mid'] : ['Sombre', 'bad'];
+  return { glass, ratio, label, cls, dirs: [...dirs].sort((x, y) => y[1] - x[1]).map(([d]) => d) };
+}
+
 function sheetText(r) {
   const lines = [`${r.name} (${r.level})`, `${r.rect ? '' : 'Environ '}${mTxt(r.L)} × ${mTxt(r.l)}, ${r.area.toFixed(1).replace('.', ',')} m², hauteur ${cmTxt(r.height)}`];
+  lines.push(`Lumière du jour : ${r.light.label.toLowerCase()}${r.light.glass ? ` (${r.light.glass.toFixed(1).replace('.', ',')} m² vitrés, ${r.light.dirs.join(', ')})` : ', aucune fenêtre'}`);
   if (r.doors.length) lines.push(`Portes : ${r.doors.map(cmTxt).join(', ')}`);
   if (r.wins.length) lines.push(`Fenêtres : ${r.wins.map(cmTxt).join(', ')}`);
   if (r.obs.length) lines.push(`Place libre au sol : ${r.free.toFixed(1).replace('.', ',')} m² (${Math.round((r.free / r.area) * 100)} %)`);
@@ -1582,16 +1617,43 @@ function sheetText(r) {
   return lines.join('\n');
 }
 
+// ——— Dossier PDF : tout le projet en un fichier, pour un artisan ou la banque ———
+async function makeDossier(btn) {
+  const label = btn?.innerHTML;
+  if (btn) { btn.disabled = true; btn.textContent = 'Préparation du dossier…'; }
+  try {
+    await store.save();
+    const p = store.project, b = fullBudget(store), su = surfaces(store), rooms = roomSheets();
+    const shops = shoppingData(), st = stageTotals(shops), rows = { now: [], later: [] };
+    for (const g of shops) for (const r of g.rows) rows[stageOf(r.def)].push([`${r.its.length > 1 ? `${r.its.length} × ` : ''}${r.def.name}`, [...r.rooms].join(', '), euro(r.total), r.total]);
+    for (const k of ['now', 'later']) rows[k].sort((x, y) => y[3] - x[3]);
+    const furn = b.items.reduce((t, l) => t + l.price, 0);
+    const all = p.levels.flatMap((l) => l.rooms);
+    const facts = [['Surface habitable', `${su.habitable.toFixed(0)} m²`], ['Pièces', String(all.length)], ['Chambres', String(all.filter((r) => ['chambre', 'parentale', 'enfant'].includes(r.type)).length)], ['Niveaux', String(p.levels.length)], ['Budget total estimé', euro(b.total)], ['Dont meubles et déco', euro(furn)]];
+    const { dossierPdf, pdfImage } = await import('./planpdf.js');
+    const saved = (await dbAll('renders')).map((x) => x.value).filter((x) => x.project === p.id).sort((x, y) => y.date - x.date).slice(0, 5);
+    const photos = [];
+    for (const r of saved) { try { photos.push(await pdfImage(r.blob)); } catch { /* photo illisible */ } }
+    if (!photos.length && ui.view === '3d') { try { photos.push(await pdfImage(await (await fetch(view.grab())).blob())); } catch { /* vue indisponible */ } }
+    const blob = dossierPdf(p, { facts, address: p.site.address || '', rooms, photos, budget: { lines: [['Budget total estimé', euro(b.total)], ['Construction au m²', euro(b.perM2)], ['Meubles et déco', euro(furn)]], stages: st, rows } });
+    await shareFile(new File([blob], `${p.name} - dossier.pdf`, { type: 'application/pdf' }));
+    if (!saved.length) toast(photos.length ? 'Astuce : les photos enregistrées en mode Photo rendent le dossier plus beau.' : 'Astuce : enregistre une ou deux photos en mode Photo, elles iront dans le dossier.');
+  } catch (e) { console.error(e); toast('Le dossier n’a pas pu être créé.'); } finally { if (btn) { btn.disabled = false; btn.innerHTML = label; } }
+}
+
 function renderMeasures(body) {
   const rooms = roomSheets();
   const tag = (g) => (g < 70 ? 'bad' : g < 90 ? 'mid' : 'ok');
   body.innerHTML = `<h2 class="t">Fiche des pièces</h2>
-    <p class="muted small">Les mesures intérieures de chaque pièce, prises sur le plan. Les passages : 90 cm est confortable, 70 cm est un minimum.</p>
+    <p class="muted small">Les mesures intérieures de chaque pièce, prises sur le plan. Les passages : 90 cm est confortable, 70 cm est un minimum. La lumière du jour compte les vitrages sur l’extérieur : le sud compte plein, l’est et l’ouest un peu moins, le nord encore moins.</p>
+    ${(() => { const dark = rooms.filter((r) => r.light.cls === 'bad' && /salon|séjour|chambre|bureau|cuisine|manger|suite/i.test(r.name)); return dark.length ? `<div class="note">Pièces de vie un peu sombres : ${dark.map((r) => esc(r.name)).join(', ')}. Une fenêtre de plus ou une baie plus large changerait tout.</div>` : ''; })()}
+    ${rooms.length ? `<div class="btnrow"><button class="btn block" id="dossier">${icon('copy')}Dossier PDF du projet</button></div>` : ''}
     ${rooms.length ? `<div class="btnrow"><button class="btn block" id="sheetShare">${icon('copy')}Envoyer la fiche</button></div>` : '<p class="muted" style="margin-top:12px">Trace des pièces sur le plan : leurs mesures apparaîtront ici.</p>'}
     ${rooms.map((r, k) => `<div class="sheet"><h4><span>${esc(r.name)}</span><span class="muted small">${esc(r.level)}</span></h4>
       <div class="kv"><span>Dimensions</span><b>${r.rect ? '' : '≈ '}${mTxt(r.L)} × ${mTxt(r.l)}</b></div>
       <div class="kv"><span>Surface</span><b>${r.area.toFixed(1).replace('.', ',')} m²</b></div>
       <div class="kv"><span>Hauteur sous plafond</span><b>${cmTxt(r.height)}</b></div>
+      <div class="kv"><span>Lumière du jour</span><b class="pass ${r.light.cls}">${r.light.label}</b></div><div class="lightbar"><i style="width:${Math.min(100, (r.light.ratio / 0.3) * 100)}%"></i></div><div class="muted small" style="text-align:right">${r.light.glass ? `${r.light.glass.toFixed(1).replace('.', ',')} m² vitrés · ${esc(r.light.dirs.join(', '))}` : 'aucune fenêtre sur l’extérieur'}</div>
       ${r.doors.length ? `<div class="kv"><span>Porte${r.doors.length > 1 ? 's' : ''}</span><b>${r.doors.map(cmTxt).join(' · ')}</b></div>` : ''}
       ${r.wins.length ? `<div class="kv"><span>Fenêtre${r.wins.length > 1 ? 's' : ''}</span><b>${r.wins.map(cmTxt).join(' · ')}</b></div>` : ''}
       ${r.obs.length ? `<div class="kv"><span>Place libre au sol</span><b>${r.free.toFixed(1).replace('.', ',')} m² · ${Math.round((r.free / r.area) * 100)} %</b></div>` : ''}
@@ -1602,6 +1664,7 @@ function renderMeasures(body) {
     if (navigator.share) { try { await navigator.share({ text }); return; } catch { /* partage annulé */ } }
     try { await navigator.clipboard.writeText(text); toast('Fiche copiée.'); } catch { toast('Copie impossible sur cet appareil.'); }
   };
+  const dos = $('#dossier', body); if (dos) dos.onclick = () => makeDossier(dos);
   const all = $('#sheetShare', body);
   if (all) all.onclick = () => send(`${store.project.name} : fiche des pièces\n\n${rooms.map(sheetText).join('\n\n')}`);
   body.querySelectorAll('[data-sheet]').forEach((b) => { b.onclick = () => send(sheetText(rooms[Number(b.dataset.sheet)])); });
@@ -1686,7 +1749,67 @@ function openProject(p) {
 }
 
 // ——— Événements du magasin ———
+// ——— Mesures en Visite : toucher un mur, un meuble ou une ouverture affiche ses dimensions ———
+/** Distance le long d'une direction jusqu'au premier mur rencontré (en cm), en ignorant certains murs. */
+function castToWall(lv, from, dir, skip) {
+  let best = null;
+  for (const w of lv.walls) {
+    if (w.id === skip) continue;
+    const A = lv.nodes[w.a], B = lv.nodes[w.b], ex = B.x - A.x, ey = B.y - A.y, den = dir.x * ey - dir.y * ex;
+    if (Math.abs(den) < 1e-9) continue;
+    const t = ((A.x - from.x) * ey - (A.y - from.y) * ex) / den, u = ((A.x - from.x) * dir.y - (A.y - from.y) * dir.x) / den;
+    if (t > 3 && u >= 0 && u <= 1 && (!best || t < best.t)) best = { t, w };
+  }
+  return best;
+}
+const mFmt = (cm) => `${(cm / 100).toFixed(2).replace('.', ',')} m`;
+function measureInWalk() {
+  const pill = $('#measPill'), sel = store.selection, lv = store.level;
+  const hide = () => { pill.classList.add('hidden'); view.clearMeasure(); };
+  if (view.mode !== 'walk' || ui.view !== '3d' || !sel) { hide(); return; }
+  const base = view.baseOf(store.levelIndex), hit = view.lastHit, here = hit && { x: hit.x / 0.01, y: hit.z / 0.01 };
+  let text = '';
+  if (sel.type === 'wall') {
+    const w = lv.walls.find((x) => x.id === sel.id); if (!w || !here) { hide(); return; }
+    const A = lv.nodes[w.a], B = lv.nodes[w.b], L = Math.hypot(B.x - A.x, B.y - A.y);
+    let n = { x: -(B.y - A.y) / L, y: (B.x - A.x) / L };
+    const cam = { x: view.camera.position.x / 0.01, y: view.camera.position.z / 0.01 };
+    if ((cam.x - here.x) * n.x + (cam.y - here.y) * n.y < 0) n = { x: -n.x, y: -n.y };
+    const f = castToWall(lv, here, n, w.id);
+    text = `<b>Mur : ${mFmt(L)}</b> de long`;
+    if (f) { const d = f.t - f.w.thickness / 2; text += ` · <b>${mFmt(d)}</b> jusqu’au mur d’en face`; view.showMeasure(here, { x: here.x + n.x * d, y: here.y + n.y * d }, Math.max(base + 0.3, hit.y)); }
+    else view.clearMeasure();
+  } else if (sel.type === 'item') {
+    const it = lv.items.find((x) => x.id === sel.id), def = it && getItem(it.cat); if (!def) { hide(); return; }
+    const W = it.w ?? def.w, D = it.d ?? def.d, H = it.h ?? def.h, r = ((it.rot || 0) * Math.PI) / 180, fr = { x: -Math.sin(r), y: Math.cos(r) };
+    text = `<b>${esc(def.name)}</b> · ${Math.round(W)} × ${Math.round(D)} × ${Math.round(H)} cm`;
+    const f = def.ceiling || def.wall ? null : castToWall(lv, { x: it.x, y: it.y }, fr);
+    if (f) {
+      const d = f.t - D / 2 - f.w.thickness / 2, a = { x: it.x + fr.x * (D / 2), y: it.y + fr.y * (D / 2) };
+      if (d > 5) { text += ` · <b>${mFmt(d)}</b> devant, jusqu’au mur`; view.showMeasure(a, { x: a.x + fr.x * d, y: a.y + fr.y * d }, base + 0.25); } else view.clearMeasure();
+    } else view.clearMeasure();
+  } else if (sel.type === 'opening') {
+    const w = lv.walls.find((x) => x.id === sel.wallId), o = w?.openings.find((x) => x.id === sel.id); if (!o) { hide(); return; }
+    text = `<b>${isDoorType(o.type) ? 'Passage' : 'Fenêtre'} : ${Math.round(o.width)} × ${Math.round(o.height)} cm</b>${o.sill ? ` · allège ${Math.round(o.sill)} cm` : ''}`;
+    view.clearMeasure();
+  } else if (sel.type === 'room') {
+    const i = lv.rooms.findIndex((x) => x.id === sel.id), r = store.analysis(lv).rooms[i];
+    if (!r) { hide(); return; }
+    text = `<b>${esc(lv.rooms[i].name)}</b> · ${r.area.toFixed(1).replace('.', ',')} m² · hauteur ${Math.round(lv.height)} cm`;
+    view.clearMeasure();
+  } else { hide(); return; }
+  pill.innerHTML = text; pill.classList.remove('hidden');
+}
+function setMeasureMode(on) {
+  view.measureMode = on; $('#measWalk').classList.toggle('on', on); $('#measWalk').textContent = on ? 'Mesurer : activé' : 'Mesurer';
+  if (on) { if (document.pointerLockElement) document.exitPointerLock(); view.hoverLook = false; toast('Touche un mur, un meuble ou une fenêtre pour voir ses mesures.'); }
+  else { store.select(null); $('#measPill').classList.add('hidden'); view.clearMeasure(); }
+}
+$('#measWalk').onclick = () => setMeasureMode(!view.measureMode);
+store.addEventListener('walk', (e) => { if (!e.detail) { if (view.measureMode) setMeasureMode(false); $('#measPill').classList.add('hidden'); view.clearMeasure(); } });
+
 store.addEventListener('select', () => {
+  measureInWalk();
   ui.detail = null;
   renderSelbar();
   if (narrow() && !store.selection && ui.panelOpen && ui.selPanel) setPanel(false);

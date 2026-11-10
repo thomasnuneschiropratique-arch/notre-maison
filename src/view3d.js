@@ -935,7 +935,7 @@ export class View3D {
       if (press.lockedWalk) { this.move.f = 0; press = null; return; }
       this.controls.enabled = this.mode === 'orbit';
       if (press.brush) { press = null; store.brushStroke.end(); return; }
-      if (this.mode === 'walk' && press.mouse && !press.moved && !locked()) { press = null; this.lockLook(); return; }
+      if (this.mode === 'walk' && press.mouse && !press.moved && !locked() && !this.measureMode) { press = null; this.lockLook(); return; }
       if (press.began) store.commit({ rebuild: false });
       else if (!press.moved) this.tap(e);
       press = null;
@@ -1006,7 +1006,7 @@ export class View3D {
   tap(e) {
     const hit = this.pick(e);
     if (!hit) { store.select(null); return; }
-    if (this.mode === 'walk' && hit.kind === 'floor' && !store.selection) {
+    if (this.mode === 'walk' && hit.kind === 'floor' && !store.selection && !this.measureMode) {
       this.camera.position.x = this.lastHit.x; this.camera.position.z = this.lastHit.z;
       this.onCameraMove();
       return;
@@ -1156,6 +1156,26 @@ export class View3D {
     this.applyLamps();
     this.resize();
     this.invalidate();
+  }
+
+  /** Trait de mesure en pointillés entre deux points du plan (en cm), à une hauteur donnée (en m). */
+  showMeasure(a, b, y) {
+    this.clearMeasure();
+    const g = new THREE.Group(), mat = new THREE.LineDashedMaterial({ color: '#b5532f', dashSize: 0.08, gapSize: 0.05, depthTest: false, transparent: true });
+    const A = new THREE.Vector3(a.x * M, y, a.y * M), B = new THREE.Vector3(b.x * M, y, b.y * M);
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([A, B]), mat); line.computeLineDistances(); line.renderOrder = 20;
+    g.add(line);
+    const dot = new THREE.SphereGeometry(0.035, 12, 8), dm = new THREE.MeshBasicMaterial({ color: '#b5532f', depthTest: false, transparent: true });
+    for (const P of [A, B]) { const m = new THREE.Mesh(dot, dm); m.position.copy(P); m.renderOrder = 21; g.add(m); }
+    g.userData.helper = true; g.userData.noAO = true;
+    this.measureLine = g; this.scene.add(g); this.invalidate(false);
+  }
+
+  clearMeasure() {
+    if (!this.measureLine) return;
+    this.scene.remove(this.measureLine);
+    this.measureLine.traverse((o) => { o.geometry?.dispose(); o.material?.dispose?.(); });
+    this.measureLine = null; this.invalidate(false);
   }
 
   /** Image de la vue actuelle, sans le cadre de sélection : sert à l'« avant » d'un avant / après. */

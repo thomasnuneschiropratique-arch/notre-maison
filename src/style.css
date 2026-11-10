@@ -72,6 +72,8 @@ input[type=range] { accent-color: var(--accent); }
 .joy { position: absolute; left: 22px; bottom: 112px; width: 112px; height: 112px; border-radius: 50%; background: rgba(255,253,248,.3); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.6); z-index: 6; touch-action: none; }
 .joy i { position: absolute; left: 36px; top: 36px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.9); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
 .walkgo { position: absolute; right: 12px; top: 62px; z-index: 6; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.walkgo .measwalk { box-shadow: 0 3px 14px rgba(38,35,30,.14); background: rgba(255,253,248,.93); padding: 7px 11px; }
+.walkgo .measwalk.on { background: var(--accent); color: #fff; }
 .walkgo .abwalk { box-shadow: 0 3px 14px rgba(38,35,30,.14); background: rgba(255,253,248,.93); padding: 7px 11px; }
 .walkgo .abwalk.on { background: var(--ink); color: #fff; }
 @media (min-width: 821px) { .walkgo .abwalk { display: none; } }
@@ -340,3 +342,9 @@ select.chip { border: 0; appearance: none; -webkit-appearance: none; padding-rig
 .photomenu button:hover { background: #f3eee4; }
 .photomenu b { font-size: 14px; }
 .photomenu span { font-size: 12px; color: var(--soft); }
+.lightbar { height: 5px; border-radius: 3px; background: #efeadf; overflow: hidden; margin: 2px 0 2px; }
+.lightbar i { display: block; height: 100%; background: linear-gradient(90deg, #e9b44c, #f4d27a); }
+
+/* Mesures en Visite */
+.measpill { position: absolute; left: 50%; top: 104px; transform: translateX(-50%); z-index: 6; background: rgba(26,24,20,.82); color: #fff; font-size: 13px; padding: 7px 14px; border-radius: 16px; max-width: calc(100% - 24px); text-align: center; pointer-events: none; }
+.measpill b { color: #ffd9c6; }
