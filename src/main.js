@@ -61,7 +61,7 @@ document.getElementById('app').innerHTML = `
       <div class="sunbar" id="sunbar">
         <span class="lbl">Heure</span><input type="range" id="hour" min="5" max="23" step="0.25" value="15"/><span class="val" id="hourV"></span>
         <button class="sunmore" id="sunMore" aria-label="Plus de réglages">⋯</button>
-        <div class="row2"><select class="chip" id="sunDay" aria-label="Date">${SUN_DAYS.map(([d, l]) => `<option value="${d}" ${d === 172 ? 'selected' : ''}>${l}</option>`).join('')}</select><button class="chip" id="sunPlay" title="Faire défiler la journée">▶ Journée</button><button class="chip on" id="lamps">Lampes</button><button class="chip" id="abBtn" title="Garder la vue pour comparer après un changement">Avant / après</button><span style="flex:1"></span><span>Exposition</span><input type="range" id="expo" min="0.4" max="2.4" step="0.05" value="1" style="width:96px"/></div>
+        <div class="row2"><select class="chip" id="sunDay" aria-label="Date">${SUN_DAYS.map(([d, l]) => `<option value="${d}" ${d === 172 ? 'selected' : ''}>${l}</option>`).join('')}</select><button class="chip" id="sunPlay" title="Faire défiler la journée">▶ Journée</button><button class="chip on" id="lamps">Lampes</button><button class="chip" id="abBtn" title="Garder la vue pour comparer après un changement">Avant / après</button><button class="chip" id="showBtn" title="Visite automatique en plein écran">▶ Présentation</button><span style="flex:1"></span><span>Exposition</span><input type="range" id="expo" min="0.4" max="2.4" step="0.05" value="1" style="width:96px"/></div>
       </div>
       <div class="navpad" id="navpad"><button data-n="left" aria-label="Aller à gauche">◄</button><button data-n="up" aria-label="Avancer">▲</button><button data-n="down" aria-label="Reculer">▼</button><button data-n="right" aria-label="Aller à droite">►</button><button data-n="turnL" aria-label="Tourner à gauche">↺</button><button data-n="turnR" aria-label="Tourner à droite">↻</button><button data-n="tiltU" aria-label="Regarder plus du dessus">⤒</button><button data-n="tiltD" aria-label="Regarder plus de face">⤓</button><button data-n="in" aria-label="Zoomer">+</button><button data-n="out" aria-label="Dézoomer">−</button></div>
       <div class="ab hidden" id="abView"><img id="abImg" alt="Avant"/><div class="abhandle" id="abHandle"><i></i></div><span class="abl l">Avant</span><span class="abl r">Après</span>
@@ -110,7 +110,7 @@ async function customThumb(def, img) {
 }
 
 const narrow = () => matchMedia('(max-width: 820px)').matches;
-const TABS = [['catalog', 'Meubles'], ['style', 'Style'], ['terrain', 'Terrain'], ['budget', 'Budget'], ['shopping', 'Achats'], ['measures', 'Mesures'], ['advice', 'Conseils'], ['photos', 'Photos'], ['projects', 'Projets']];
+const TABS = [['catalog', 'Meubles'], ['style', 'Style'], ['terrain', 'Terrain'], ['budget', 'Budget'], ['shopping', 'Achats'], ['measures', 'Mesures'], ['planning', 'Travaux'], ['advice', 'Conseils'], ['photos', 'Photos'], ['projects', 'Projets']];
 const ui = { view: 'plan', tab: 'catalog', cat: 'anna', sub: null, q: '', sort: 'pop', detail: null, panelOpen: !narrow() };
 
 function toast(t) {
@@ -185,7 +185,7 @@ function syncChrome() {
   document.querySelectorAll('#viewSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === ui.view));
   document.querySelectorAll('#bottomnav button').forEach((b) => {
     const n = b.dataset.n;
-    const on = ui.panelOpen ? (n === ui.tab || (n === 'more' && ['style', 'terrain', 'shopping', 'measures', 'advice', 'photos', 'projects', 'more'].includes(ui.tab))) : n === ui.view;
+    const on = ui.panelOpen ? (n === ui.tab || (n === 'more' && ['style', 'terrain', 'shopping', 'measures', 'planning', 'advice', 'photos', 'projects', 'more'].includes(ui.tab))) : n === ui.view;
     b.classList.toggle('on', on);
   });
   document.querySelectorAll('#rail button').forEach((b) => b.classList.toggle('on', b.dataset.t === plan.tool || (b.dataset.t === 'door' && plan.tool === 'opening')));
@@ -397,6 +397,88 @@ $('#photoBtn').onclick = (e) => {
   m.onclick = (ev) => { const b = ev.target.closest('[data-ph]'); if (!b) return; m.remove(); takePhoto(b.dataset.ph === 'night'); };
   setTimeout(() => addEventListener('pointerdown', function off(ev) { if (!m.contains(ev.target)) { m.remove(); removeEventListener('pointerdown', off); } }), 0);
 };
+// ——— Mode présentation : la maison se fait visiter toute seule, en plein écran ———
+const SKIP_ROOMS = /garage|couloir|wc|penderie|lingerie|dressing|dégagement|cellier|buanderie|placard|local/i;
+const show = { on: false, raf: 0 };
+function showShots() {
+  const p = store.project, order = [p.entry || 0, ...p.levels.map((_, i) => i).filter((i) => i !== (p.entry || 0))], shots = [{ kind: 'out', secs: 9 }];
+  for (const li of order) {
+    const lv = p.levels[li], a = analyzeLevel(lv);
+    a.rooms.forEach((r, i) => {
+      const info = lv.rooms[i]; if (!info || r.area < 6 || SKIP_ROOMS.test(info.name)) return;
+      // Vue depuis un angle de la pièce, tournée vers son centre : le cadrage des photos d'agence.
+      // On essaie plusieurs places (près des angles, à mi-chemin, au centre) et on garde celle qui voit le plus loin, loin des murs.
+      let A2 = 0, cx = 0, cy = 0;
+      r.poly.forEach((q, k) => { const n2 = r.poly[(k + 1) % r.poly.length], f = q.x * n2.y - n2.x * q.y; A2 += f; cx += (q.x + n2.x) * f; cy += (q.y + n2.y) * f; });
+      const c = A2 ? { x: cx / (3 * A2), y: cy / (3 * A2) } : r.center;
+      const obst = lv.items.map((it) => ({ it, def: getItem(it.cat) })).filter((x) => x.def && !x.def.ceiling && !x.def.wall && (x.def.h ?? 0) > 60).map((x) => itemCorners(x.it, x.def));
+      const edgeGap = (q) => Math.min(...r.poly.map((v, k) => segPointDist(q, v, r.poly[(k + 1) % r.poly.length])));
+      let best = null;
+      for (const f of [0.72, 0.55, 0.38]) for (const v of r.poly) {
+        const q = { x: c.x + (v.x - c.x) * f, y: c.y + (v.y - c.y) * f };
+        if (!pointInPolygon(q, r.poly) || obst.some((o) => pointInPolygon(q, o)) || edgeGap(q) < 70) continue;
+        const L = Math.hypot(c.x - q.x, c.y - q.y); if (L < 30) continue;
+        const dir = { x: (c.x - q.x) / L, y: (c.y - q.y) / L }, hit = castToWall(lv, q, dir), depth = hit ? hit.t : 2000;
+        const blocked = obst.some((o) => polyGap([q, { x: q.x + dir.x * Math.min(depth, 250), y: q.y + dir.y * Math.min(depth, 250) }], o) < 20);
+        const score = depth - (blocked ? 400 : 0);
+        if (!best || score > best.score) best = { score, q, dir };
+      }
+      const spot = best ? best.q : c, dir = best ? best.dir : { x: 0, y: -1 };
+      shots.push({ kind: 'room', li, spot, yaw: Math.atan2(-dir.x, -dir.y), name: info.name, level: lv.name, area: r.area, secs: 7 });
+    });
+  }
+  shots.push({ kind: 'out', secs: 6, end: true });
+  return shots;
+}
+async function startShow() {
+  if (show.on) return;
+  if (ui.view !== '3d') await setView('3d');
+  if (narrow()) setPanel(false);
+  const shots = showShots(), prev = { preset: view.preset, level: store.levelIndex };
+  show.on = true; show.prev = prev;
+  const layer = $('#viewLayer'), cap = document.createElement('div');
+  cap.className = 'showcap'; cap.id = 'showCap'; cap.innerHTML = '<div class="t"></div><div class="s"></div><div class="showhint">Toucher pour arrêter</div>';
+  layer.append(cap); document.body.classList.add('presenting');
+  try { await document.documentElement.requestFullscreen?.(); } catch { /* plein écran refusé : la vue occupe quand même tout l'écran */ }
+  view.resize(); view.invalidate();
+  cap.onpointerdown = (e) => { e.stopPropagation(); stopShow(); };
+  const text = (t, sub) => { cap.querySelector('.t').textContent = t; cap.querySelector('.s').textContent = sub; cap.classList.remove('in'); void cap.offsetWidth; cap.classList.add('in'); };
+  for (const sh of shots) {
+    if (!show.on) return;
+    if (sh.kind === 'out') {
+      if (view.preset !== 'exterior') setPreset('exterior');
+      text(sh.end ? 'Notre Maison' : store.project.name, sh.end ? 'Fin de la visite' : `${store.project.levels.length} niveau${store.project.levels.length > 1 ? 'x' : ''}`);
+      await animate(sh.secs, () => view.nudge({ turn: 0.55 }));
+    } else {
+      if (store.levelIndex !== sh.li) { store.setLevel(sh.li); fillLevels(); }
+      if (view.preset !== 'walk') setPreset('walk');
+      view.startWalk(sh.spot); view.pitch = -0.06;
+      text(sh.name, `${sh.level} · ${sh.area.toFixed(1).replace('.', ',')} m²`);
+      await animate(sh.secs, (k) => { view.yaw = sh.yaw + (k - 0.5) * 0.6; view.applyLook(); });
+    }
+  }
+  stopShow();
+}
+function animate(secs, step) {
+  return new Promise((res) => {
+    const t0 = performance.now();
+    const f = (t) => { if (!show.on) { res(); return; } const k = Math.min(1, (t - t0) / (secs * 1000)); step(k * k * (3 - 2 * k)); if (k >= 1) { res(); return; } show.raf = requestAnimationFrame(f); };
+    show.raf = requestAnimationFrame(f);
+  });
+}
+function stopShow() {
+  if (!show.on) return;
+  show.on = false; cancelAnimationFrame(show.raf);
+  $('#showCap')?.remove(); document.body.classList.remove('presenting');
+  if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  const pv = show.prev;
+  if (pv) { if (store.levelIndex !== pv.level) { store.setLevel(pv.level); fillLevels(); } setPreset(pv.preset); }
+  setTimeout(() => { view.resize(); view.invalidate(); }, 120);
+}
+$('#showBtn').onclick = startShow;
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && show.on) stopShow(); });
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && show.on) stopShow(); });
+
 /** L'« heure bleue » du jour choisi : juste après le coucher, le ciel éclaire encore et les lampes brillent. */
 function blueHour() {
   const { lat, lon } = store.project.site, day = sunDay();
@@ -475,7 +557,7 @@ function render() {
   $('#tabs').innerHTML = TABS.map(([k, l]) => `<button data-k="${k}" class="${ui.tab === k && !sel && !ui.detail ? 'on' : ''}">${l}</button>`).join('');
   if (sel) renderSelection(body, sel);
   else if (ui.detail) renderDetail(body, ui.detail);
-  else ({ catalog: renderCatalog, style: renderStyle, terrain: renderTerrain, budget: renderBudget, shopping: renderShopping, measures: renderMeasures, advice: renderAdvice, photos: renderPhotos, projects: renderProjects, more: renderMore }[ui.tab] || renderCatalog)(body);
+  else ({ catalog: renderCatalog, style: renderStyle, terrain: renderTerrain, budget: renderBudget, shopping: renderShopping, measures: renderMeasures, planning: renderPlanning, advice: renderAdvice, photos: renderPhotos, projects: renderProjects, more: renderMore }[ui.tab] || renderCatalog)(body);
   syncChrome();
 }
 $('#tabs').onclick = (e) => { const k = e.target.dataset.k; if (k) openTab(k); };
@@ -930,10 +1012,72 @@ function openingPanel(body, w, o) {
   $('#del', body).onclick = () => plan.deleteSelection();
 }
 
+// ——— Ambiances : plusieurs décos pour la même maison (meubles intérieurs, sols, peintures, revêtements) ———
+const KEEP_CATS = ['structure', 'exterieur'];
+function decorOf(p) {
+  return p.levels.map((lv) => ({
+    id: lv.id,
+    items: structuredClone(lv.items.filter((it) => !KEEP_CATS.includes(getItem(it.cat)?.cat))),
+    rooms: lv.rooms.map((r) => ({ id: r.id, floor: r.floor, paint: r.paint, ceiling: r.ceiling, moulding: r.moulding })),
+    walls: lv.walls.map((w) => ({ id: w.id, matL: w.matL, matR: w.matR })),
+  }));
+}
+function applyDecor(p, decor) {
+  for (const d of decor) {
+    const lv = p.levels.find((l) => l.id === d.id); if (!lv) continue;
+    lv.items = [...lv.items.filter((it) => KEEP_CATS.includes(getItem(it.cat)?.cat)), ...structuredClone(d.items)];
+    for (const r of d.rooms) { const x = lv.rooms.find((y) => y.id === r.id); if (x) { x.floor = r.floor; x.paint = r.paint; x.ceiling = r.ceiling; if (r.moulding) x.moulding = r.moulding; else delete x.moulding; } }
+    for (const w of d.walls) { const x = lv.walls.find((y) => y.id === w.id); if (x) { for (const k of ['matL', 'matR']) { if (w[k]) x[k] = w[k]; else delete x[k]; } } }
+  }
+}
+function ambianceBlock(p) {
+  const list = p.ambiances || [];
+  return `<h3 class="s">Ambiances de déco</h3>
+    <p class="muted small">Plusieurs décos pour la même maison : meubles intérieurs, sols, peintures et revêtements. Les murs, les fenêtres, l’escalier et le jardin restent communs.</p>
+    ${list.length ? `<div class="ambs">${list.map((a) => `<div class="amb ${a.id === p.ambiance ? 'on' : ''}"><button class="m" data-amb="${a.id}"><b>${esc(a.name)}</b><span class="muted small">${a.id === p.ambiance ? 'Affichée en ce moment' : 'Toucher pour l’afficher'}</span></button><button class="iconbtn" data-ambren="${a.id}" title="Renommer">✎</button>${list.length > 1 ? `<button class="iconbtn" data-ambdel="${a.id}" title="Supprimer">${icon('trash')}</button>` : ''}</div>`).join('')}</div>` : ''}
+    <div class="btnrow"><button class="btn block" id="ambNew">+ ${list.length ? 'Nouvelle ambiance (copie de celle affichée)' : 'Créer une deuxième ambiance'}</button></div>
+    ${list.length > 1 ? '<p class="note">Astuce : dans la 3D, garde une vue « avant » (Avant / après), change d’ambiance ici, puis touche « Comparer ».</p>' : ''}`;
+}
+function bindAmbiances(body) {
+  const p = store.project;
+  const saveCurrent = () => { const cur = (p.ambiances || []).find((a) => a.id === p.ambiance); if (cur) cur.decor = decorOf(p); };
+  const nb = $('#ambNew', body);
+  if (nb) nb.onclick = () => {
+    const name = (prompt('Nom de la nouvelle ambiance ?', p.ambiances?.length ? `Ambiance ${p.ambiances.length + 1}` : 'Ambiance 2') || '').trim(); if (!name) return;
+    live(() => {
+      p.ambiances ||= [];
+      if (!p.ambiances.length) { const first = { id: uid('A'), name: 'Ambiance 1', decor: decorOf(p) }; p.ambiances.push(first); p.ambiance = first.id; }
+      saveCurrent();
+      const a = { id: uid('A'), name, decor: decorOf(p) }; p.ambiances.push(a); p.ambiance = a.id;
+    });
+    render(); toast(`« ${name} » créée : change les meubles, les sols, les peintures, l’autre ambiance reste intacte.`);
+  };
+  body.querySelectorAll('[data-amb]').forEach((b) => { b.onclick = () => {
+    const a = p.ambiances.find((x) => x.id === b.dataset.amb); if (!a || a.id === p.ambiance) return;
+    live(() => { saveCurrent(); applyDecor(p, a.decor); p.ambiance = a.id; });
+    render(); toast(`Ambiance « ${a.name} » affichée.`);
+  }; });
+  body.querySelectorAll('[data-ambren]').forEach((b) => { b.onclick = () => {
+    const a = p.ambiances.find((x) => x.id === b.dataset.ambren), name = (prompt('Nouveau nom ?', a.name) || '').trim();
+    if (name) { live(() => { a.name = name; }); render(); }
+  }; });
+  body.querySelectorAll('[data-ambdel]').forEach((b) => { b.onclick = () => {
+    const a = p.ambiances.find((x) => x.id === b.dataset.ambdel);
+    if (!confirm(`Supprimer l’ambiance « ${a.name} » ?`)) return;
+    live(() => {
+      if (a.id === p.ambiance) { const other = p.ambiances.find((x) => x.id !== a.id); applyDecor(p, other.decor); p.ambiance = other.id; }
+      p.ambiances = p.ambiances.filter((x) => x.id !== a.id);
+      if (p.ambiances.length === 1) { delete p.ambiances; delete p.ambiance; }
+    });
+    render(); toast({ text: 'Ambiance supprimée.', undo: true });
+  }; });
+}
+
 function renderStyle(body) {
   const p = store.project, lv = store.level;
   body.innerHTML = `
     <h2 class="t">Style de la maison</h2>
+    ${ambianceBlock(p)}
     <h3 class="s">Façade</h3>${swatchRow(FACADES, p.style.facade, 'facade')}<div class="matname">${esc(materialInfo(p.style.facade)?.name)}</div>
     <h3 class="s">Toiture</h3>
     <div class="field"><label>Forme</label><select id="roofT">${[['gable', '2 pans'], ['hip', '4 pans'], ['mono', 'Monopente'], ['flat', 'Toit-terrasse'], ['none', 'Aucune']].map(([k, l]) => `<option value="${k}" ${p.roof.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
@@ -1029,6 +1173,7 @@ function renderStyle(body) {
     setView('plan'); render();
     toast(sketch ? 'Croquis posé sous le plan. Cale-le avec l’outil Mesure sur un mur connu.' : 'Indique maintenant la largeur réelle du plan, ou cale-le avec l’outil Mesure.');
   };
+  bindAmbiances(body);
   $('#bg', body).onchange = (e) => importBg(e.target.files[0], false);
   $('#sketch', body).onchange = (e) => importBg(e.target.files[0], true);
 }
@@ -1670,9 +1815,87 @@ function renderMeasures(body) {
   body.querySelectorAll('[data-sheet]').forEach((b) => { b.onclick = () => send(sheetText(rooms[Number(b.dataset.sheet)])); });
 }
 
+// ——— Planning des travaux : une frise par étape, avec des dates qu'on ajuste ———
+const STEPS = [
+  ['Études et permis de construire', 3], ['Terrassement et fondations', 1], ['Gros œuvre', 3], ['Charpente et toiture', 1.5],
+  ['Menuiseries extérieures', 1], ['Plomberie et électricité', 2], ['Isolation et plâtrerie', 2], ['Chapes et sols', 1.5],
+  ['Peinture', 1], ['Cuisine et salles de bain', 1.5], ['Extérieurs : terrasse, piscine', 2, -2], ['Emménagement', 0.5],
+];
+const iso = (d) => d.toISOString().slice(0, 10);
+const addMonths = (d, m) => { const r = new Date(d); r.setDate(r.getDate() + Math.round(m * 30.4)); return r; };
+function defaultPlanning() {
+  const start = new Date(); start.setMonth(start.getMonth() + 1, 1);
+  let t = start; const steps = [];
+  for (const [name, months, overlap = 0] of STEPS) {
+    const a = overlap ? addMonths(t, overlap) : t, b = addMonths(a, months);
+    steps.push({ id: uid('S'), name, start: iso(a), end: iso(b), done: false });
+    if (!overlap) t = b;
+  }
+  return { steps };
+}
+const frDate = (s) => new Date(`${s}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+function renderPlanning(body) {
+  const p = store.project, pl = p.planning;
+  if (!pl) {
+    body.innerHTML = `<h2 class="t">Planning des travaux</h2>
+      <p class="muted small">Une frise des grandes étapes du chantier, des études à l’emménagement. Les durées proposées sont des ordres de grandeur pour une maison neuve : ajuste-les avec ton constructeur.</p>
+      <div class="btnrow"><button class="btn pri block" id="plStart">Créer le planning</button></div>`;
+    $('#plStart', body).onclick = () => { live(() => { p.planning = defaultPlanning(); }); render(); };
+    return;
+  }
+  const steps = pl.steps, t0 = Math.min(...steps.map((x) => +new Date(x.start))), t1 = Math.max(...steps.map((x) => +new Date(x.end)), t0 + 864e5 * 30);
+  const span = t1 - t0, pos = (d) => ((+new Date(d) - t0) / span) * 100, now = Date.now();
+  const months = []; for (let d = new Date(t0); d <= t1; d.setMonth(d.getMonth() + 1, 1)) months.push(new Date(d));
+  const done = steps.filter((x) => x.done).length, next = steps.find((x) => !x.done);
+  const move = steps.find((x) => /emménag/i.test(x.name)), st = stageTotals(shoppingData());
+  body.innerHTML = `<h2 class="t">Planning des travaux</h2>
+    <div class="price">${done} / ${steps.length} <span class="muted small">étapes terminées${next ? ` · prochaine : ${esc(next.name)}, le ${frDate(next.start)}` : ''}</span></div>
+    ${move ? `<p class="muted small">Emménagement prévu le <b>${frDate(move.start)}</b> : ${euro(st.now.left)} d’achats « Emménagement » restent à faire d’ici là.</p>` : ''}
+    <div class="frise"><div class="fr hd"><span></span><div class="track">${(() => { const every = Math.max(1, Math.ceil(months.length / 5)); return months.filter((m, k) => k % every === 0 && pos(iso(m)) < 88).map((m) => `<em style="left:${Math.max(0, pos(iso(m)))}%">${m.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')} ${String(m.getFullYear()).slice(2)}</em>`).join(''); })()}</div></div>
+      ${steps.map((x) => `<div class="fr"><span title="${esc(x.name)}">${esc(x.name)}</span><div class="track"><i class="${x.done ? 'done' : +new Date(x.start) <= now && now <= +new Date(x.end) ? 'now' : ''}" style="left:${pos(x.start)}%;width:${Math.max(2, pos(x.end) - pos(x.start))}%"></i>${now > t0 && now < t1 ? `<b class="today" style="left:${pos(iso(new Date()))}%"></b>` : ''}</div></div>`).join('')}</div>
+    <h3 class="s">Étapes</h3>
+    <div id="plSteps">${steps.map((x, k) => `<div class="step ${x.done ? 'done' : ''}" data-k="${k}">
+      <div class="head"><input type="checkbox" data-f="done" ${x.done ? 'checked' : ''} aria-label="Étape terminée"/><input class="nm" data-f="name" value="${esc(x.name)}"/><button class="iconbtn" data-del title="Supprimer">${icon('trash')}</button></div>
+      <div class="dates"><label>Début<input type="date" data-f="start" value="${x.start}"/></label><label>Fin<input type="date" data-f="end" value="${x.end}"/></label></div></div>`).join('')}</div>
+    <div class="btnrow"><button class="btn" id="plAdd">+ Ajouter une étape</button><button class="btn" id="plShift">Tout décaler…</button></div>
+    <div class="btnrow"><button class="btn danger block" id="plReset">Repartir du planning type</button></div>
+    <p class="note">Durées indicatives : un constructeur ou un architecte te donnera les vraies. Le planning est partagé avec l’autre téléphone quand le partage est activé.</p>`;
+  const box = $('#plSteps', body);
+  box.onchange = (e) => {
+    const row = e.target.closest('[data-k]'), f = e.target.dataset.f; if (!row || !f) return;
+    const x = steps[Number(row.dataset.k)], top = $('#pbody').scrollTop;
+    live(() => {
+      x[f] = f === 'done' ? e.target.checked : e.target.value;
+      if (f === 'start' && x.end < x.start) x.end = x.start;
+      if (f === 'end' && x.end < x.start) x.start = x.end;
+      steps.sort((a, b) => a.start.localeCompare(b.start));
+    });
+    render(); $('#pbody').scrollTop = top;
+  };
+  box.onclick = (e) => {
+    const d = e.target.closest('[data-del]'); if (!d) return;
+    const k = Number(d.closest('[data-k]').dataset.k);
+    live(() => { steps.splice(k, 1); if (!steps.length) delete p.planning; });
+    render(); toast({ text: 'Étape supprimée.', undo: true });
+  };
+  $('#plAdd', body).onclick = () => {
+    const last = steps[steps.length - 1], a = last ? new Date(last.end) : new Date();
+    live(() => { steps.push({ id: uid('S'), name: 'Nouvelle étape', start: iso(a), end: iso(addMonths(a, 1)), done: false }); });
+    render(); $('#pbody').scrollTop = $('#pbody').scrollHeight;
+  };
+  $('#plShift', body).onclick = () => {
+    const v = Number(String(prompt('Décaler les étapes non terminées de combien de semaines ? (négatif pour avancer)', '2') || '').replace(',', '.'));
+    if (!v) return;
+    live(() => { for (const x of steps) if (!x.done) { const a = new Date(x.start), b = new Date(x.end); a.setDate(a.getDate() + v * 7); b.setDate(b.getDate() + v * 7); x.start = iso(a); x.end = iso(b); } });
+    render(); toast(`Étapes décalées de ${v} semaine${Math.abs(v) > 1 ? 's' : ''}.`);
+  };
+  $('#plReset', body).onclick = () => { if (!confirm('Remplacer le planning par le planning type ?')) return; live(() => { p.planning = defaultPlanning(); }); render(); toast({ text: 'Planning type remis.', undo: true }); };
+}
+
 function renderMore(body) {
-  body.innerHTML = `<h2 class="t">Plus</h2>${[['shopping', 'Liste d’achats', 'Tous les meubles, magasin par magasin'], ['measures', 'Fiche des pièces', 'Dimensions, place libre, passages : à emporter en magasin'], ['terrain', 'Terrain et paysage', 'Parcelle, pente, relief, environnement'], ['style', 'Style de la maison', 'Façade, toiture, plan importé'], ['advice', 'Conseils', 'Règles et confort'], ['photos', 'Photos', 'Images photoréalistes'], ['projects', 'Projets', 'Versions, comparaison, plan PDF, partage']].map(([k, a, b]) => `<button class="tpl" data-k="${k}"><b>${a}</b><span class="muted small">${b}</span></button>`).join('')}`;
-  body.querySelectorAll('[data-k]').forEach((b) => { b.onclick = () => openTab(b.dataset.k); });
+  body.innerHTML = `<h2 class="t">Plus</h2>${[['shopping', 'Liste d’achats', 'Tous les meubles, magasin par magasin'], ['measures', 'Fiche des pièces', 'Dimensions, place libre, passages : à emporter en magasin'], ['planning', 'Planning des travaux', 'Les étapes du chantier, de l’étude à l’emménagement'], ['show', 'Présentation', 'Visite automatique en plein écran, pour la famille'], ['terrain', 'Terrain et paysage', 'Parcelle, pente, relief, environnement'], ['style', 'Style de la maison', 'Façade, toiture, plan importé'], ['advice', 'Conseils', 'Règles et confort'], ['photos', 'Photos', 'Images photoréalistes'], ['projects', 'Projets', 'Versions, comparaison, plan PDF, partage']].map(([k, a, b]) => `<button class="tpl" data-k="${k}"><b>${a}</b><span class="muted small">${b}</span></button>`).join('')}`;
+  body.querySelectorAll('[data-k]').forEach((b) => { b.onclick = () => (b.dataset.k === 'show' ? startShow() : openTab(b.dataset.k)); });
 }
 
 function customForm() {

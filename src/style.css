@@ -348,3 +348,39 @@ select.chip { border: 0; appearance: none; -webkit-appearance: none; padding-rig
 /* Mesures en Visite */
 .measpill { position: absolute; left: 50%; top: 104px; transform: translateX(-50%); z-index: 6; background: rgba(26,24,20,.82); color: #fff; font-size: 13px; padding: 7px 14px; border-radius: 16px; max-width: calc(100% - 24px); text-align: center; pointer-events: none; }
 .measpill b { color: #ffd9c6; }
+
+/* Ambiances */
+.ambs { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.amb { display: flex; align-items: center; gap: 4px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 4px 6px 4px 4px; }
+.amb.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.amb .m { flex: 1; text-align: left; padding: 6px 8px; display: flex; flex-direction: column; }
+
+/* Planning des travaux */
+.frise { margin-top: 12px; padding: 8px 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+.frise .fr { display: grid; grid-template-columns: 40% 1fr; gap: 8px; align-items: center; min-height: 21px; }
+.frise .fr > span { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frise .track { position: relative; height: 21px; border-left: 1px solid var(--line); }
+.frise .hd .track { height: 16px; border: 0; }
+.frise .hd em { position: absolute; top: 0; font-style: normal; font-size: 10.5px; color: var(--soft); white-space: nowrap; }
+.frise .track i { position: absolute; top: 5px; bottom: 5px; border-radius: 5px; background: #d9cdb8; }
+.frise .track i.now { background: var(--accent); }
+.frise .track i.done { background: #9fbf9f; }
+.frise .today { position: absolute; top: 0; bottom: 0; width: 2px; background: #b5332f; }
+.step { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 7px 9px; margin-top: 7px; }
+.step .head { display: flex; align-items: center; gap: 7px; }
+.step .head input[type=checkbox] { width: 20px; height: 20px; flex: none; }
+.step .nm { flex: 1; border: 0; background: none; font-weight: 600; font-size: 13.5px; padding: 4px 2px; min-width: 0; }
+.step.done .nm { text-decoration: line-through; color: var(--soft); }
+.step .dates { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.step .dates label { font-size: 11.5px; color: var(--soft); display: flex; flex-direction: column; gap: 2px; }
+.step .dates input { font-size: 13px; padding: 5px 6px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+
+/* Présentation */
+.presenting #viewLayer { position: fixed; inset: 0; z-index: 200; background: #000; }
+.presenting .v3bar, .presenting .sunbar, .presenting .navpad, .presenting .walkgo, .presenting .joy, .presenting .measpill, .presenting .loadpill, .presenting .toast { display: none !important; }
+.showcap { position: absolute; inset: 0; z-index: 210; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 6vw 7vh; cursor: pointer; background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,.45)); color: #fff; }
+.showcap .t { font: 600 clamp(26px, 5vw, 52px)/1.1 Georgia, serif; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
+.showcap .s { font-size: clamp(14px, 2vw, 19px); opacity: .9; margin-top: 6px; }
+.showcap .showhint { position: absolute; top: 16px; right: 18px; font-size: 12.5px; opacity: .65; }
+.showcap.in .t, .showcap.in .s { animation: capIn .9s ease both; }
+@keyframes capIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
