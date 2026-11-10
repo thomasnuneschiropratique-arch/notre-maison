@@ -7,7 +7,7 @@ import { FLOORS, PAINTS, WALL_FINISHES, FACADES, ROOFS, GROUNDS, materialInfo, b
 import { TEMPLATES, MANOR_VERSION, windowsOf, facing, boxOf } from './templates.js';
 import { runChecks, surfaces } from './advice.js';
 import { fullBudget, budgetSettings, GAMMES, MODES, MARKET, BUDGET_SOURCES } from './budget.js';
-import { dist, analyzeLevel } from './geometry.js';
+import { dist, analyzeLevel, itemCorners, pointInPolygon, sunPosition } from './geometry.js';
 import { parcelOf, parcelArea, checkParcel, setbackOf, metres } from './parcel.js';
 import { tourSeen, startTour } from './tour.js';
 import { QUALITY_PREF, AUTO_LOW, setQuality } from './quality.js';
@@ -109,7 +109,7 @@ async function customThumb(def, img) {
 }
 
 const narrow = () => matchMedia('(max-width: 820px)').matches;
-const TABS = [['catalog', 'Meubles'], ['style', 'Style'], ['terrain', 'Terrain'], ['budget', 'Budget'], ['shopping', 'Achats'], ['advice', 'Conseils'], ['photos', 'Photos'], ['projects', 'Projets']];
+const TABS = [['catalog', 'Meubles'], ['style', 'Style'], ['terrain', 'Terrain'], ['budget', 'Budget'], ['shopping', 'Achats'], ['measures', 'Mesures'], ['advice', 'Conseils'], ['photos', 'Photos'], ['projects', 'Projets']];
 const ui = { view: 'plan', tab: 'catalog', cat: 'anna', sub: null, q: '', sort: 'pop', detail: null, panelOpen: !narrow() };
 
 function toast(t) {
@@ -184,7 +184,7 @@ function syncChrome() {
   document.querySelectorAll('#viewSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === ui.view));
   document.querySelectorAll('#bottomnav button').forEach((b) => {
     const n = b.dataset.n;
-    const on = ui.panelOpen ? (n === ui.tab || (n === 'more' && ['style', 'terrain', 'shopping', 'advice', 'photos', 'projects', 'more'].includes(ui.tab))) : n === ui.view;
+    const on = ui.panelOpen ? (n === ui.tab || (n === 'more' && ['style', 'terrain', 'shopping', 'measures', 'advice', 'photos', 'projects', 'more'].includes(ui.tab))) : n === ui.view;
     b.classList.toggle('on', on);
   });
   document.querySelectorAll('#rail button').forEach((b) => b.classList.toggle('on', b.dataset.t === plan.tool || (b.dataset.t === 'door' && plan.tool === 'opening')));
@@ -386,7 +386,33 @@ const joyEnd = () => { knob.style.transform = ''; view.move.f = view.move.t = 0;
 joy.addEventListener('pointerup', joyEnd); joy.addEventListener('pointercancel', joyEnd);
 
 // ——— Mode photo ———
-$('#photoBtn').onclick = async () => {
+// Le bouton Photo propose deux images : comme à l'écran, ou de nuit avec toutes les lampes allumées.
+$('#photoBtn').onclick = (e) => {
+  e.stopPropagation();
+  const old = $('#photoMenu'); if (old) { old.remove(); return; }
+  const m = document.createElement('div'); m.className = 'photomenu'; m.id = 'photoMenu';
+  m.innerHTML = '<button data-ph="now"><b>Photo comme à l’écran</b><span>Heure et date choisies</span></button><button data-ph="night"><b>Photo de soirée</b><span>Juste après le coucher du soleil, lampes allumées</span></button>';
+  $('#v3bar').append(m);
+  m.onclick = (ev) => { const b = ev.target.closest('[data-ph]'); if (!b) return; m.remove(); takePhoto(b.dataset.ph === 'night'); };
+  setTimeout(() => addEventListener('pointerdown', function off(ev) { if (!m.contains(ev.target)) { m.remove(); removeEventListener('pointerdown', off); } }), 0);
+};
+/** L'« heure bleue » du jour choisi : juste après le coucher, le ciel éclaire encore et les lampes brillent. */
+function blueHour() {
+  const { lat, lon } = store.project.site, day = sunDay();
+  for (let h = 16; h <= 23; h += 0.05) {
+    const summer = day > 86 && day < 300, alt = (sunPosition(lat, lon, day, h - (summer ? 2 : 1)).altitude * 180) / Math.PI;
+    if (alt < -2.5) return Math.round(h * 4) / 4;
+  }
+  return 22;
+}
+async function takePhoto(night) {
+  if (night) {
+    ui.nightPrev = { hour: $('#hour').value, lamps: view.env.lamps, exposure: view.env.exposure };
+    $('#hour').value = blueHour(); updateSun();
+    view.env.lamps = true; $('#lamps').classList.add('on'); view.updateLamps();
+    view.setEnv({ exposure: Math.max(1.5, view.env.exposure) });
+    await new Promise((r) => setTimeout(r, 900));
+  }
   const hud = $('#photoHud');
   hud.classList.remove('hidden'); $('#sunbar').classList.add('hidden'); $('#v3bar').classList.add('hidden');
   $('#walkgo').classList.add('hidden'); $('#joy').classList.add('hidden');
@@ -416,6 +442,11 @@ store.addEventListener('photo-lost', () => { closePhoto(); toast('L’appareil a
 function closePhoto() {
   ui.wake?.release?.(); ui.wake = null;
   view.stopPhoto();
+  if (ui.nightPrev) {
+    const pv = ui.nightPrev; ui.nightPrev = null;
+    $('#hour').value = pv.hour; view.env.lamps = pv.lamps; $('#lamps').classList.toggle('on', pv.lamps); view.updateLamps();
+    view.setEnv({ exposure: pv.exposure }); updateSun();
+  }
   $('#photoHud').classList.add('hidden'); $('#sunbar').classList.remove('hidden'); $('#v3bar').classList.remove('hidden');
   if (view.preset === 'walk') { $('#walkgo').classList.remove('hidden'); $('#joy').classList.toggle('hidden', !matchMedia('(pointer: coarse)').matches); }
 }
@@ -443,7 +474,7 @@ function render() {
   $('#tabs').innerHTML = TABS.map(([k, l]) => `<button data-k="${k}" class="${ui.tab === k && !sel && !ui.detail ? 'on' : ''}">${l}</button>`).join('');
   if (sel) renderSelection(body, sel);
   else if (ui.detail) renderDetail(body, ui.detail);
-  else ({ catalog: renderCatalog, style: renderStyle, terrain: renderTerrain, budget: renderBudget, shopping: renderShopping, advice: renderAdvice, photos: renderPhotos, projects: renderProjects, more: renderMore }[ui.tab] || renderCatalog)(body);
+  else ({ catalog: renderCatalog, style: renderStyle, terrain: renderTerrain, budget: renderBudget, shopping: renderShopping, measures: renderMeasures, advice: renderAdvice, photos: renderPhotos, projects: renderProjects, more: renderMore }[ui.tab] || renderCatalog)(body);
   syncChrome();
 }
 $('#tabs').onclick = (e) => { const k = e.target.dataset.k; if (k) openTab(k); };
@@ -492,7 +523,7 @@ function myName() {
   if (!n) { n = (prompt('Ton prénom, pour signer tes coups de cœur ?') || '').trim(); if (n) try { localStorage.setItem('nm:heart', n); } catch { /* navigation privée */ } }
   return n;
 }
-const likesOf = (id) => store.project.likes?.[id] || [];
+const likesOf = (id) => store.project?.likes?.[id] || [];
 function toggleLike(id) {
   const me = myName(); if (!me) return false;
   store.snapshot();
@@ -523,7 +554,7 @@ function filteredItems() {
 
 function renderCatalog(body) {
   const subs = [...new Set(allItems().filter(inCat).map((i) => i.sub))];
-  const nLikes = Object.keys(store.project.likes || {}).length, nBoth = Object.values(store.project.likes || {}).filter((l) => l.length > 1).length;
+  const likes = store.project?.likes || {}, nLikes = Object.keys(likes).length, nBoth = Object.values(likes).filter((l) => l.length > 1).length;
   const stats = catalogStats();
   body.innerHTML = `
     <input class="search" id="q" placeholder="Rechercher parmi ${stats.total} articles" value="${esc(ui.q)}"/>
@@ -1113,19 +1144,42 @@ function shoppingData() {
   return [...shops].map(([name, list]) => { const rows = [...list.values()]; return { name, rows, total: rows.reduce((t, r) => t + r.total, 0), left: rows.reduce((t, r) => t + r.total * (r.its.filter((i) => !i.bought).length / r.its.length), 0) }; }).sort((a, b) => b.total - a.total);
 }
 
+// ——— Achats en deux temps : ce qu'il faut pour emménager, ce qui peut attendre ———
+const LATER_BY_DEFAULT = ['deco', 'objets', 'exterieur'];
+const stageOf = (def) => store.project?.stages?.[def.id] || (LATER_BY_DEFAULT.includes(def.cat) ? 'later' : 'now');
+const STAGE_LABEL = { now: 'Emménagement', later: 'Plus tard' };
+function stageTotals(shops) {
+  const t = { now: { total: 0, left: 0 }, later: { total: 0, left: 0 } };
+  for (const g of shops) for (const r of g.rows) { const k = stageOf(r.def), left = r.total * (r.its.filter((i) => !i.bought).length / r.its.length); t[k].total += r.total; t[k].left += left; }
+  return t;
+}
+
 function shoppingText(shops) {
-  return shops.map((g) => `${g.name} (${euro(g.left)} restants)\n${g.rows.filter((r) => r.its.some((i) => !i.bought)).map((r) => `- ${r.its.length > 1 ? `${r.its.length} × ` : ''}${r.def.name} : ${euro(r.total)}${r.def.url ? ` ${r.def.url}` : ''}`).join('\n')}`).join('\n\n');
+  return shops.map((g) => `${g.name} (${euro(g.left)} restants)\n${g.rows.filter((r) => r.its.some((i) => !i.bought)).map((r) => `- ${r.its.length > 1 ? `${r.its.length} × ` : ''}${r.def.name} : ${euro(r.total)}${stageOf(r.def) === 'later' ? ' (plus tard)' : ''}${r.def.url ? ` ${r.def.url}` : ''}`).join('\n')}`).join('\n\n');
 }
 
 function renderShopping(body) {
-  const shops = shoppingData(), total = shops.reduce((t, g) => t + g.total, 0), left = shops.reduce((t, g) => t + g.left, 0);
-  ui.shopAll ??= true;
+  const all = shoppingData();
+  ui.shopAll ??= true; ui.shopStage ??= '';
+  const st = stageTotals(all);
+  // Filtre par étape : on garde seulement les lignes de cette étape, magasin par magasin.
+  const shops = (ui.shopStage ? all.map((g) => { const rows = g.rows.filter((r) => stageOf(r.def) === ui.shopStage); return { ...g, rows, total: rows.reduce((t, r) => t + r.total, 0), left: rows.reduce((t, r) => t + r.total * (r.its.filter((i) => !i.bought).length / r.its.length), 0) }; }).filter((g) => g.rows.length) : all);
+  const total = shops.reduce((t, g) => t + g.total, 0), left = shops.reduce((t, g) => t + g.left, 0);
   body.innerHTML = `<h2 class="t">Liste d’achats</h2>
     <div class="price">${euro(left)} <span class="muted small">restent à acheter sur ${euro(total)}</span></div>
+    ${all.length ? `<div class="stages"><button class="stg ${ui.shopStage === 'now' ? 'on' : ''}" data-stage="now"><b>Emménagement</b><span>${euro(st.now.left)} à acheter</span><small>sur ${euro(st.now.total)}</small></button><button class="stg ${ui.shopStage === 'later' ? 'on' : ''}" data-stage="later"><b>Plus tard</b><span>${euro(st.later.left)} à acheter</span><small>sur ${euro(st.later.total)}</small></button></div>
+    <p class="muted small">Touche une étape pour ne voir qu’elle. Sur chaque ligne, « Plus tard » ou « Emménagement » la fait changer d’étape. Par défaut, la déco, les objets et l’extérieur attendent.</p>` : ''}
     ${shops.length ? `<div class="chips wrap" id="shopF"><button class="chip ${ui.shopAll ? 'on' : ''}" data-all="1">Tout</button><button class="chip ${ui.shopAll ? '' : 'on'}" data-all="0">À acheter</button></div>
     <div class="btnrow"><button class="btn block" id="shopShare">${icon('copy')}Envoyer la liste</button></div>
-    ${shops.map((g) => `<div class="shop"><h4><span>${esc(g.name)}</span><span>${euro(g.total)}</span></h4>${g.rows.filter((r) => ui.shopAll || r.its.some((i) => !i.bought)).map((r) => { const done = r.its.every((i) => i.bought), link = purchaseLinks(r.def)[0]; return `<label class="shopline ${done ? 'done' : ''}"><input type="checkbox" data-id="${esc(r.def.id)}" ${done ? 'checked' : ''}/><span class="nm">${r.its.length > 1 ? `${r.its.length} × ` : ''}${esc(r.def.name)}<small>${esc([...r.rooms].join(', '))} · ${r.def.approx ? '≈ ' : ''}${euro(r.total)}</small></span>${link ? `<a href="${esc(link.url)}" target="_blank" rel="noopener">Voir</a>` : '<span></span>'}</label>`; }).join('')}</div>`).join('')}
+    ${shops.map((g) => `<div class="shop"><h4><span>${esc(g.name)}</span><span>${euro(g.total)}</span></h4>${g.rows.filter((r) => ui.shopAll || r.its.some((i) => !i.bought)).map((r) => { const done = r.its.every((i) => i.bought), link = purchaseLinks(r.def)[0]; return `<label class="shopline ${done ? 'done' : ''}"><input type="checkbox" data-id="${esc(r.def.id)}" ${done ? 'checked' : ''}/><span class="nm">${r.its.length > 1 ? `${r.its.length} × ` : ''}${esc(r.def.name)}<small>${esc([...r.rooms].join(', '))} · ${r.def.approx ? '≈ ' : ''}${euro(r.total)}</small><button class="stagebtn ${stageOf(r.def)}" data-stg="${esc(r.def.id)}">${STAGE_LABEL[stageOf(r.def)]}</button></span>${link ? `<a href="${esc(link.url)}" target="_blank" rel="noopener">Voir</a>` : '<span></span>'}</label>`; }).join('')}</div>`).join('')}
     <div class="note">Prix relevés à titre indicatif : vérifie-les avant d’acheter. Une case cochée compte comme « déjà acheté » dans le budget.</div>` : '<p class="muted" style="margin-top:12px">Place des meubles sur le plan : ils apparaîtront ici, magasin par magasin.</p>'}`;
+  body.querySelectorAll('[data-stage]').forEach((b) => { b.onclick = () => { ui.shopStage = ui.shopStage === b.dataset.stage ? '' : b.dataset.stage; render(); }; });
+  body.querySelectorAll('[data-stg]').forEach((b) => { b.onclick = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const def = getItem(b.dataset.stg), t = $('#pbody').scrollTop, next = stageOf(def) === 'now' ? 'later' : 'now';
+    live(() => { const m = store.project.stages ||= {}; if (next === (LATER_BY_DEFAULT.includes(def.cat) ? 'later' : 'now')) delete m[def.id]; else m[def.id] = next; });
+    render(); $('#pbody').scrollTop = t;
+  }; });
   const f = $('#shopF', body);
   if (!f) return;
   f.onclick = (e) => { const a = e.target.dataset.all; if (a !== undefined) { ui.shopAll = a === '1'; render(); } };
@@ -1460,8 +1514,101 @@ async function renderProjects(body) {
   };
 }
 
+// ——— Fiche des pièces : les mesures utiles en magasin ———
+function segPointDist(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / L)) : 0;
+  return Math.hypot(p.x - a.x - t * dx, p.y - a.y - t * dy);
+}
+/** Écart entre deux contours fermés : 0 s'ils se touchent ou se chevauchent. */
+function polyGap(A, B) {
+  if (A.some((p) => pointInPolygon(p, B)) || B.some((p) => pointInPolygon(p, A))) return 0;
+  let m = Infinity;
+  for (const [P, Q] of [[A, B], [B, A]]) for (const p of P) for (let i = 0; i < Q.length; i++) m = Math.min(m, segPointDist(p, Q[i], Q[(i + 1) % Q.length]));
+  return m;
+}
+/** « Cama - Lit coffre en velours côtelé 180x200cm » devient « lit coffre en velours ». */
+function shortName(name) {
+  let w = name.replace(/^[^-–]{1,20}\s[-–]\s/, '').split(/[,(]|\s\d/)[0].trim().split(/\s+/).slice(0, 4);
+  while (w.length > 1 && /^(de|du|des|et|en|à|au|aux|avec|la|le|les|pour|sur|jusqu’au|jusqu'au|d'|l')$/i.test(w[w.length - 1])) w.pop();
+  const t = w.join(' ');
+  return t.charAt(0).toLowerCase() + t.slice(1);
+}
+const isObstacle = (it, def) => def && !def.ceiling && !def.wall && def.cat !== 'structure' && (it.z ?? def.z ?? 0) < 60 && (def.h ?? 0) >= 25 && def.model?.type !== 'rug' && def.sub !== 'tapis';
+const cmTxt = (v) => `${Math.round(v)} cm`;
+const mTxt = (v) => `${(v / 100).toFixed(2).replace('.', ',')} m`;
+
+function roomSheets() {
+  const out = [];
+  store.project.levels.forEach((lv) => {
+    const a = store.analysis(lv);
+    a.rooms.forEach((r, i) => {
+      const info = lv.rooms[i]; if (!info) return;
+      const walls = r.wallIds.map((id) => lv.walls.find((w) => w.id === id)).filter(Boolean);
+      const th = walls.length ? walls.reduce((t, w) => t + w.thickness, 0) / walls.length : 20;
+      const xs = r.poly.map((q) => q.x), ys = r.poly.map((q) => q.y);
+      const L = Math.max(...xs) - Math.min(...xs) - th, l = Math.max(...ys) - Math.min(...ys) - th;
+      const rect = r.poly.length === 4 && Math.abs(r.area * 10000 - L * l) / (L * l) < 0.08;
+      const doors = [], wins = [];
+      for (const w of walls) for (const o of w.openings) (isDoorType(o.type) ? doors : wins).push(o.width);
+      const items = lv.items.filter((it) => pointInPolygon({ x: it.x, y: it.y }, r.poly)).map((it) => ({ it, def: getItem(it.cat) })).filter((x) => x.def);
+      const obs = items.filter((x) => isObstacle(x.it, x.def)).map((x) => ({ ...x, poly: itemCorners(x.it, x.def) }));
+      const used = obs.reduce((t, x) => t + ((x.it.w ?? x.def.w) * (x.it.d ?? x.def.d)) / 10000, 0);
+      const free = Math.max(0, r.area - used);
+      // Passage le plus étroit : entre deux meubles, ou entre un meuble et un mur (on ignore ce qui est collé).
+      let narrow = null;
+      // Contre un mur, moins de 45 cm n'est pas un passage mais un simple recul : on l'ignore.
+      const consider = (g, what, min) => { if (g >= min && g < 120 && (!narrow || g < narrow.g)) narrow = { g, what }; };
+      const nm = (d) => shortName(d.name);
+      // Seuls les gros meubles forment des passages : chaises, tabourets, plantes et guéridons se déplacent.
+      const big = obs.filter((x) => ((x.it.w ?? x.def.w) * (x.it.d ?? x.def.d)) / 10000 >= 0.3 && Math.min(x.it.w ?? x.def.w, x.it.d ?? x.def.d) >= 35);
+      for (let x = 0; x < big.length; x++) {
+        for (let y = x + 1; y < big.length; y++) consider(polyGap(big[x].poly, big[y].poly), `${nm(big[x].def)} et ${nm(big[y].def)}`, 25);
+        const toWall = Math.min(...big[x].poly.flatMap((p) => r.poly.map((q, k) => segPointDist(p, q, r.poly[(k + 1) % r.poly.length])))) - th / 2;
+        consider(toWall, `${nm(big[x].def)} et le mur`, 45);
+      }
+      out.push({ level: lv.name, name: info.name, area: r.area, L: Math.max(L, l), l: Math.min(L, l), rect, height: lv.height, doors, wins, items, obs, free, used, narrow });
+    });
+  });
+  return out;
+}
+
+function sheetText(r) {
+  const lines = [`${r.name} (${r.level})`, `${r.rect ? '' : 'Environ '}${mTxt(r.L)} × ${mTxt(r.l)}, ${r.area.toFixed(1).replace('.', ',')} m², hauteur ${cmTxt(r.height)}`];
+  if (r.doors.length) lines.push(`Portes : ${r.doors.map(cmTxt).join(', ')}`);
+  if (r.wins.length) lines.push(`Fenêtres : ${r.wins.map(cmTxt).join(', ')}`);
+  if (r.obs.length) lines.push(`Place libre au sol : ${r.free.toFixed(1).replace('.', ',')} m² (${Math.round((r.free / r.area) * 100)} %)`);
+  if (r.narrow) lines.push(`Passage le plus étroit : ${cmTxt(r.narrow.g)}, entre ${r.narrow.what}`);
+  if (r.items.length) lines.push(`Meubles : ${r.items.map((x) => `${x.def.name} ${Math.round(x.it.w ?? x.def.w)}×${Math.round(x.it.d ?? x.def.d)}`).join(', ')}`);
+  return lines.join('\n');
+}
+
+function renderMeasures(body) {
+  const rooms = roomSheets();
+  const tag = (g) => (g < 70 ? 'bad' : g < 90 ? 'mid' : 'ok');
+  body.innerHTML = `<h2 class="t">Fiche des pièces</h2>
+    <p class="muted small">Les mesures intérieures de chaque pièce, prises sur le plan. Les passages : 90 cm est confortable, 70 cm est un minimum.</p>
+    ${rooms.length ? `<div class="btnrow"><button class="btn block" id="sheetShare">${icon('copy')}Envoyer la fiche</button></div>` : '<p class="muted" style="margin-top:12px">Trace des pièces sur le plan : leurs mesures apparaîtront ici.</p>'}
+    ${rooms.map((r, k) => `<div class="sheet"><h4><span>${esc(r.name)}</span><span class="muted small">${esc(r.level)}</span></h4>
+      <div class="kv"><span>Dimensions</span><b>${r.rect ? '' : '≈ '}${mTxt(r.L)} × ${mTxt(r.l)}</b></div>
+      <div class="kv"><span>Surface</span><b>${r.area.toFixed(1).replace('.', ',')} m²</b></div>
+      <div class="kv"><span>Hauteur sous plafond</span><b>${cmTxt(r.height)}</b></div>
+      ${r.doors.length ? `<div class="kv"><span>Porte${r.doors.length > 1 ? 's' : ''}</span><b>${r.doors.map(cmTxt).join(' · ')}</b></div>` : ''}
+      ${r.wins.length ? `<div class="kv"><span>Fenêtre${r.wins.length > 1 ? 's' : ''}</span><b>${r.wins.map(cmTxt).join(' · ')}</b></div>` : ''}
+      ${r.obs.length ? `<div class="kv"><span>Place libre au sol</span><b>${r.free.toFixed(1).replace('.', ',')} m² · ${Math.round((r.free / r.area) * 100)} %</b></div>` : ''}
+      ${r.narrow ? `<div class="kv"><span>Passage le plus étroit</span><b class="pass ${tag(r.narrow.g)}">${cmTxt(r.narrow.g)}</b></div><div class="muted small" style="text-align:right">entre ${esc(r.narrow.what)}</div>` : ''}
+      ${r.items.length ? `<details><summary class="small">${r.items.length} meuble${r.items.length > 1 ? 's' : ''}</summary><div class="small">${r.items.map((x) => `<div class="kv"><span>${esc(x.def.name)}</span><span>${Math.round(x.it.w ?? x.def.w)} × ${Math.round(x.it.d ?? x.def.d)} × ${Math.round(x.def.h)} cm</span></div>`).join('')}</div></details>` : ''}
+      <div class="btnrow"><button class="btn" data-sheet="${k}">Envoyer cette pièce</button></div></div>`).join('')}`;
+  const send = async (text) => {
+    if (navigator.share) { try { await navigator.share({ text }); return; } catch { /* partage annulé */ } }
+    try { await navigator.clipboard.writeText(text); toast('Fiche copiée.'); } catch { toast('Copie impossible sur cet appareil.'); }
+  };
+  const all = $('#sheetShare', body);
+  if (all) all.onclick = () => send(`${store.project.name} : fiche des pièces\n\n${rooms.map(sheetText).join('\n\n')}`);
+  body.querySelectorAll('[data-sheet]').forEach((b) => { b.onclick = () => send(sheetText(rooms[Number(b.dataset.sheet)])); });
+}
+
 function renderMore(body) {
-  body.innerHTML = `<h2 class="t">Plus</h2>${[['shopping', 'Liste d’achats', 'Tous les meubles, magasin par magasin'], ['terrain', 'Terrain et paysage', 'Parcelle, pente, relief, environnement'], ['style', 'Style de la maison', 'Façade, toiture, plan importé'], ['advice', 'Conseils', 'Règles et confort'], ['photos', 'Photos', 'Images photoréalistes'], ['projects', 'Projets', 'Versions, comparaison, plan PDF, partage']].map(([k, a, b]) => `<button class="tpl" data-k="${k}"><b>${a}</b><span class="muted small">${b}</span></button>`).join('')}`;
+  body.innerHTML = `<h2 class="t">Plus</h2>${[['shopping', 'Liste d’achats', 'Tous les meubles, magasin par magasin'], ['measures', 'Fiche des pièces', 'Dimensions, place libre, passages : à emporter en magasin'], ['terrain', 'Terrain et paysage', 'Parcelle, pente, relief, environnement'], ['style', 'Style de la maison', 'Façade, toiture, plan importé'], ['advice', 'Conseils', 'Règles et confort'], ['photos', 'Photos', 'Images photoréalistes'], ['projects', 'Projets', 'Versions, comparaison, plan PDF, partage']].map(([k, a, b]) => `<button class="tpl" data-k="${k}"><b>${a}</b><span class="muted small">${b}</span></button>`).join('')}`;
   body.querySelectorAll('[data-k]').forEach((b) => { b.onclick = () => openTab(b.dataset.k); });
 }
 
