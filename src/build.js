@@ -195,8 +195,10 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
   if (o.type === 'garage') {
     const fd = t + 0.012;
     box(g, fw, h, fd, joinery, -w / 2 + fw / 2, h / 2, 0); box(g, fw, h, fd, joinery, w / 2 - fw / 2, h / 2, 0); box(g, w, fw, fd, joinery, 0, h - fw / 2, 0);
-    const n = Math.round(h / 0.5);
-    for (let i = 0; i < n; i++) { const p = box(g, w - fw * 2, (h - fw) / n - 0.012, 0.05, joinery, 0, ((i + 0.5) * (h - fw)) / n, t * 0.2); p.userData = { kind: 'opening', wallId: wall.id, openingId: o.id }; }
+    // Lames en bois foncé, séparées par un joint sombre : de loin, la porte garde son relief au lieu d'un aplat noir.
+    const n = Math.round(h / 0.5), slat = wood('noyer', '#8a7464'), groove = solid('#141414', 0.9);
+    box(g, w - fw * 2, h - fw, 0.02, groove, 0, (h - fw) / 2, t * 0.2 - 0.03);
+    for (let i = 0; i < n; i++) { const p = box(g, w - fw * 2 - 0.01, (h - fw) / n - 0.025, 0.05, slat, 0, ((i + 0.5) * (h - fw)) / n, t * 0.2); p.userData = { kind: 'opening', wallId: wall.id, openingId: o.id }; }
     return;
   }
   if (o.type === 'double' || (o.type === 'entry' && o.leaves === 2)) {
@@ -352,9 +354,12 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
     }
     return H;
   };
+  // Un mur sous son propre toit (garage, véranda, séjour cathédrale) n'a pas d'étage au-dessus : pas de bandeau de dalle, sinon il dépasse du toit.
+  const ownRoof = (project.roofs || []).filter((z) => z.level === level.id);
+  const underOwnRoof = (w) => ownRoof.some((z) => inZone(level.nodes[w.a], z) && inZone(level.nodes[w.b], z));
   for (const w of analysis.walls) {
     const c = corners.get(w.id);
-    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, wallHeight(w), project, wallOpts);
+    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, wallHeight(w), project, underOwnRoof(w) ? { ...wallOpts, slabAbove: 0 } : wallOpts);
   }
   if (opts.groundAt && index <= (project.entry || 0)) buildFoundation(walls, level, index, project, analysis, corners, baseY, opts);
 
@@ -456,8 +461,9 @@ export function buildRoof(project, level, baseY, zone) {
   const cutS0 = zone?.endCut || zone?.endA, cutS1 = zone?.endCut || zone?.endB, s0 = (alongX ? b.x0 : b.y0) - (cutS0 ? 0 : maxT), s1 = (alongX ? b.x1 : b.y1) + (cutS1 ? 0 : maxT);
   // Un pignon qui croise le toit principal ne doit jamais descendre dans les pièces : pas de débord sur ses côtés.
   // `flushA` : seul le côté bas ou gauche s'arrête contre un mur voisin.
-  const ovT = zone?.flush ? 0 : ov, tM = zone?.flush ? 0 : maxT, ovA = zone?.flushA ? 0 : ovT, ovB = zone?.flushB ? 0 : ovT;
-  const t0 = (alongX ? b.y0 : b.x0) - (zone?.flushA ? 0 : tM), t1 = (alongX ? b.y1 : b.x1) + (zone?.flushB ? 0 : tM);
+  // Sans débord, le toit va quand même jusqu'à la face extérieure du mur : sinon le haut du mur dépasse au-dessus de la gouttière.
+  const ovT = zone?.flush ? 0 : ov, tM = maxT, ovA = zone?.flushA ? 0 : ovT, ovB = zone?.flushB ? 0 : ovT;
+  const t0 = (alongX ? b.y0 : b.x0) - tM, t1 = (alongX ? b.y1 : b.x1) + tM;
   const slope = Math.tan((roof.pitch * Math.PI) / 180);
   const P = (s, t, y) => (alongX ? [s * M, y, t * M] : [t * M, y, s * M]);
   const half = (t1 - t0) / 2, tm = (t0 + t1) / 2;

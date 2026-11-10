@@ -222,7 +222,8 @@ export function poolWaterMaterial() {
 export function buildMeadow(accept) {
   const group = new THREE.Group(), blades = LOW ? 5000 : 42000, flowers = LOW ? 400 : 3200;
   const tuft = () => {
-    const a = new THREE.PlaneGeometry(0.3, 0.2, 1, 1); a.translate(0, 0.1, 0);
+    // Touffe plus haute que large : de près, on lit des brins, pas des rubans.
+    const a = new THREE.PlaneGeometry(0.22, 0.28, 1, 1); a.translate(0, 0.14, 0);
     const b = a.clone().rotateY(1.05), c = a.clone().rotateY(-1.05), parts = [a, b, c], pos = [], uv = [], idx = [];
     let off = 0;
     for (const p of parts) { pos.push(...p.attributes.position.array); uv.push(...p.attributes.uv.array); idx.push(...Array.from(p.index.array, (i) => i + off)); off += p.attributes.position.count; }
@@ -242,8 +243,17 @@ export function buildMeadow(accept) {
     group.add(m);
   };
   if (!mats.has('grass')) {
-    const tx = canvasTex(256, (c, S) => { for (let i = 0; i < 150; i++) { c.strokeStyle = ['#ffffff', '#e9f2d8', '#cfdcb8'][i % 3]; c.lineWidth = 1.3 + rnd() * 1.6; const x = rnd() * S; c.beginPath(); c.moveTo(x, S); c.quadraticCurveTo(x + (rnd() - 0.5) * 26, S * 0.55, x + (rnd() - 0.5) * 60, S * (0.05 + rnd() * 0.45)); c.stroke(); } });
-    const g = new THREE.MeshStandardMaterial({ map: tx, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.92 });
+    // Brins fins, plus sombres au pied qu'à la pointe : la touffe a du volume au lieu d'un aplat clair.
+    const tx = canvasTex(LOW ? 256 : 512, (c, S) => {
+      const k = S / 256;
+      for (let i = 0; i < 230; i++) {
+        const x = rnd() * S, top = S * (0.04 + rnd() * 0.5), g = c.createLinearGradient(0, S, 0, top), tip = ['#ffffff', '#eef5df', '#dde8c6'][i % 3];
+        g.addColorStop(0, '#7d8a6a'); g.addColorStop(0.55, tip); g.addColorStop(1, tip);
+        c.strokeStyle = g; c.lineWidth = (0.9 + rnd() * 1.3) * k; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(x, S); c.quadraticCurveTo(x + (rnd() - 0.5) * 8 * k, S * 0.55, x + (rnd() - 0.5) * 22 * k, top); c.stroke();
+      }
+    });
+    const g = new THREE.MeshStandardMaterial({ map: tx, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.92 });
     g.onBeforeCompile = instancedSway; g.customProgramCacheKey = () => 'grass';
     mats.set('grass', g);
     const fx = canvasTex(256, (c, S) => { for (let i = 0; i < 18; i++) { const x = S * (0.12 + rnd() * 0.76), y = S * (0.08 + rnd() * 0.5); c.strokeStyle = '#6f8c4e'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(x, S); c.lineTo(x + (rnd() - 0.5) * 16, y); c.stroke(); c.fillStyle = '#ffffff'; c.beginPath(); c.arc(x, y, S * 0.03, 0, 6.28); c.fill(); c.fillStyle = '#f0c63c'; c.beginPath(); c.arc(x, y, S * 0.012, 0, 6.28); c.fill(); } });
@@ -259,7 +269,7 @@ export function buildMeadow(accept) {
 function instancedSway(shader) {
   shader.uniforms.uWind = windU;
   shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace('#include <begin_vertex>', `#include <begin_vertex>
-    { vec2 w = instanceMatrix[3].xz; float gust = sin(uWind * 1.4 + w.x * .22 + w.y * .17) * .55 + sin(uWind * 3.1 + w.x * .9 - w.y * .6) * .25; float hh = position.y * position.y * 20.; transformed.x += gust * hh * .34; transformed.z += gust * hh * .2;
+    { vec2 w = instanceMatrix[3].xz; float gust = sin(uWind * 1.4 + w.x * .22 + w.y * .17) * .55 + sin(uWind * 3.1 + w.x * .9 - w.y * .6) * .25; float hh = position.y * position.y * 6.; transformed.x += gust * hh * .3; transformed.z += gust * hh * .18;
       /* Au loin, le gazon du sol suffit : l'image reste nette. */
       transformed *= 1. - smoothstep(14., 38., distance(cameraPosition, instanceMatrix[3].xyz)); }`);
 }

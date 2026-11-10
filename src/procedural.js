@@ -813,7 +813,9 @@ function retaining(p) {
 
 function slab(p) {
   const g = new THREE.Group();
-  B(g, p.w, p.h, p.d, p.finish, 0, 0, 0);
+  // Dallage en pierre : de vraies dalles avec leurs joints, au lieu d'un aplat clair.
+  const mat = p.paver ? texturedMaterial('large_grey_tiles', 1.8, { tint: '#f2e6d2', gain: 1.45 }) : p.finish;
+  B(g, p.w, p.h, p.d, mat, 0, 0, 0);
   return g;
 }
 
@@ -866,7 +868,7 @@ function fence(p) {
 function pool(p) {
   const g = new THREE.Group();
   const { w = 8, d = 4 } = p;
-  const stone = texturedMaterial('concrete_tiles', 1.5, { tint: '#d9d3c7' });
+  const stone = texturedMaterial('large_grey_tiles', 1.2, { tint: '#f7eedf', gain: 1.65 });
   for (const sz of [-1, 1]) B(g, w + 0.8, 0.06, 0.4, stone, 0, 0, sz * (d / 2 + 0.2));
   for (const sx of [-1, 1]) B(g, 0.4, 0.06, d, stone, sx * (w / 2 + 0.2), 0, 0);
   B(g, w, 0.01, d, poolWaterMaterial(), 0, 0.03, 0, 0);
@@ -1217,6 +1219,31 @@ function cypress(p) { return cypressTree(p); }
 
 function umbrellaPine(p) { return parasolPine(p); }
 
+/** Tapis de course : socle, bande, montants, poignées et console. */
+function treadmill(p) {
+  const g = new THREE.Group(), { w = 1.8, d = 0.8, h = 1.3 } = p, frame = solid('#2b2d31', 0.45, 0.4), belt = solid('#141516', 0.95), grey = solid('#9a9ea4', 0.35, 0.8);
+  B(g, w, 0.16, d, frame, 0, 0.02, 0, 0.03);
+  B(g, w * 0.88, 0.02, d * 0.66, belt, -w * 0.02, 0.18, 0);
+  for (const sz of [-1, 1]) B(g, w * 0.86, 0.03, 0.07, grey, -w * 0.02, 0.17, sz * (d / 2 - 0.05));
+  const x = w / 2 - 0.16;
+  for (const sz of [-1, 1]) { const up = B(g, 0.06, h - 0.25, 0.06, frame, x, 0.12, sz * (d / 2 - 0.06), 0.02); up.rotation.z = 0.12; }
+  for (const sz of [-1, 1]) B(g, 0.42, 0.04, 0.04, grey, x - 0.2, h - 0.38, sz * (d / 2 - 0.06), 0.015);
+  const con = B(g, 0.12, 0.3, d * 0.72, frame, x + 0.05, h - 0.32, 0, 0.03); con.rotation.z = 0.5;
+  B(g, 0.01, 0.16, d * 0.42, emissive('#5fb2ff', 0.6), x - 0.005, h - 0.26, 0).rotation.z = 0.5;
+  return g;
+}
+
+/** Banc de musculation : assise rembourrée sur un châssis en acier. */
+function weightBench(p) {
+  const g = new THREE.Group(), { w = 1.35, d = 0.5, h = 0.48 } = p, steel = solid('#2b2d31', 0.45, 0.6), pad = solid('#1d1e20', 0.75);
+  B(g, w * 0.92, 0.035, 0.06, steel, 0, 0.0, 0, 0.01);
+  for (const sx of [-1, 1]) B(g, 0.06, 0.035, d, steel, sx * w * 0.4, 0, 0, 0.01);
+  for (const sx of [-0.3, 0.3]) B(g, 0.05, h - 0.12, 0.05, steel, sx * w, 0.03, 0, 0.01);
+  B(g, w * 0.62, 0.09, d * 0.62, pad, -w * 0.16, h - 0.09, 0, 0.03);
+  const back = B(g, w * 0.36, 0.09, d * 0.62, pad, w * 0.3, h - 0.09, 0, 0.03); back.rotation.z = -0.32; back.position.y += 0.08;
+  return g;
+}
+
 export const PROC = {
   sofa, armchair, tvBench, tv, bookcase, table, chair, barStool, bed, mattress: mattressOnly, drawers, wardrobe, desk, officeChair,
   kitchenBase, kitchenWall, kitchenTall, oven, sinkUnit, hob, hood, fridge, dishwasher, washer, worktop, island,
@@ -1224,7 +1251,7 @@ export const PROC = {
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
   flowerBed, daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
-  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine,
+  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */

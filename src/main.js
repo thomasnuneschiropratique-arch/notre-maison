@@ -1353,18 +1353,31 @@ function projectFacts(p) {
     const rooms = p.levels.flatMap((l) => l.rooms);
     const glass = p.levels.flatMap((l) => l.walls.flatMap((w) => w.openings)).filter((o) => !isDoorType(o.type)).reduce((t, o) => t + (o.width * o.height) / 10000, 0);
     const furn = b.items.reduce((t, l) => t + l.price, 0);
-    return [['Surface habitable', s.habitable, 'm²'], ['Pièces', rooms.length, ''], ['Chambres', rooms.filter((r) => ['chambre', 'parentale', 'enfant'].includes(r.type)).length, ''], ['Niveaux', p.levels.length, ''], ['Surface vitrée', glass, 'm²'], ['Meubles et déco', furn, '€'], ['Construction au m²', b.perM2, '€'], ['Budget total', b.total, '€']];
+    // Volume intérieur : surface de chaque pièce × sa hauteur (un séjour cathédrale compte toute sa hauteur).
+    let vol = 0;
+    for (const l of p.levels) {
+      const a = analyzeLevel(l), zones = (p.roofs || []).filter((z) => z.level === l.id && z.wallH > l.height);
+      a.rooms.forEach((r, i) => { if (['garage', 'terrasse'].includes(l.rooms[i]?.type)) return; const z = zones.find((q) => r.center.x >= q.x0 && r.center.x <= q.x1 && r.center.y >= q.y0 && r.center.y <= q.y1); vol += (r.area * (z ? z.wallH : l.height)) / 100; });
+    }
+    return [['Surface habitable', s.habitable, 'm²'], ['Volume intérieur', vol, 'm³'], ['Hauteur sous plafond', p.levels[p.entry || 0].height, 'cm'], ['Pièces', rooms.length, ''], ['Chambres', rooms.filter((r) => ['chambre', 'parentale', 'enfant'].includes(r.type)).length, ''], ['Niveaux', p.levels.length, ''], ['Surface vitrée', glass, 'm²'], ['Meubles et déco', furn, '€'], ['Construction au m²', b.perM2, '€'], ['Budget total', b.total, '€']];
   } finally { setCustom(store.project.custom); }
 }
 
-function drawMini(canvas, project) {
+/** Échelle commune : deux plans comparés sont dessinés à la même échelle, pour voir lequel est plus grand. */
+function miniScale(canvas, project) {
+  const r = canvas.getBoundingClientRect(), pts = Object.values(project.levels[project.entry || 0].nodes);
+  if (!pts.length) return Infinity;
+  const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
+  return Math.min((r.width - 20) / (Math.max(...xs) - Math.min(...xs) || 1), (r.height - 20) / (Math.max(...ys) - Math.min(...ys) || 1));
+}
+function drawMini(canvas, project, scale) {
   const dpr = Math.min(devicePixelRatio || 1, 2), r = canvas.getBoundingClientRect();
   canvas.width = r.width * dpr; canvas.height = r.height * dpr;
   const c = canvas.getContext('2d'), level = project.levels[project.entry || 0], pts = Object.values(level.nodes);
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (!pts.length) return;
   const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-  const k = Math.min((r.width - 20) / (x1 - x0 || 1), (r.height - 20) / (y1 - y0 || 1));
+  const k = scale || Math.min((r.width - 20) / (x1 - x0 || 1), (r.height - 20) / (y1 - y0 || 1));
   const X = (x) => r.width / 2 + (x - (x0 + x1) / 2) * k, Y = (y) => r.height / 2 + (y - (y0 + y1) / 2) * k;
   const a = analyzeLevel(level);
   c.fillStyle = '#fff';
@@ -1375,27 +1388,60 @@ function drawMini(canvas, project) {
   a.rooms.forEach((room, i) => { if (level.rooms[i] && room.grossArea * 10000 * k * k > 2600) c.fillText(level.rooms[i].name, X(room.center.x), Y(room.center.y)); });
 }
 
-async function compareDialog() {
+async function compareDialog(aId, bId) {
   await store.save();
   const list = (await dbAll('projects')).map((x) => x.value).sort((a, b) => b.updated - a.updated);
   if (list.length < 2) { toast('Crée d’abord une deuxième version.'); return; }
   const m = document.createElement('div'); m.className = 'modal';
   const opts = (sel) => list.map((p) => `<option value="${esc(p.id)}" ${p.id === sel ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
-  const other = list.find((p) => p.id !== store.project.id).id;
+  aId = typeof aId === 'string' ? aId : store.project.id;
+  const other = typeof bId === 'string' ? bId : list.find((p) => p.id !== aId).id;
   m.innerHTML = `<div class="box wide"><h2 class="t">Comparer deux versions</h2>
-    <div class="cmp"><div><select id="cA">${opts(store.project.id)}</select><canvas id="pA"></canvas></div><div><select id="cB">${opts(other)}</select><canvas id="pB"></canvas></div></div>
-    <div id="cT"></div><div class="btnrow"><button class="btn pri block" id="cX">Fermer</button></div></div>`;
+    <div class="cmp"><div><select id="cA">${opts(aId)}</select><canvas id="pA"></canvas></div><div><select id="cB">${opts(other)}</select><canvas id="pB"></canvas></div></div>
+    <div id="cT"></div><div class="btnrow"><button class="btn" id="cOpen">Ouvrir celle de droite</button><button class="btn pri" id="cX">Fermer</button></div></div>`;
   document.body.append(m);
   const fmt = (v, u) => (u === '€' ? euro(v) : `${u === 'm²' ? v.toFixed(1).replace('.', ',') : Math.round(v)}${u ? ` ${u}` : ''}`);
   const show = () => {
     const A = list.find((p) => p.id === $('#cA', m).value), B = list.find((p) => p.id === $('#cB', m).value);
-    drawMini($('#pA', m), A); drawMini($('#pB', m), B);
+    const k = Math.min(miniScale($('#pA', m), A), miniScale($('#pB', m), B));
+    drawMini($('#pA', m), A, k); drawMini($('#pB', m), B, k);
     const fa = projectFacts(A), fb = projectFacts(B);
     $('#cT', m).innerHTML = `<table class="cmptable"><tr><th></th><th>Gauche</th><th>Droite</th><th>Écart</th></tr>${fa.map(([l, v, u], i) => { const d = fb[i][1] - v; return `<tr><td>${esc(l)}</td><td>${fmt(v, u)}</td><td>${fmt(fb[i][1], u)}</td><td>${Math.abs(d) < 0.05 ? '=' : `${d > 0 ? '+' : '−'} ${fmt(Math.abs(d), u)}`}</td></tr>`; }).join('')}</table>`;
   };
   $('#cA', m).onchange = show; $('#cB', m).onchange = show;
   $('#cX', m).onclick = () => m.remove();
+  const ob = $('#cOpen', m);
+  if (ob) ob.onclick = async () => { const B = list.find((p) => p.id === $('#cB', m).value); m.remove(); await store.save(); openProject(await dbGet('projects', B.id)); fillLevels(); render(); toast(`« ${B.name} » ouverte.`); };
   show();
+}
+
+// ——— La même maison anglaise, avec un peu plus de volume, à côté de la vôtre ———
+const isManor = (p) => /^Maison anglaise/.test(p?.name || '') || !!p?.tplVersion;
+async function roomyCompare() {
+  await store.save();
+  const all = (await dbAll('projects')).map((x) => x.value);
+  let roomy = all.find((p) => p.variant === 'roomy');
+  if (!roomy) {
+    await loadMore().catch(() => {});
+    roomy = TEMPLATES.find((t) => t.id === 'manoir-plus').make();
+    roomy.updated = Date.now();
+    await dbPut('projects', roomy.id, roomy); queuePush(roomy.id);
+  }
+  const base = isManor(store.project) && store.project.variant !== 'roomy' ? store.project : all.filter((p) => isManor(p) && p.variant !== 'roomy').sort((a, b) => b.updated - a.updated)[0];
+  if (!base) { toast('Version plus spacieuse créée dans Projets.'); return; }
+  compareDialog(base.id, roomy.id);
+}
+async function offerRoomy() {
+  const key = 'nm-roomy-offer';
+  try { if (localStorage.getItem(key)) return; } catch { return; }
+  if (!isManor(store.project) || store.project.variant === 'roomy') return;
+  if ((await dbAll('projects')).some((x) => x.value.variant === 'roomy')) return;
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="box"><h2 class="t">La même maison, avec un peu plus d’espace</h2><p class="muted small">Pièces un peu plus grandes (environ 15 % de surface en plus) et plafonds plus hauts de 15 cm. Elle se range à côté de la vôtre dans Projets : rien n’est modifié dans votre maison.</p><div class="btnrow"><button class="btn" id="rLater">Plus tard</button><button class="btn pri" id="rGo">Créer et comparer</button></div></div>`;
+  document.body.append(m);
+  const done = () => { try { localStorage.setItem(key, '1'); } catch { /* navigation privée */ } m.remove(); };
+  $('#rLater', m).onclick = done;
+  $('#rGo', m).onclick = async () => { done(); await roomyCompare(); };
 }
 
 async function shareFile(file) {
@@ -1618,6 +1664,7 @@ async function renderProjects(body) {
   <div class="btnrow"><button class="btn pri block" id="new">Nouveau projet</button></div>
   <div class="btnrow"><button class="btn" id="cmp">Comparer deux versions</button><button class="btn" id="pdf">Plan coté en PDF</button></div>
   <div class="btnrow"><button class="btn block" id="dossierP">Dossier complet en PDF</button></div>
+  ${isManor(store.project) ? '<div class="btnrow"><button class="btn block" id="roomyP">Comparer avec la version plus spacieuse</button></div>' : ''}
   <h3 class="s">Partager entre vos téléphones</h3>
   ${syncBlock()}
   ${deviceBlock()}
@@ -1637,6 +1684,7 @@ async function renderProjects(body) {
     await shareFile(new File([blob], `${store.project.name} - plan.pdf`, { type: 'application/pdf' }));
   };
   $('#dossierP', body).onclick = (e) => makeDossier(e.currentTarget);
+  const rp = $('#roomyP', body); if (rp) rp.onclick = roomyCompare;
   $('#tourAgain', body).onclick = () => { if (narrow()) setPanel(false); startTour(); };
   bindSync(body);
   bindDevice(body);
@@ -2076,7 +2124,7 @@ store.addEventListener('level', () => { fillLevels(); render(); });
   setView('plan');
   render();
   document.getElementById('splash')?.remove();
-  offerLatestManor(store.project);
+  if (!offerLatestManor(store.project)) setTimeout(() => { if (!document.querySelector('.modal')) offerRoomy(); }, 900);
   // Évite que l'appareil efface le projet en cas de manque de place.
   navigator.storage?.persist?.().catch(() => {});
   if (isEnabled()) connect(knownCode(), knownName(), syncHooks);

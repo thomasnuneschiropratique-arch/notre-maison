@@ -451,7 +451,7 @@ export class View3D {
     for (const o of this.itemObjs.values()) {
       if (o.userData.r === undefined) { const s = new THREE.Box3().setFromObject(o).getSize(v); o.userData.r = Math.max(s.x, s.y, s.z); }
       const lvl = o.userData.level ?? 0, big = o.userData.r > 2.2;
-      const want = this.levelVisible(lvl) && (lvl === li || (big && !this.interior)) && (big || o.position.distanceTo(cam) < 18);
+      const want = this.levelVisible(lvl) && this.wallShown(o) && (lvl === li || (big && !this.interior)) && (big || o.position.distanceTo(cam) < 18);
       if (o.visible !== want) { o.visible = want; changed = true; }
     }
     if (changed) this.needsRender = true;
@@ -627,7 +627,8 @@ export class View3D {
           obj.position.set(it.x * M, this.itemY(it, def, li), it.y * M);
           obj.rotation.y = (-(it.rot || 0) * Math.PI) / 180;
           obj.userData.level = li;
-          obj.visible = this.levelVisible(li);
+          obj.userData.hugWall = def.sub === 'rideau' || def.wall ? hugWall(lv, it) : null;
+          obj.visible = this.levelVisible(li) && this.wallShown(obj);
         };
         let obj = this.itemObjs.get(it.id);
         if (obj && obj.userData.sig === sig) { place(obj); continue; }
@@ -696,10 +697,11 @@ export class View3D {
       const i = g.userData.index;
       g.visible = this.levelVisible(i);
       const c = g.getObjectByName('ceilings');
-      if (c) c.visible = ceilings || i < (this.levelTopVisible() ?? 0);
+      // En maquette, un plafond vu de dessus est invisible mais arrêterait le soleil : les pièces de plain-pied deviendraient noires.
+      if (c) c.visible = ceilings;
     }
-    for (const o of this.itemObjs.values()) o.visible = this.levelVisible(o.userData.level ?? 0);
     this.updateWallHiding();
+    for (const o of this.itemObjs.values()) o.visible = this.levelVisible(o.userData.level ?? 0) && this.wallShown(o);
     this.updateLamps();
     // Pour voir un niveau enterré depuis la maquette, on écarte la terre.
     if (this.terrain.near) this.terrain.near.visible = !(this.mode === 'orbit' && this.preset !== 'exterior' && store.levelIndex < (store.project.entry || 0));
@@ -719,9 +721,14 @@ export class View3D {
         vis = dx * o.userData.outward.x + dz * o.userData.outward.z < 0.1;
       }
       if (o.visible !== vis) { o.visible = vis; changed = true; }
+      if (vis) this.hiddenWalls?.delete(o.userData.wallId); else (this.hiddenWalls ||= new Set()).add(o.userData.wallId);
     }
+    // Rideaux et cadres suivent leur mur : sans lui, ils flotteraient dans le vide.
+    if (changed) for (const o of this.itemObjs.values()) if (o.userData.hugWall) o.visible = this.levelVisible(o.userData.level ?? 0) && this.wallShown(o);
     if (changed) this.invalidate();
   }
+
+  wallShown(o) { return !o.userData.hugWall || !this.hiddenWalls?.has(o.userData.hugWall); }
 
   onCameraMove() {
     this.needsRender = true;
@@ -1201,6 +1208,18 @@ export class View3D {
   snapshot() {
     return { pos: this.camera.position.toArray(), target: this.controls.target.toArray(), yaw: this.yaw, pitch: this.pitch, mode: this.mode };
   }
+}
+
+/** Le mur contre lequel est posé un rideau ou un cadre (à moins de 35 cm de sa face). */
+function hugWall(lv, it) {
+  let best = null, bd = Infinity;
+  for (const w of lv.walls) {
+    const A = lv.nodes[w.a], B = lv.nodes[w.b]; if (!A || !B) continue;
+    const dx = B.x - A.x, dy = B.y - A.y, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((it.x - A.x) * dx + (it.y - A.y) * dy) / L)) : 0;
+    const d = Math.hypot(it.x - A.x - t * dx, it.y - A.y - t * dy) - w.thickness / 2;
+    if (d < 35 && d < bd) { bd = d; best = w.id; }
+  }
+  return best;
 }
 
 function disposeTree(root) {
