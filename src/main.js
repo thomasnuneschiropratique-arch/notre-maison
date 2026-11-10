@@ -1080,12 +1080,12 @@ function renderStyle(body) {
     ${ambianceBlock(p)}
     <h3 class="s">Façade</h3>${swatchRow(FACADES, p.style.facade, 'facade')}<div class="matname">${esc(materialInfo(p.style.facade)?.name)}</div>
     <h3 class="s">Toiture</h3>
-    <div class="field"><label>Forme</label><select id="roofT">${[['gable', '2 pans'], ['hip', '4 pans'], ['mono', 'Monopente'], ['flat', 'Toit-terrasse'], ['slab', 'Dalle débordante'], ['none', 'Aucune']].map(([k, l]) => `<option value="${k}" ${p.roof.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label>Forme</label><select id="roofT">${[['gable', '2 pans'], ['hip', '4 pans'], ['mono', 'Monopente'], ['flat', 'Toit-terrasse'], ['slab', 'Dalle débordante'], ['butterfly', 'Papillon'], ['none', 'Aucune']].map(([k, l]) => `<option value="${k}" ${p.roof.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     <div class="field"><label>Pente (°)</label><input type="number" id="pitch" min="5" max="60" value="${p.roof.pitch}"/></div>
     <div class="field"><label>Débord (cm)</label><input type="number" id="ov" value="${p.roof.overhang}"/></div>
     <h3 class="s">Toits supplémentaires</h3>
     <div id="roofs">${(p.roofs || []).map((z, i) => `<div class="card2" data-z="${i}"><div class="head"><span>Toit ${i + 1} · ${esc(p.levels.find((l) => l.id === z.level)?.name || '')}</span><button class="iconbtn" data-del aria-label="Supprimer ce toit">${icon('trash')}</button></div>
-      <div class="field"><label>Forme</label><select data-f="type">${[['gable', '2 pans'], ['hip', '4 pans'], ['mono', 'Monopente'], ['flat', 'Toit-terrasse'], ['slab', 'Dalle débordante']].map(([k, l]) => `<option value="${k}" ${z.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label>Forme</label><select data-f="type">${[['gable', '2 pans'], ['hip', '4 pans'], ['mono', 'Monopente'], ['flat', 'Toit-terrasse'], ['slab', 'Dalle débordante'], ['butterfly', 'Papillon']].map(([k, l]) => `<option value="${k}" ${z.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label>Faîtage</label><select data-f="ridge">${[['auto', 'Automatique'], ['x', 'Horizontal sur le plan'], ['y', 'Vertical sur le plan']].map(([k, l]) => `<option value="${k}" ${z.ridge === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label>Pente (°)</label><input type="number" data-f="pitch" min="5" max="60" value="${z.pitch}"/></div>
       <div class="field"><label>Débord (cm)</label><input type="number" data-f="overhang" value="${z.overhang}"/></div>

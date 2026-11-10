@@ -81,6 +81,7 @@ export const FACADES = [
   { id: 'facade_pierre', name: 'Pierre', t: 'stone_wall', s: 3, price: 150 },
   { id: 'facade_bois', name: 'Bardage bois', t: 'weathered_planks', s: 2.4, price: 85 },
   { id: 'facade_beton', name: 'Béton brut', t: 'concrete_tile_facade', s: 4, price: 90 },
+  { id: 'facade_bois_noir', name: 'Bardage bois noir', t: 'dark_wooden_planks', s: 2.2, tint: '#4a4a4a', gain: 0.75, price: 120 },
   { id: 'facade_travertin', name: 'Travertin en grands panneaux', t: 'large_sandstone_blocks', s: 3.4, tint: '#f6eee2', gain: 2.6, price: 230 },
 ];
 

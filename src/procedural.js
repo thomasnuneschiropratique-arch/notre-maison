@@ -909,6 +909,42 @@ function modernLounger(p) {
 
 function olive(p) { return oliveTree(p); }
 
+/** Piscine haricot des années 50 : forme libre, margelle en pierre claire. */
+function kidneyPool(p) {
+  const g = new THREE.Group(), { w = 9, d = 4.5 } = p;
+  const curve = (sx, sy) => {
+    const s = new THREE.Shape(), X = (x) => x * sx, Y = (y) => y * sy;
+    s.moveTo(X(-0.5), Y(0));
+    s.bezierCurveTo(X(-0.5), Y(-0.55), X(-0.08), Y(-0.6), X(0.06), Y(-0.3));
+    s.bezierCurveTo(X(0.16), Y(-0.12), X(0.26), Y(-0.52), X(0.42), Y(-0.42));
+    s.bezierCurveTo(X(0.58), Y(-0.3), X(0.56), Y(0.38), X(0.3), Y(0.47));
+    s.bezierCurveTo(X(0.04), Y(0.56), X(-0.5), Y(0.52), X(-0.5), Y(0));
+    return s;
+  };
+  const water = new THREE.ShapeGeometry(curve(w, d), 48); water.rotateX(-Math.PI / 2);
+  const wm = new THREE.Mesh(water, poolWaterMaterial()); wm.position.y = 0.035; wm.receiveShadow = true; g.add(wm);
+  const ring = curve(w + 0.8, d + 0.8); ring.holes.push(new THREE.Path(curve(w, d).getPoints(64)));
+  const cg = new THREE.ExtrudeGeometry(ring, { depth: 0.06, bevelEnabled: false, curveSegments: 48 }); cg.rotateX(-Math.PI / 2);
+  const cm = new THREE.Mesh(cg, texturedMaterial('large_grey_tiles', 1.2, { tint: '#f7eedf', gain: 1.65 })); cm.castShadow = cm.receiveShadow = true; g.add(cm);
+  return g;
+}
+
+/** Claustra en blocs de béton ajourés : la façade filtre la lumière, motif en losange. */
+function claustra(p) {
+  const g = new THREE.Group(), { w = 3, h = 2.2, d = 0.12 } = p, m = 0.3, nx = Math.max(1, Math.round(w / m)), ny = Math.max(1, Math.round(h / m)), geos = [];
+  const add = (sx, sy, x, y, rz = 0) => { const b = new THREE.BoxGeometry(sx, sy, d); if (rz) b.rotateZ(rz); b.translate(x, y, 0); geos.push(b); };
+  for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {
+    const x = -w / 2 + (i + 0.5) * (w / nx), y = (j + 0.5) * (h / ny), cw = w / nx, ch = h / ny;
+    add(cw, 0.035, x, y - ch / 2 + 0.0175); add(0.035, ch, x - cw / 2 + 0.0175, y);
+    add(cw * 0.42, 0.04, x, y, Math.PI / 4); add(cw * 0.42, 0.04, x, y, -Math.PI / 4);
+  }
+  add(w, 0.035, 0, h - 0.0175); add(0.035, h, w / 2 - 0.0175, h / 2);
+  const mesh = new THREE.Mesh(mergeGeometries(geos), solid('#ece7dd', 0.85)); mesh.castShadow = mesh.receiveShadow = true; g.add(mesh);
+  return g;
+}
+
+function steelColumn(p) { const g = new THREE.Group(); B(g, 0.12, p.h ?? 2.8, 0.12, blackMetal(), 0, 0, 0, 0.004); return g; }
+
 const stoneMat = () => texturedMaterial('rustic_stone_wall', 1.8, { tint: '#f1e4cf', gain: 1.35 });
 const walnutMat = () => texturedMaterial('american_walnut_veneer', 2, { tint: '#d7a877', gain: 1.15 });
 
@@ -1285,7 +1321,7 @@ export const PROC = {
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
   flowerBed, daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
-  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive,
+  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive, kidneyPool, claustra, steelColumn,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */

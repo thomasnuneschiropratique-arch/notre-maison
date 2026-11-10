@@ -1,7 +1,7 @@
 // Transforme le plan (centimètres) en scène 3D (mètres) : murs percés, sols, plafonds, menuiseries, toiture.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { wallCorners, dot, sub } from './geometry.js';
+import { wallCorners, dot, sub, analyzeLevel, pointInPolygon } from './geometry.js';
 import { getMaterial, solid, glass, wood, blackMetal, chrome, texturedMaterial } from './materials.js';
 
 const M = 0.01;
@@ -423,6 +423,24 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
       under.position.y = baseY - 0.02; floors.add(under);
     }
   });
+  // Plancher au-dessus d'un volume en double hauteur (passerelle, mezzanine) : on voit son dessous et ses rives depuis le bas.
+  if (lowerLevel) {
+    const slabT = (lowerLevel.slab ?? 22) * M, open = (project.roofs || []).filter((z) => z.level === lowerLevel.id && z.vault && z.wallH > lowerLevel.height);
+    const vault = (p) => open.some((z) => p.x > z.x0 && p.x < z.x1 && p.y > z.y0 && p.y < z.y1);
+    // Couvert par une pièce du dessous qui a un plafond ? Sinon (double hauteur, porte-à-faux, abri voiture), le dessous se voit.
+    const lowerRooms = analyzeLevel(lowerLevel).rooms, covered = (q) => !vault(q) && lowerRooms.some((lr) => pointInPolygon(q, lr.poly));
+    analysis.rooms.forEach((r, i) => {
+      if (!level.rooms[i]) return;
+      const c = r.center, probes = [c, ...r.poly.map((v) => { const dx = c.x - v.x, dy = c.y - v.y, L = Math.hypot(dx, dy) || 1; return { x: v.x + (dx / L) * 20, y: v.y + (dy / L) * 20 }; })];
+      if (probes.every(covered)) return;
+      const holes = voids.filter((v) => opts.inside(voidCenter(v), r.poly)).map((v) => clampVoid(v, r.poly));
+      const bottom = new THREE.Mesh(flipped(floorGeometry(r.poly, holes)), solid('#e9e4da', 0.85));
+      bottom.position.y = baseY - slabT + 0.015; bottom.receiveShadow = true; bottom.userData = { kind: 'slabUnder' }; floors.add(bottom);
+      const band = new QuadBatch();
+      r.poly.forEach((a, k) => { const b = r.poly[(k + 1) % r.poly.length], len = Math.hypot(b.x - a.x, b.y - a.y) * M; if (len < 0.01) return; band.quad([a.x * M, baseY - slabT, a.y * M], [b.x * M, baseY - slabT, b.y * M], [b.x * M, baseY, b.y * M], [a.x * M, baseY, a.y * M], [-(b.y - a.y) * M / len, 0, (b.x - a.x) * M / len], [[0, 0], [len, 0], [len, slabT], [0, slabT]]); });
+      const bm = meshOf(band, solid('#e9e4da', 0.85).clone(), { kind: 'slabEdge' }); bm.material.side = THREE.DoubleSide; floors.add(bm);
+    });
+  }
   // Trémie : l'épaisseur du plancher habille le tour de l'escalier, sinon on voit le vide entre plafond et sol de l'étage.
   if (lowerLevel && voids.length) {
     const slab = (lowerLevel.slab ?? 22) * M, y0 = baseY - slab - 0.012, y1 = baseY + 0.004, sides = new QuadBatch();
@@ -543,7 +561,25 @@ export function buildRoof(project, level, baseY, zone) {
     roofB.quad(p0, p1, p2, p3, [n.x, n.y, n.z], [[0, 0], [lenU, 0], [lenU, lenV], [0, lenV]]);
   };
 
-  if (roof.type === 'mono') {
+  if (roof.type === 'butterfly') {
+    // Toit papillon : deux pans qui remontent vers les façades, noue au milieu, bandeau vitré entre le haut des murs et le toit.
+    const valley = top + 0.08, hAt = (t) => valley + Math.abs(t - tm) * slope * M, tA0 = t0 - ovT, tB0 = t1 + ovT;
+    addPlane(P(sA, tA0, hAt(tA0)), P(sB, tA0, hAt(tA0)), P(sB, tm, valley), P(sA, tm, valley));
+    addPlane(P(sA, tm, valley), P(sB, tm, valley), P(sB, tB0, hAt(tB0)), P(sA, tB0, hAt(tB0)));
+    for (const s of [s0, s1]) {
+      const n = alongX ? [s === s0 ? -1 : 1, 0, 0] : [0, 0, s === s0 ? -1 : 1];
+      gable.quad(P(s, t0, top), P(s, tm, top), P(s, tm, valley), P(s, t0, hAt(t0)), n, [[0, 0], [half * M, 0], [half * M, 0.08], [0, hAt(t0) - top]]);
+      gable.quad(P(s, tm, top), P(s, t1, top), P(s, t1, hAt(t1)), P(s, tm, valley), n, [[0, 0], [half * M, 0], [half * M, hAt(t1) - top], [0, 0.08]]);
+    }
+    const clear = new QuadBatch(), frame = blackMetal();
+    for (const t of [t0, t1]) {
+      const y1 = hAt(t) - 0.02, n = alongX ? [0, 0, t === t0 ? -1 : 1] : [t === t0 ? -1 : 1, 0, 0];
+      clear.quad(P(s0, t, top), P(s1, t, top), P(s1, t, y1), P(s0, t, y1), n, [[0, 0], [1, 0], [1, 1], [0, 1]]);
+      const k = Math.max(2, Math.round((s1 - s0) / 120));
+      for (let i = 0; i <= k; i++) { const s = s0 + ((s1 - s0) * i) / k, q = P(s, t, (top + y1) / 2); box(g, alongX ? 0.05 : 0.06, y1 - top, alongX ? 0.06 : 0.05, frame, q[0], q[1], q[2]); }
+    }
+    const cm = new THREE.Mesh(clear.geometry(), glass()); cm.userData.kind = 'roofGlass'; g.add(cm);
+  } else if (roof.type === 'mono') {
     const highY = top + (t1 - t0 + ov) * slope * M;
     addPlane(P(sA, tA, highY), P(sB, tA, highY), P(sB, tB, eaveY), P(sA, tB, eaveY));
     for (const s of [s0, s1]) {
@@ -583,10 +619,10 @@ export function buildRoof(project, level, baseY, zone) {
   if (!gable.empty) {
     const gm = new THREE.Mesh(gable.geometry(), facade.clone());
     // Dehors, la façade ; dedans (séjour cathédrale), un enduit clair au lieu de la pierre extérieure.
-    gm.material.side = zone?.vault ? THREE.FrontSide : THREE.DoubleSide;
+    gm.material.side = zone?.vault && roof.type !== 'butterfly' ? THREE.FrontSide : THREE.DoubleSide;
     gm.castShadow = gm.receiveShadow = true;
     g.add(gm);
-    if (zone?.vault) { const inner = new THREE.Mesh(gm.geometry, solid('#ece6da', 0.85).clone()); inner.material.side = THREE.BackSide; inner.receiveShadow = true; g.add(inner); }
+    if (zone?.vault && roof.type !== 'butterfly') { const inner = new THREE.Mesh(gm.geometry, solid('#ece6da', 0.85).clone()); inner.material.side = THREE.BackSide; inner.receiveShadow = true; g.add(inner); }
   }
   g.traverse((m) => { m.userData.kind = 'roof'; });
   return g;
