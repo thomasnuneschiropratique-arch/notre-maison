@@ -11,7 +11,7 @@ export function audit(store) {
     // Circulation : on part du hall ou du palier, on suit les passages au sol.
     const links = a.rooms.map(() => new Set());
     for (const w of lv.walls) { const l = a.sideRoom.get(`${w.id}:L`), r = a.sideRoom.get(`${w.id}:R`); if (l !== undefined && r !== undefined && w.openings.some((o) => o.sill < 10)) { links[l].add(r); links[r].add(l); } }
-    const start = lv.rooms.findIndex((r) => r.name === 'Hall' || r.name === 'Palier'), seen = new Set([start]), todo = [start];
+    const start = Math.max(0, lv.rooms.findIndex((r) => ['Hall', 'Palier', 'Entrée'].includes(r.name))), seen = new Set([start]), todo = [start];
     while (todo.length) for (const n of links[todo.pop()]) if (!seen.has(n)) { seen.add(n); todo.push(n); }
     a.rooms.forEach((r, i) => { if (!seen.has(i)) out.unreachable.push(`${lv.name} : ${name(i)}`); });
     out[`liens ${lv.name}`] = a.rooms.map((r, i) => `${name(i)} → ${[...links[i]].map(name).join(', ')}`);

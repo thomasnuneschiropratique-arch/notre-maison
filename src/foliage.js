@@ -121,6 +121,19 @@ export function leafyTree({ w = 3.4, h = 5 }) {
   return g;
 }
 
+const OLIVE = ['#76845e', '#8a976f', '#6a7853', '#9ba57f', '#5f6d4b'];
+
+/** Olivier : tronc court et tortueux qui se divise bas, feuillage argenté en masses claires. */
+export function oliveTree({ w = 4.5, h = 4.5 }) {
+  const g = new THREE.Group(), r = Math.max(0.12, w * 0.045);
+  const lobes = once('oliveL', () => { const out = []; for (let i = 0; i < 9; i++) { const a = (i / 9) * 6.28 + rnd() * 0.5, d = 0.18 + rnd() * 0.2; out.push({ x: Math.cos(a) * d, y: 0.6 + rnd() * 0.22, z: Math.sin(a) * d, rx: 0.17 + rnd() * 0.08, ry: 0.11 + rnd() * 0.06, rz: 0.17 + rnd() * 0.08 }); } return out; });
+  branch(g, 0, 0, 0, 0.12 * w, h * 0.22, 0.05 * w, r * 1.5, r * 1.1);
+  for (let i = 0; i < 4; i++) { const a = (i * 6.28) / 4 + 0.7, mx = 0.12 * w + Math.cos(a) * w * 0.12, mz = 0.05 * w + Math.sin(a) * w * 0.12; branch(g, 0.12 * w, h * 0.22, 0.05 * w, mx, h * 0.42, mz, r * 0.75, r * 0.5); branch(g, mx, h * 0.42, mz, Math.cos(a) * w * 0.3, h * 0.62, Math.sin(a) * w * 0.3, r * 0.5, r * 0.15); }
+  const geo = once('olive', () => cloudGeometry(lobes, 1400, 0.16));
+  const m = leafMesh(geo, leafMat('olive', OLIVE, 'leaf')); m.scale.set(w, h, w); g.add(m);
+  return g;
+}
+
 /** Cyprès de Provence, élancé et dense. */
 export function cypressTree({ w = 1.1, h = 8 }) {
   const g = new THREE.Group();

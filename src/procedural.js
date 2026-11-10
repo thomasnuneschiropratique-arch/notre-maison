@@ -4,7 +4,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { solid, fabric, wood, glass, mirror, ceramic, chrome, blackMetal, brass, emissive, finishFromColor, texturedMaterial } from './materials.js';
 import { carModel } from './cars.js';
-import { leafyTree, cypressTree, parasolPine, clippedShrub, flowerBed, poolWaterMaterial, flames } from './foliage.js';
+import { leafyTree, cypressTree, parasolPine, oliveTree, clippedShrub, flowerBed, poolWaterMaterial, flames } from './foliage.js';
 
 /** UV en mètres par projection sur l'axe dominant, pour que les textures gardent leur échelle réelle. */
 function uvMeters(geo) {
@@ -869,11 +869,45 @@ function pool(p) {
   const g = new THREE.Group();
   const { w = 8, d = 4 } = p;
   const stone = texturedMaterial('large_grey_tiles', 1.2, { tint: '#f7eedf', gain: 1.65 });
+  // Débordement : côté sud sans margelle, l'eau file jusqu'au bord et tombe dans un caniveau sombre.
+  if (p.infinity) {
+    B(g, w + 0.8, 0.06, 0.4, stone, 0, 0, -(d / 2 + 0.2));
+    for (const sx of [-1, 1]) B(g, 0.4, 0.06, d + 0.4, stone, sx * (w / 2 + 0.2), 0, 0.2);
+    B(g, w, 0.012, d + 0.02, poolWaterMaterial(), 0, 0.04, 0.01, 0);
+    B(g, w, 0.35, 0.05, solid('#24312f', 0.3), 0, -0.3, d / 2 + 0.03, 0);
+    B(g, w, 0.02, 0.35, poolWaterMaterial(), 0, -0.32, d / 2 + 0.22, 0);
+    return g;
+  }
   for (const sz of [-1, 1]) B(g, w + 0.8, 0.06, 0.4, stone, 0, 0, sz * (d / 2 + 0.2));
   for (const sx of [-1, 1]) B(g, 0.4, 0.06, d, stone, sx * (w / 2 + 0.2), 0, 0);
   B(g, w, 0.01, d, poolWaterMaterial(), 0, 0.03, 0, 0);
   return g;
 }
+
+/** Pergola à lames de bois sur poteaux de pierre claire : l'ombre en rayures des villas contemporaines. */
+function slatPergola(p) {
+  const g = new THREE.Group(), { w = 6, d = 4, h = 2.9 } = p;
+  const post = texturedMaterial('white_sandstone_bricks', 2.4, { tint: '#efe5d3', gain: 1.6 }), beam = wood('chene'), slat = wood('chene', '#c9a57e');
+  const nx = Math.max(2, Math.round(w / 4) + 1);
+  for (let i = 0; i < nx; i++) { const x = -w / 2 + 0.15 + (i * (w - 0.3)) / (nx - 1); for (const sz of [-1, 1]) B(g, 0.28, h - 0.22, 0.28, post, x, 0, sz * (d / 2 - 0.14), 0.01); }
+  for (const sz of [-1, 1]) B(g, w, 0.22, 0.14, beam, 0, h - 0.22, sz * (d / 2 - 0.14), 0.01);
+  for (const sx of [-1, 1]) B(g, 0.14, 0.22, d, beam, sx * (w / 2 - 0.07), h - 0.22, 0, 0.01);
+  const n = Math.round(w / 0.16);
+  for (let i = 0; i < n; i++) B(g, 0.05, 0.13, d + 0.2, slat, -w / 2 + (i + 0.5) * (w / n), h - 0.02, 0, 0.004);
+  return g;
+}
+
+/** Bain de soleil en teck, matelas blanc et dossier relevé. */
+function modernLounger(p) {
+  const g = new THREE.Group(), { w = 0.75, d = 2, h = 0.4 } = p, teak = wood('chene', '#b8865a'), pad = fabric('#efeae0');
+  B(g, w, 0.07, d, teak, 0, 0.22, 0, 0.01);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) B(g, 0.06, 0.22, 0.06, teak, sx * (w / 2 - 0.05), 0, sz * (d / 2 - 0.08), 0.01);
+  B(g, w - 0.06, 0.08, d * 0.64, pad, 0, 0.29, d * 0.16, 0.03);
+  const back = B(g, w - 0.06, 0.08, d * 0.36, pad, 0, 0.29, -d * 0.3, 0.03); back.rotation.x = -0.5; back.position.y += 0.2; back.position.z += 0.05;
+  return g;
+}
+
+function olive(p) { return oliveTree(p); }
 
 const stoneMat = () => texturedMaterial('rustic_stone_wall', 1.8, { tint: '#f1e4cf', gain: 1.35 });
 const walnutMat = () => texturedMaterial('american_walnut_veneer', 2, { tint: '#d7a877', gain: 1.15 });
@@ -1251,7 +1285,7 @@ export const PROC = {
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
   flowerBed, daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
-  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench,
+  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */

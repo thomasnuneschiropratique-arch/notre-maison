@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { wallCorners, dot, sub } from './geometry.js';
-import { getMaterial, solid, glass, wood, blackMetal, chrome } from './materials.js';
+import { getMaterial, solid, glass, wood, blackMetal, chrome, texturedMaterial } from './materials.js';
 
 const M = 0.01;
 
@@ -167,10 +167,12 @@ function buildWall(group, level, wall, corners, analysis, rooms, baseY, H, proje
   caps.quad(pt(c.aL), pt(c.bL), pt(c.bR), pt(c.aR), [0, 1, 0], uv0);
   if (!caps.empty) wg.add(meshOf(caps, plaster(), { kind: 'wallCap', wallId: wall.id }));
 
-  for (const o of openings) buildOpening(wg, wall, o, A, dir, nor, baseY, project, H);
+  // Côté extérieur du mur, pour poser volets et appuis dehors : +1 côté gauche, -1 côté droit.
+  const outSide = analysis.sideRoom.get(`${wall.id}:L`) === undefined ? 1 : analysis.sideRoom.get(`${wall.id}:R`) === undefined ? -1 : 0;
+  for (const o of openings) buildOpening(wg, wall, o, A, dir, nor, baseY, project, H, outSide);
 }
 
-function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
+function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H, outSide = 0) {
   const g = new THREE.Group();
   const cx = (A.x + dir.x * o.t) * M, cz = (A.y + dir.y * o.t) * M;
   g.position.set(cx, baseY + o.sill * M, cz);
@@ -184,7 +186,8 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
   if (o.type === 'passage') return;
   if (o.type === 'arch') {
     // Arc en plein cintre : les écoinçons remplissent le haut de l'ouverture.
-    const R = Math.min(w / 2, h * 0.6), plaster = solid('#f1ece1', 0.72);
+    // `stone` : arcade en pierre, les écoinçons prennent la matière de la façade.
+    const R = Math.min(w / 2, h * 0.6), plaster = o.stone ? getMaterial(o.stone).clone() : solid('#f1ece1', 0.72);
     const shape = new THREE.Shape();
     shape.moveTo(-w / 2, 0); shape.lineTo(-w / 2, R + 0.002); shape.lineTo(w / 2, R + 0.002); shape.lineTo(w / 2, 0); shape.absarc(0, 0, w / 2 - 0.001, 0, Math.PI, false);
     const geo = new THREE.ExtrudeGeometry(shape, { depth: t + 0.012, bevelEnabled: false, curveSegments: 28 });
@@ -285,6 +288,16 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H) {
   }
   if (o.sill > 0) box(g, w + 0.06, 0.03, t * 0.55, solid('#d8d4cb', 0.7), 0, -0.015, o.flip ? -t * 0.42 : t * 0.42);
   if (o.shutter) box(g, w, 0.18, 0.16, joinery, 0, h - 0.0, o.flip ? -t * 0.62 : t * 0.62);
+  // Volets battants en bois, ouverts contre la façade : planches verticales et barres horizontales.
+  if (o.shutters) {
+    const side = outSide || (o.flip ? -1 : 1), z = side * (t / 2 + 0.025), sw = w / 2, panel = solid(o.shutters, 0.62), bar = solid(o.shutters, 0.5);
+    for (const k of [-1, 1]) {
+      const x = k * (w / 2 + sw / 2 + 0.02);
+      box(g, sw, h, 0.035, panel, x, h / 2, z);
+      for (let i = 1; i < Math.max(3, Math.round(sw / 0.13)); i++) box(g, 0.006, h - 0.04, 0.038, solid('#000000', 0.9), x - sw / 2 + (i * sw) / Math.max(3, Math.round(sw / 0.13)), h / 2, z);
+      for (const v of [0.18, 0.5, 0.82]) box(g, sw - 0.04, 0.07, 0.05, bar, x, h * v, z + side * 0.012);
+    }
+  }
 }
 
 function floorGeometry(poly, holes = []) {
@@ -322,10 +335,27 @@ export function stairVoids(lower, stairDefs) {
     const r = ((it.rot || 0) * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
     const straight = !def.model.p?.shape || def.model.p.shape === 'straight';
     const f = (def.model.p?.flight || 0) * 50;
-    const shape = def.model.p?.quarter ? [[-w - 3, -d - 3], [-w - 3, d * 0.2], [-w + f * 2 + 3, d * 0.2], [-w + f * 2 + 3, -d + f * 2 + 3], [w + 3, -d + f * 2 + 3], [w + 3, -d - 3]] : [[-w - 3, -d - 3], [-w - 3, straight ? d * 0.2 : d + 3], [w + 3, straight ? d * 0.2 : d + 3], [w + 3, -d - 3]];
+    // La trémie s'ouvre dès que la marche passe sous les 2,05 m de hauteur libre, quelle que soit la hauteur sous plafond.
+    const H = lower.height || 260, rise = H + (lower.slab ?? 22), need = Math.max(0, (H - 205) / rise);
+    const endStraight = Math.min(d, Math.max(d * 0.2, d * (1 - 2 * need)));
+    const endQuarter = Math.min(d, Math.max(d * 0.2, d - (need / 0.76) * (2 * d - 2 * f)));
+    const shape = def.model.p?.quarter ? [[-w - 3, -d - 3], [-w - 3, endQuarter], [-w + f * 2 + 3, endQuarter], [-w + f * 2 + 3, -d + f * 2 + 3], [w + 3, -d + f * 2 + 3], [w + 3, -d - 3]] : [[-w - 3, -d - 3], [-w - 3, straight ? endStraight : d + 3], [w + 3, straight ? endStraight : d + 3], [w + 3, -d - 3]];
     out.push(shape.map(([x, y]) => ({ x: it.x + x * c - y * s, y: it.y + x * s + y * c })));
   }
   return out;
+}
+
+/** Centre d'une trémie, en ne gardant que sa partie principale (la volée la plus large). */
+function voidCenter(v) {
+  let A = 0, cx = 0, cy = 0;
+  v.forEach((p, i) => { const q = v[(i + 1) % v.length], f = p.x * q.y - q.x * p.y; A += f; cx += (p.x + q.x) * f; cy += (p.y + q.y) * f; });
+  return A ? { x: cx / (3 * A), y: cy / (3 * A) } : v[0];
+}
+
+/** Une trémie qui déborde dans l'épaisseur d'un mur est ramenée dans la pièce, sinon le découpage du sol se brouille. */
+function clampVoid(v, poly) {
+  const xs = poly.map((p) => p.x), ys = poly.map((p) => p.y), x0 = Math.min(...xs) + 1, x1 = Math.max(...xs) - 1, y0 = Math.min(...ys) + 1, y1 = Math.max(...ys) - 1;
+  return v.map((p) => ({ x: Math.min(x1, Math.max(x0, p.x)), y: Math.min(y1, Math.max(y0, p.y)) }));
 }
 
 /** Construit un niveau entier. Renvoie un groupe avec walls / floors / ceilings distincts. */
@@ -369,7 +399,8 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
   analysis.rooms.forEach((r, i) => {
     const info = level.rooms[i];
     if (!info) return;
-    const insideVoids = voids.filter((v) => opts.inside(v[0], r.poly));
+    // Une trémie appartient à la pièce qui contient son centre : un escalier collé aux murs a ses coins dans l'épaisseur du mur.
+    const insideVoids = voids.filter((v) => opts.inside(voidCenter(v), r.poly)).map((v) => clampVoid(v, r.poly));
     const fg = floorGeometry(r.poly, insideVoids);
     const f = new THREE.Mesh(fg, getMaterial(info.floor));
     f.position.y = baseY + 0.001;
@@ -377,7 +408,7 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
     f.userData = { kind: 'floor', roomId: info.id };
     floors.add(f);
 
-    const insideCeil = ceilingVoids.filter((v) => opts.inside(v[0], r.poly));
+    const insideCeil = ceilingVoids.filter((v) => opts.inside(voidCenter(v), r.poly)).map((v) => clampVoid(v, r.poly));
     const zone = zones.find((z) => inZone(r.center, z));
     if (zone?.vault) return;
     const cg = flipped(floorGeometry(r.poly, insideCeil));
@@ -392,6 +423,16 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
       under.position.y = baseY - 0.02; floors.add(under);
     }
   });
+  // Trémie : l'épaisseur du plancher habille le tour de l'escalier, sinon on voit le vide entre plafond et sol de l'étage.
+  if (lowerLevel && voids.length) {
+    const slab = (lowerLevel.slab ?? 22) * M, y0 = baseY - slab - 0.012, y1 = baseY + 0.004, sides = new QuadBatch();
+    for (const v of voids) v.forEach((a, k) => {
+      const b = v[(k + 1) % v.length], len = Math.hypot(b.x - a.x, b.y - a.y) * M; if (len < 0.01) return;
+      const n = [-(b.y - a.y) * M / len, 0, (b.x - a.x) * M / len];
+      sides.quad([a.x * M, y0, a.y * M], [b.x * M, y0, b.y * M], [b.x * M, y1, b.y * M], [a.x * M, y1, a.y * M], n, [[0, 0], [len, 0], [len, slab], [0, slab]]);
+    });
+    if (!sides.empty) { const m = meshOf(sides, plaster(), { kind: 'stairwell' }); m.material = m.material.clone(); m.material.side = THREE.DoubleSide; floors.add(m); }
+  }
   return root;
 }
 
@@ -441,6 +482,21 @@ export function buildRoof(project, level, baseY, zone) {
   const tile = getMaterial(project.style.roof);
   const eaveMat = solid('#e9e6df', 0.6);
   const top = baseY;
+
+  // Dalle contemporaine : plaque blanche fine qui déborde largement, éventuellement végétalisée.
+  if (roof.type === 'slab') {
+    const ov = roof.overhang ?? 120, o = { n: roof.ovN ?? ov, s: roof.ovS ?? ov, e: roof.ovE ?? ov, w: roof.ovW ?? ov };
+    const x0 = (b.x0 - maxT - o.w) * M, x1 = (b.x1 + maxT + o.e) * M, z0 = (b.y0 - maxT - o.n) * M, z1 = (b.y1 + maxT + o.s) * M, th = (roof.thick ?? 32) * M;
+    const white = solid('#f3f1ec', 0.55);
+    box(g, x1 - x0, th, z1 - z0, white, (x0 + x1) / 2, top + th / 2, (z0 + z1) / 2);
+    if (roof.green) {
+      const inset = 0.5, grass = texturedMaterial('sparse_grass', 1.6, { tint: '#a9c07f', gain: 1.7 });
+      const gm = box(g, x1 - x0 - inset * 2, 0.06, z1 - z0 - inset * 2, grass, (x0 + x1) / 2, top + th + 0.03, (z0 + z1) / 2), uv = gm.geometry.attributes.uv;
+      for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 - x0), uv.getY(i) * (z1 - z0));
+    }
+    g.traverse((m) => { m.userData.kind = 'roof'; });
+    return g;
+  }
 
   if (roof.type === 'flat') {
     const x0 = (b.x0 - maxT) * M, x1 = (b.x1 + maxT) * M, z0 = (b.y0 - maxT) * M, z1 = (b.y1 + maxT) * M;
@@ -526,9 +582,11 @@ export function buildRoof(project, level, baseY, zone) {
   }
   if (!gable.empty) {
     const gm = new THREE.Mesh(gable.geometry(), facade.clone());
-    gm.material.side = THREE.DoubleSide;
+    // Dehors, la façade ; dedans (séjour cathédrale), un enduit clair au lieu de la pierre extérieure.
+    gm.material.side = zone?.vault ? THREE.FrontSide : THREE.DoubleSide;
     gm.castShadow = gm.receiveShadow = true;
     g.add(gm);
+    if (zone?.vault) { const inner = new THREE.Mesh(gm.geometry, solid('#ece6da', 0.85).clone()); inner.material.side = THREE.BackSide; inner.receiveShadow = true; g.add(inner); }
   }
   g.traverse((m) => { m.userData.kind = 'roof'; });
   return g;
