@@ -197,12 +197,15 @@ export function poolWaterMaterial() {
     const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1.6, 0.9);
     return t;
   })();
+  // Mosaïque de 2,5 cm répétée sur tout le bassin (les coordonnées de texture sont en mètres).
   const tile = canvasTex(512, (c, Z) => {
-    const g = c.createRadialGradient(Z / 2, Z / 2, Z * 0.1, Z / 2, Z / 2, Z * 0.72); g.addColorStop(0, '#2c8fa6'); g.addColorStop(1, '#58c0cf');
-    c.fillStyle = g; c.fillRect(0, 0, Z, Z);
-    c.strokeStyle = 'rgba(235,250,250,.2)'; c.lineWidth = 1;
-    for (let i = 0; i <= 64; i++) { const p = (i * Z) / 64; c.beginPath(); c.moveTo(p, 0); c.lineTo(p, Z); c.moveTo(0, p); c.lineTo(Z, p); c.stroke(); }
+    c.fillStyle = '#3ea6bb'; c.fillRect(0, 0, Z, Z);
+    const n = 80, q = Z / n;
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const k = rnd(); if (k < 0.25) { c.fillStyle = k < 0.12 ? 'rgba(20,90,115,.18)' : 'rgba(150,225,235,.16)'; c.fillRect(x * q, y * q, q, q); } }
+    c.strokeStyle = 'rgba(235,250,250,.22)'; c.lineWidth = 1;
+    for (let i = 0; i <= n; i++) { const p = i * q; c.beginPath(); c.moveTo(p, 0); c.lineTo(p, Z); c.moveTo(0, p); c.lineTo(Z, p); c.stroke(); }
   }, false);
+  tile.wrapS = tile.wrapT = THREE.RepeatWrapping; tile.repeat.set(0.5, 0.5);
   const caustic = canvasTex(512, (c, Z) => {
     c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 2.2;
     for (let i = 0; i < 90; i++) { const x = rnd() * Z, y = rnd() * Z; c.beginPath(); c.moveTo(x, y); c.bezierCurveTo(x + (rnd() - 0.5) * 70, y + (rnd() - 0.5) * 70, x + (rnd() - 0.5) * 90, y + (rnd() - 0.5) * 90, x + (rnd() - 0.5) * 110, y + (rnd() - 0.5) * 110); c.stroke(); }

@@ -380,7 +380,7 @@ export class Plan2D {
     if (d?.type === 'brush') { store.brushStroke.end(); return; }
     if (d?.type === 'room') { this.finishRoom(d); this.draw(); return; }
     if (d?.type === 'roofZone') { this.finishRoof(d); this.draw(); return; }
-    if (d?.type === 'measure') { this.measure = tap ? null : d; this.draw(); return; }
+    if (d?.type === 'measure') { this.measure = tap ? null : d; this.draw(); if (!tap && lv.background && Math.hypot(d.b.x - d.a.x, d.b.y - d.a.y) > 20) store.emit('measured', d); return; }
     if (d?.type === 'zone') { if (tap) this.zoneTap(p, d.add); else this.finishZone(d); this.draw(); return; }
     if (d?.began) {
       if (d.type === 'node' && d.snapNode && d.snapNode !== d.id) mergeNodes(lv, d.id, d.snapNode);
@@ -933,7 +933,15 @@ export class Plan2D {
   }
 
   drawOverlayText() {
-    const lv = store.level;
+    const lv = store.level, c0 = this.ctx;
+    // Flèche du nord, en bas à droite : elle suit l'orientation réglée dans Style.
+    const n = ((store.project.site?.north || 0) * Math.PI) / 180, cx = this.w - 34, cy = this.h - 40;
+    c0.save(); c0.translate(cx, cy); c0.rotate(n);
+    c0.fillStyle = 'rgba(255,253,248,.85)'; c0.beginPath(); c0.arc(0, 0, 17, 0, 7); c0.fill();
+    c0.fillStyle = ACCENT; c0.beginPath(); c0.moveTo(0, -13); c0.lineTo(6, 6); c0.lineTo(0, 2); c0.lineTo(-6, 6); c0.closePath(); c0.fill();
+    c0.restore();
+    c0.fillStyle = ACCENT; c0.font = '600 11px ui-sans-serif, -apple-system, system-ui, sans-serif'; c0.textAlign = 'center'; c0.textBaseline = 'middle';
+    c0.fillText('N', cx + Math.sin(n) * 26, cy - Math.cos(n) * 26);
     if (Object.keys(lv.nodes).length) return;
     const c = this.ctx;
     c.fillStyle = SOFT; c.font = '15px ui-sans-serif, -apple-system, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';

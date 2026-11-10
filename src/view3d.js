@@ -1158,6 +1158,25 @@ export class View3D {
     this.invalidate();
   }
 
+  /** Image de la vue actuelle, sans le cadre de sélection : sert à l'« avant » d'un avant / après. */
+  grab() {
+    const sel = this.selBox.visible; this.selBox.visible = false;
+    this.renderer.shadowMap.needsUpdate = true;
+    if (this.composer) this.composer.render(); else this.renderer.render(this.scene, this.camera);
+    const url = this.renderer.domElement.toDataURL('image/jpeg', 0.88);
+    this.selBox.visible = sel; this.invalidate();
+    return url;
+  }
+
+  pose() { return { ...this.snapshot(), preset: this.preset, level: store.levelIndex }; }
+
+  setPose(s) {
+    this.camera.position.fromArray(s.pos);
+    if (this.mode === 'walk') { this.walkY = s.pos[1]; this.yaw = s.yaw; this.pitch = s.pitch; this.applyLook(); this.trackRoom(); }
+    else { this.controls.target.fromArray(s.target); this.camera.lookAt(this.controls.target); this.controls.update(); this.onCameraMove(); }
+    this.invalidate();
+  }
+
   /** Coupe la façade côté caméra quand elle est dehors, pour voir l'intérieur en photo. */
   snapshot() {
     return { pos: this.camera.position.toArray(), target: this.controls.target.toArray(), yaw: this.yaw, pitch: this.pitch, mode: this.mode };

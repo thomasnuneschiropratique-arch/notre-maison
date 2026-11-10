@@ -92,7 +92,8 @@ function landscape(m, env) {
 }
 
 function farGeometry(hAt, env, cx, cz) {
-  const step = LOW ? 80 : 40, R = 2400, inner = T_SIZE / 2 - 3;
+  // Même finesse partout : une grille plus grossière faisait remonter de grands triangles verts à travers les dallages.
+  const step = 40, R = 2400, inner = T_SIZE / 2 - 3;
   const pos = [], col = [], idx = [];
   const n = Math.round((2 * R) / step) + 1, base = new THREE.Color(env.far).multiplyScalar(0.44), field = new THREE.Color(env.far).lerp(new THREE.Color('#b09a5e'), 0.5).multiplyScalar(0.5), rock = new THREE.Color('#6b685f'), snow = new THREE.Color('#f2f4f6'), haze = new THREE.Color('#b4c3d0');
   const c = new THREE.Color();

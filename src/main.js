@@ -13,6 +13,7 @@ import { tourSeen, startTour } from './tour.js';
 import { QUALITY_PREF, AUTO_LOW, setQuality } from './quality.js';
 import { sync, connect, disconnect, queuePush, removeShared, knownCode, knownName, isEnabled } from './sync.js';
 import { isGroup, newGroup, isEmptyGroup, addLevel, addHouse, addGarden, addSameSpot, stats as groupStats, moveBy, rotate as rotateGroup, duplicate as duplicateGroup } from './group.js';
+const SUN_DAYS = [[172, '21 juin'], [264, '21 sept.'], [355, '21 déc.'], [80, '21 mars'], ['today', 'Aujourd’hui'], [15, 'Mi-janvier'], [46, 'Mi-février'], [105, 'Mi-avril'], [135, 'Mi-mai'], [196, 'Mi-juillet'], [227, 'Mi-août'], [288, 'Mi-octobre'], [319, 'Mi-novembre']];
 
 const ICONS = {
   select: '<path d="M5 3l14 8-6 2-2 6z"/>', zone: '<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><path d="M12 8v8M8 12h8"/>', wall: '<path d="M3 7h18M3 12h18M3 17h18M9 7v5M15 12v5M6 12v5M18 7v5"/>', room: '<rect x="4" y="5" width="16" height="14" rx="1"/><path d="M4 12h6"/>',
@@ -60,11 +61,13 @@ document.getElementById('app').innerHTML = `
       <div class="sunbar" id="sunbar">
         <span class="lbl">Heure</span><input type="range" id="hour" min="5" max="23" step="0.25" value="15"/><span class="val" id="hourV"></span>
         <button class="sunmore" id="sunMore" aria-label="Plus de réglages">⋯</button>
-        <div class="row2"><button class="chip" id="season">Été</button><button class="chip on" id="lamps">Lampes</button><span style="flex:1"></span><span>Exposition</span><input type="range" id="expo" min="0.4" max="2.4" step="0.05" value="1" style="width:96px"/></div>
+        <div class="row2"><select class="chip" id="sunDay" aria-label="Date">${SUN_DAYS.map(([d, l]) => `<option value="${d}" ${d === 172 ? 'selected' : ''}>${l}</option>`).join('')}</select><button class="chip" id="sunPlay" title="Faire défiler la journée">▶ Journée</button><button class="chip on" id="lamps">Lampes</button><button class="chip" id="abBtn" title="Garder la vue pour comparer après un changement">Avant / après</button><span style="flex:1"></span><span>Exposition</span><input type="range" id="expo" min="0.4" max="2.4" step="0.05" value="1" style="width:96px"/></div>
       </div>
       <div class="navpad" id="navpad"><button data-n="left" aria-label="Aller à gauche">◄</button><button data-n="up" aria-label="Avancer">▲</button><button data-n="down" aria-label="Reculer">▼</button><button data-n="right" aria-label="Aller à droite">►</button><button data-n="turnL" aria-label="Tourner à gauche">↺</button><button data-n="turnR" aria-label="Tourner à droite">↻</button><button data-n="tiltU" aria-label="Regarder plus du dessus">⤒</button><button data-n="tiltD" aria-label="Regarder plus de face">⤓</button><button data-n="in" aria-label="Zoomer">+</button><button data-n="out" aria-label="Dézoomer">−</button></div>
+      <div class="ab hidden" id="abView"><img id="abImg" alt="Avant"/><div class="abhandle" id="abHandle"><i></i></div><span class="abl l">Avant</span><span class="abl r">Après</span>
+        <div class="abbar"><button class="chip" id="abNew">Nouvel avant</button><button class="chip on" id="abClose">Fermer</button></div></div>
       <div class="loadpill hidden" id="loadPill"><i></i><span></span></div>
-      <div class="walkgo hidden" id="walkgo"><select id="walkRoom" aria-label="Aller dans une pièce"></select></div>
+      <div class="walkgo hidden" id="walkgo"><select id="walkRoom" aria-label="Aller dans une pièce"></select><button class="chip abwalk" id="abWalk">Avant / après</button></div>
       <div class="joy hidden" id="joy"><i></i></div>
       <div class="photoHud hidden" id="photoHud">
         <div style="display:flex;justify-content:space-between;gap:10px"><b id="phTitle">Préparation…</b><small id="phCount"></small></div>
@@ -107,7 +110,7 @@ async function customThumb(def, img) {
 
 const narrow = () => matchMedia('(max-width: 820px)').matches;
 const TABS = [['catalog', 'Meubles'], ['style', 'Style'], ['terrain', 'Terrain'], ['budget', 'Budget'], ['shopping', 'Achats'], ['advice', 'Conseils'], ['photos', 'Photos'], ['projects', 'Projets']];
-const ui = { view: 'plan', tab: 'catalog', cat: 'anna', sub: null, q: '', sort: 'pop', detail: null, panelOpen: !narrow(), summer: true };
+const ui = { view: 'plan', tab: 'catalog', cat: 'anna', sub: null, q: '', sort: 'pop', detail: null, panelOpen: !narrow() };
 
 function toast(t) {
   document.querySelector('.toast')?.remove();
@@ -115,15 +118,32 @@ function toast(t) {
   const undo = typeof t === 'object' && t.undo;
   el.textContent = typeof t === 'object' ? t.text : t;
   if (undo) { const b = document.createElement('button'); b.textContent = 'Annuler'; b.onclick = () => { store.undo(); el.remove(); }; el.append(b); }
+  const act = typeof t === 'object' && t.action;
+  if (act) { const b = document.createElement('button'); b.textContent = act.label; b.onclick = () => { el.remove(); act.fn(); }; el.append(b); }
   document.body.append(el);
-  setTimeout(() => el.remove(), undo ? 5000 : 2800);
+  setTimeout(() => el.remove(), act ? 7000 : undo ? 5000 : 2800);
 }
 store.addEventListener('toast', (e) => toast(e.detail));
+// Caler un plan importé : on mesure un mur connu, puis on indique sa vraie longueur.
+store.addEventListener('measured', (e) => {
+  const { a, b } = e.detail, len = Math.hypot(b.x - a.x, b.y - a.y);
+  toast({ text: `Trait de ${(len / 100).toFixed(2).replace('.', ',')} m.`, action: { label: 'Caler le plan dessus', fn: () => {
+    const v = prompt('Longueur réelle de ce trait, en mètres ?', (len / 100).toFixed(2).replace('.', ','));
+    const real = Number(String(v || '').replace(',', '.')) * 100;
+    if (!real || real < 20) return;
+    const f = real / len;
+    live(() => { const bg = store.level.background; if (!bg) return; bg.scale *= f; bg.x = a.x - (a.x - bg.x) * f; bg.y = a.y - (a.y - bg.y) * f; });
+    plan.measure = null; plan.draw();
+    toast('Plan calé à la bonne échelle.');
+    if (ui.tab === 'style') render();
+  } } });
+});
 // Après une mise à jour de l'app, un ancien morceau peut avoir disparu : on recharge une seule fois.
 addEventListener('vite:preloadError', () => { if (!sessionStorage.getItem('nm-reloaded')) { sessionStorage.setItem('nm-reloaded', '1'); location.reload(); } });
 store.addEventListener('save-error', () => toast('Sauvegarde impossible sur cet appareil.'));
 
 async function setView(v) {
+  $('#abView')?.classList.add('hidden'); $('#viewLayer')?.classList.remove('comparing');
   ui.view = v;
   $('#planLayer').classList.toggle('hidden', v !== 'plan');
   $('#viewLayer').classList.toggle('hidden', v !== '3d');
@@ -284,12 +304,63 @@ function fillWalkRooms() {
 }
 $('#walkRoom').onchange = (e) => { const r = store.level.rooms.find((x) => x.id === e.target.value); if (r) view.startWalk(r); e.target.value = ''; };
 const fmtHour = (h) => `${Math.floor(h)}h${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
-function updateSun() { const h = Number($('#hour').value); $('#hourV').textContent = fmtHour(h); view.setEnv({ hour: h, day: ui.summer ? 172 : 355 }); }
-$('#hour').oninput = updateSun;
-$('#season').onclick = () => { ui.summer = !ui.summer; $('#season').textContent = ui.summer ? 'Été' : 'Hiver'; updateSun(); };
+function updateSun() { const h = Number($('#hour').value); $('#hourV').textContent = fmtHour(h); view.setEnv({ hour: h, day: sunDay() }); }
+function sunDay() { const v = $('#sunDay').value; if (v !== 'today') return Number(v); const n = new Date(); return Math.round((n - new Date(n.getFullYear(), 0, 0)) / 864e5); }
+$('#hour').oninput = () => { stopPlay(); updateSun(); };
+$('#sunDay').onchange = updateSun;
+// La journée défile de 6 h à 22 h en une quinzaine de secondes.
+let playing = 0;
+function stopPlay() { if (!playing) return; cancelAnimationFrame(playing); playing = 0; $('#sunPlay').textContent = '▶ Journée'; }
+$('#sunPlay').onclick = () => {
+  if (playing) { stopPlay(); return; }
+  const el = $('#hour'); let h = Number(el.value) >= 21.5 ? 6 : Math.max(6, Number(el.value)), last = 0;
+  $('#sunPlay').textContent = '■ Arrêter';
+  const step = (t) => {
+    if (last && t - last < 90) { playing = requestAnimationFrame(step); return; }
+    const dt = last ? (t - last) / 1000 : 0; last = t;
+    h = Math.min(22, h + dt * 1.05); el.value = h; updateSun();
+    if (h >= 22) { playing = 0; $('#sunPlay').textContent = '▶ Journée'; return; }
+    playing = requestAnimationFrame(step);
+  };
+  playing = requestAnimationFrame(step);
+};
 $('#lamps').onclick = (e) => { view.env.lamps = !view.env.lamps; e.target.classList.toggle('on', view.env.lamps); view.updateLamps(); };
 $('#expo').oninput = (e) => view.setEnv({ exposure: Number(e.target.value) });
 $('#hourV').textContent = fmtHour(15);
+// ——— Avant / après : on garde une image, on change un meuble, puis on compare au même endroit ———
+const ab = { before: null, pose: null, x: 0.5 };
+function abLabel() { for (const b of [$('#abBtn'), $('#abWalk')]) { b.textContent = ab.before ? 'Comparer' : 'Avant / après'; b.classList.toggle('on', !!ab.before); } }
+function abKeep() {
+  ab.before = view.grab(); ab.pose = view.pose(); ab.size = [view.renderer.domElement.clientWidth, view.renderer.domElement.clientHeight];
+  abLabel();
+  toast('Vue « avant » gardée. Change un meuble, une couleur, un sol… puis touche « Comparer ».');
+}
+async function abShow() {
+  const pz = ab.pose;
+  if (pz.level !== store.levelIndex) { store.setLevel(pz.level); fillLevels(); }
+  if (pz.preset !== view.preset) setPreset(pz.preset);
+  view.setPose(pz);
+  await new Promise((r) => setTimeout(r, 700));
+  view.setPose(pz);
+  $('#abImg').src = ab.before;
+  ab.x = 0.5; abPlace();
+  $('#abView').classList.remove('hidden'); $('#viewLayer').classList.add('comparing');
+  const c = view.renderer.domElement;
+  if (Math.abs(c.clientWidth - ab.size[0]) > 4 || Math.abs(c.clientHeight - ab.size[1]) > 4) toast('La fenêtre a changé de taille : l’image « avant » est un peu déformée.');
+}
+function abPlace() { $('#abImg').style.clipPath = `inset(0 ${(1 - ab.x) * 100}% 0 0)`; $('#abHandle').style.left = `${ab.x * 100}%`; }
+$('#abBtn').onclick = $('#abWalk').onclick = () => { if (ab.before) abShow(); else abKeep(); };
+const abHide = () => { $('#abView').classList.add('hidden'); $('#viewLayer').classList.remove('comparing'); };
+$('#abClose').onclick = abHide;
+$('#abNew').onclick = () => { abHide(); ab.before = null; abLabel(); requestAnimationFrame(() => abKeep()); };
+$('#abView').onpointerdown = (e) => {
+  if (e.target.closest('.abbar')) return;
+  const box = $('#abView').getBoundingClientRect();
+  const move = (ev) => { ab.x = Math.min(1, Math.max(0, (ev.clientX - box.left) / box.width)); abPlace(); };
+  move(e);
+  const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
+  addEventListener('pointermove', move); addEventListener('pointerup', up);
+};
 $('#sunMore').onclick = () => $('#sunbar').classList.toggle('more');
 
 // Barre de commandes des vues 3D : maintenir un bouton pour continuer.
@@ -415,14 +486,35 @@ function fillThumbs(root) {
   root.querySelectorAll('img[data-th]:not([data-o])').forEach((i) => { i.dataset.o = '1'; io.observe(i); });
 }
 
+// ——— Coups de cœur : chacun met un cœur, l'appli montre ce que vous aimez tous les deux ———
+function myName() {
+  let n = knownName(); try { n ||= localStorage.getItem('nm:heart') || ''; } catch { /* navigation privée */ }
+  if (!n) { n = (prompt('Ton prénom, pour signer tes coups de cœur ?') || '').trim(); if (n) try { localStorage.setItem('nm:heart', n); } catch { /* navigation privée */ } }
+  return n;
+}
+const likesOf = (id) => store.project.likes?.[id] || [];
+function toggleLike(id) {
+  const me = myName(); if (!me) return false;
+  store.snapshot();
+  const all = store.project.likes ||= {}, cur = all[id] || [];
+  all[id] = cur.includes(me) ? cur.filter((x) => x !== me) : [...cur, me];
+  if (!all[id].length) delete all[id];
+  store.commit({ rebuild: false });
+  return true;
+}
+const heartHtml = (id) => { const l = likesOf(id), me = knownName() || (() => { try { return localStorage.getItem('nm:heart') || ''; } catch { return ''; } })(), on = l.includes(me);
+  return `<button class="heart ${on ? 'on' : ''} ${l.length > 1 ? 'both' : ''}" data-heart="${esc(id)}" aria-label="Coup de cœur" title="${l.length ? esc(l.join(' et ')) : 'Coup de cœur'}">${on || l.length ? '♥' : '♡'}${l.length > 1 ? `<b>${l.length}</b>` : ''}</button>`; };
+const inCat = (i) => (ui.cat === 'anna' ? isHerStyle(i) : ui.cat === 'likes' ? likesOf(i.id).length > 0 : i.cat === ui.cat);
+
 function filteredItems() {
   const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const q = norm(ui.q.trim());
   let list = allItems();
   if (q) { const words = q.split(/\s+/); list = list.filter((i) => { const t = norm(`${i.name} ${i.label} ${subLabel(i.sub)} ${i.brand}`); return words.every((w) => t.includes(w)); }); }
   else {
-    list = list.filter((i) => (ui.cat === 'anna' ? isHerStyle(i) : i.cat === ui.cat));
+    list = list.filter(inCat);
     if (ui.sub) list = list.filter((i) => i.sub === ui.sub);
+    if (ui.cat === 'likes') list = [...list].sort((a, b) => likesOf(b.id).length - likesOf(a.id).length);
   }
   if (ui.sort === 'asc') list = [...list].sort((a, b) => a.price - b.price);
   if (ui.sort === 'desc') list = [...list].sort((a, b) => b.price - a.price);
@@ -430,16 +522,18 @@ function filteredItems() {
 }
 
 function renderCatalog(body) {
-  const subs = [...new Set(allItems().filter((i) => (ui.cat === 'anna' ? isHerStyle(i) : i.cat === ui.cat)).map((i) => i.sub))];
+  const subs = [...new Set(allItems().filter(inCat).map((i) => i.sub))];
+  const nLikes = Object.keys(store.project.likes || {}).length, nBoth = Object.values(store.project.likes || {}).filter((l) => l.length > 1).length;
   const stats = catalogStats();
   body.innerHTML = `
     <input class="search" id="q" placeholder="Rechercher parmi ${stats.total} articles" value="${esc(ui.q)}"/>
-    <div class="chips" id="cats">${CATEGORIES.filter(([k]) => k !== 'perso' || allItems().some((i) => i.cat === 'perso')).map(([k, l]) => `<button class="chip ${ui.cat === k ? 'on' : ''}" data-c="${k}">${l}</button>`).join('')}</div>
+    <div class="chips" id="cats">${nLikes || ui.cat === 'likes' ? `<button class="chip ${ui.cat === 'likes' ? 'on' : ''}" data-c="likes">♥ Coups de cœur${nLikes ? ` (${nLikes})` : ''}</button>` : ''}${CATEGORIES.filter(([k]) => k !== 'perso' || allItems().some((i) => i.cat === 'perso')).map(([k, l]) => `<button class="chip ${ui.cat === k ? 'on' : ''}" data-c="${k}">${l}</button>`).join('')}</div>
     ${!ui.q && subs.length > 1 ? `<div class="chips" id="subs"><button class="chip ${!ui.sub ? 'on' : ''}" data-s="">Tout</button>${subs.map((s) => `<button class="chip ${ui.sub === s ? 'on' : ''}" data-s="${s}">${subLabel(s)}</button>`).join('')}</div>` : ''}
+    ${ui.cat === 'likes' && !ui.q ? `<p class="muted small" style="margin-top:8px">${nLikes ? `${nBoth ? `<b>${nBoth} meuble${nBoth > 1 ? 's' : ''} que vous aimez tous les deux</b>, en premier. ` : ''}Touche ♡ sur un meuble pour l’ajouter.` : 'Touche ♡ sur un meuble pour l’ajouter à vos coups de cœur.'} Avec le partage activé, ceux de l’autre arrivent ici aussi.</p>` : ''}
     <div id="gridWrap"></div>
     <div class="btnrow"><button class="btn block" id="addCustom">+ Ajouter un meuble trouvé en ligne</button></div>`;
   const PAGE = 40;
-  const cardHtml = (i) => `<div class="card" role="button" tabindex="0" data-id="${esc(i.id)}" ${narrow() ? '' : 'draggable="true"'}><img class="th" data-th="${esc(i.id)}" alt=""/><button class="add" data-add="${esc(i.id)}" aria-label="Placer ${esc(i.name)}" title="Placer sur le plan">+</button><div class="b"><div class="n">${esc(i.name)}</div><div class="l">${esc(i.label)}</div><div class="p"><span>${i.brand === 'IKEA' || i.brand === 'Générique' ? '' : `${esc(i.brand)} · `}${Math.round(i.w)}×${Math.round(i.d)}</span><b>${i.approx ? '≈ ' : ''}${euro(i.price)}</b></div></div></div>`;
+  const cardHtml = (i) => `<div class="card" role="button" tabindex="0" data-id="${esc(i.id)}" ${narrow() ? '' : 'draggable="true"'}><img class="th" data-th="${esc(i.id)}" alt=""/><button class="add" data-add="${esc(i.id)}" aria-label="Placer ${esc(i.name)}" title="Placer sur le plan">+</button>${heartHtml(i.id)}<div class="b"><div class="n">${esc(i.name)}</div><div class="l">${esc(i.label)}</div><div class="p"><span>${i.brand === 'IKEA' || i.brand === 'Générique' ? '' : `${esc(i.brand)} · `}${Math.round(i.w)}×${Math.round(i.d)}</span><b>${i.approx ? '≈ ' : ''}${euro(i.price)}</b></div></div></div>`;
   let list = [], shown = 0, more = null;
   const drawGrid = (keep = 0) => {
     list = filteredItems(); shown = 0;
@@ -464,6 +558,8 @@ function renderCatalog(body) {
     grid.onclick = (e) => {
       const add = e.target.closest('[data-add]');
       if (add) { placeItem(getItem(add.dataset.add)); return; }
+      const h = e.target.closest('[data-heart]');
+      if (h) { if (toggleLike(h.dataset.heart)) h.outerHTML = heartHtml(h.dataset.heart); return; }
       const c = e.target.closest('.card');
       if (c) { ui.catScroll = $('#pbody').scrollTop; ui.catShown = shown; ui.detail = c.dataset.id; render(); $('#pbody').scrollTop = 0; }
     };
@@ -490,8 +586,9 @@ function renderDetail(body, id) {
   const def = getItem(id); if (!def) { ui.detail = null; return render(); }
   body.innerHTML = `
     <button class="btn" id="back" style="margin-bottom:10px">← Retour</button>
-    <img class="hero" id="hero" alt=""/>
+    <div style="position:relative"><img class="hero" id="hero" alt=""/><span id="dheart">${heartHtml(def.id)}</span></div>
     <h2 class="t" style="margin-top:12px">${esc(def.name)}</h2>
+    ${likesOf(def.id).length ? `<div class="muted small">♥ ${esc(likesOf(def.id).join(' et '))}</div>` : ''}
     <div class="muted">${esc(def.label)}${def.brand !== 'Générique' ? ` · ${esc(def.brand)}` : ''}</div>
     <div class="price">${def.approx ? '≈ ' : ''}${euro(def.price)}</div>
     <div class="muted small" style="margin-top:6px">L ${Math.round(def.w)} × P ${Math.round(def.d)} × H ${Math.round(def.h)} cm</div>
@@ -501,6 +598,7 @@ function renderDetail(body, id) {
   thumbOf(def, $('#hero', body));
   $('#back', body).onclick = () => { ui.detail = null; render(); $('#pbody').scrollTop = ui.catScroll || 0; };
   $('#place', body).onclick = () => placeItem(def, null, { down: false });
+  $('#dheart', body).onclick = () => { if (toggleLike(def.id)) { const top = $('#pbody').scrollTop; render(); $('#pbody').scrollTop = top; } };
 }
 
 function placeTarget() { return store.level.name.toLowerCase().startsWith('rez') ? 'le plan' : store.level.name; }
@@ -825,17 +923,19 @@ function renderStyle(body) {
     <div class="field"><label>Menuiseries</label><input type="color" id="joi" value="${p.style.joinery}" style="height:36px;padding:2px"/></div>
     <h3 class="s">Terrain</h3>${swatchRow(GROUNDS, p.site.ground, 'ground')}
     <h3 class="s">Emplacement et ensoleillement</h3>
-    <div class="field"><label>Latitude</label><input type="number" step="0.01" id="lat" value="${p.site.lat}"/></div>
-    <div class="field"><label>Longitude</label><input type="number" step="0.01" id="lon" value="${p.site.lon}"/></div>
+    <div class="field wide"><label>Adresse du terrain</label><div style="display:flex;gap:6px"><input id="addr" placeholder="12 chemin des Vignes, Albi" value="${esc(p.site.address || '')}" style="flex:1"/><button class="btn" id="addrGo">Placer</button></div></div>
+    <div class="field"><label>Latitude</label><input type="number" step="0.0001" id="lat" value="${p.site.lat}"/></div>
+    <div class="field"><label>Longitude</label><input type="number" step="0.0001" id="lon" value="${p.site.lon}"/></div>
     <div class="field"><label>Orientation du nord (°)</label><input type="number" id="north" value="${p.site.north}"/></div>
-    <p class="note">Réglé par défaut sur la périphérie de Toulouse. Indique les coordonnées exactes du terrain une fois choisi. Le soleil de la vue 3D suit sa position réelle à cet endroit : tu peux vérifier quelle pièce est éclairée le matin ou le soir.</p>
+    <p class="note">Réglé par défaut sur la périphérie de Toulouse. Tape l’adresse du terrain et touche « Placer ». L’orientation du nord se lit sur la flèche N du plan : 0 si le nord est en haut, 90 s’il est à droite. Dans la vue 3D, choisis une date (21 décembre, 21 juin…) et une heure, ou touche « Journée » pour voir le soleil passer dans chaque pièce.</p>
     <h3 class="s">${esc(lv.name)}</h3>
     <div class="field wide"><label>Nom</label><input id="lvn" value="${esc(lv.name)}"/></div>
     <div class="field"><label>Hauteur sous plafond (cm)</label><input type="number" id="lvh" value="${lv.height}"/></div>
     ${p.levels.length > 1 ? '<div class="btnrow"><button class="btn danger block" id="lvdel">Supprimer cet étage</button></div>' : ''}
     <h3 class="s">Plan de l'architecte</h3>
-    <p class="muted small">Importe la photo d'un plan et décalque les murs par-dessus.</p>
-    <div class="btnrow"><label class="btn block">Importer une image<input type="file" id="bg" accept="image/*" hidden/></label></div>
+    <p class="muted small">Importe la photo d'un plan, ou photographie un croquis fait à la main, et décalque les murs par-dessus.</p>
+    <div class="btnrow"><label class="btn">Importer une image<input type="file" id="bg" accept="image/*" hidden/></label><label class="btn">Photographier un croquis<input type="file" id="sketch" accept="image/*" capture="environment" hidden/></label></div>
+    ${lv.background ? '<p class="note">Pour le mettre à la bonne échelle : prends l’outil Mesure, trace le long d’un mur dont tu connais la longueur, puis touche « Caler le plan dessus ».</p>' : ''}
     ${lv.background ? `<div class="field"><label>Largeur réelle du plan (m)</label><input type="number" step="0.1" id="bgw" value="${((lv.background.width * lv.background.scale) / 100).toFixed(1)}"/></div>
     <div class="field"><label>Opacité</label><input type="range" min="0.1" max="1" step="0.05" id="bgo" value="${lv.background.opacity}"/></div><div class="btnrow"><button class="btn danger block" id="bgx">Retirer le plan</button></div>` : ''}`;
   body.querySelectorAll('.swatch').forEach((b) => { b.onclick = () => { live(() => {
@@ -858,6 +958,19 @@ function renderStyle(body) {
   };
   bind('roofT', (v) => { p.roof.type = v; }); bind('pitch', (v) => { p.roof.pitch = Number(v); }); bind('ov', (v) => { p.roof.overhang = Number(v); });
   bind('joi', (v) => { p.style.joinery = v; }); bind('lat', (v) => { p.site.lat = Number(v); }); bind('lon', (v) => { p.site.lon = Number(v); }); bind('north', (v) => { p.site.north = Number(v); });
+  const addrGo = $('#addrGo', body);
+  if (addrGo) addrGo.onclick = async () => {
+    const q = $('#addr', body).value.trim(); if (q.length < 4) { toast('Tape l’adresse du terrain.'); return; }
+    addrGo.disabled = true;
+    try {
+      const r = await fetch(`https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(q)}&limit=1`).then((x) => x.json());
+      const f = r.features?.[0];
+      if (!f) { toast('Adresse introuvable.'); return; }
+      const [lon, lat] = f.geometry.coordinates;
+      live(() => { p.site.lat = Math.round(lat * 1e4) / 1e4; p.site.lon = Math.round(lon * 1e4) / 1e4; p.site.address = f.properties.label; });
+      render(); toast(`Placé : ${f.properties.label}`);
+    } catch { toast('Recherche impossible : vérifie la connexion.'); } finally { addrGo.disabled = false; }
+  };
   bind('lvn', (v) => { lv.name = v; }); bind('lvh', (v) => { lv.height = Number(v); });
   bind('bgw', (v) => { lv.background.scale = (Number(v) * 100) / lv.background.width; });
   bind('bgo', (v) => { lv.background.opacity = Number(v); });
@@ -870,18 +983,42 @@ function renderStyle(body) {
     render();
   };
   const x = $('#bgx', body); if (x) x.onclick = () => { live(() => { lv.background = null; }); render(); };
-  $('#bg', body).onchange = async (e) => {
-    const f = e.target.files[0]; if (!f) return;
-    const img = await createImageBitmap(f);
-    const k = Math.min(1, 1800 / Math.max(img.width, img.height));
-    const c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k;
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-    const src = c.toDataURL('image/jpeg', 0.78);
+  const importBg = async (f, sketch) => {
+    if (!f) return;
+    let img;
+    try { img = await createImageBitmap(f); } catch { toast('Cette image ne peut pas être ouverte.'); return; }
+    const k = Math.min(1, (sketch ? 1400 : 1800) / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0, c.width, c.height);
+    if (sketch) cleanSketch(g, c.width, c.height);
+    const src = sketch ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.78);
     const w0 = plan.toWorld(plan.w * 0.1, plan.h * 0.1);
-    live(() => { lv.background = { src, x: w0.x, y: w0.y, scale: 1200 / c.width, width: c.width, opacity: 0.5 }; });
+    live(() => { lv.background = { src, x: w0.x, y: w0.y, scale: 1200 / c.width, width: c.width, opacity: sketch ? 0.85 : 0.5 }; });
     setView('plan'); render();
-    toast('Indique maintenant la largeur réelle du plan.');
+    toast(sketch ? 'Croquis posé sous le plan. Cale-le avec l’outil Mesure sur un mur connu.' : 'Indique maintenant la largeur réelle du plan, ou cale-le avec l’outil Mesure.');
   };
+  $('#bg', body).onchange = (e) => importBg(e.target.files[0], false);
+  $('#sketch', body).onchange = (e) => importBg(e.target.files[0], true);
+}
+
+/** Croquis sur papier : le papier devient transparent, les traits restent foncés, même sous une lumière inégale. */
+function cleanSketch(g, w, h) {
+  const d = g.getImageData(0, 0, w, h), px = d.data, n = w * h, lum = new Float32Array(n);
+  for (let i = 0; i < n; i++) lum[i] = 0.3 * px[i * 4] + 0.59 * px[i * 4 + 1] + 0.11 * px[i * 4 + 2];
+  // Teinte du papier autour de chaque point (grille grossière), pour gommer les ombres de la photo.
+  const cell = Math.max(16, Math.round(Math.max(w, h) / 24)), gw = Math.ceil(w / cell), gh = Math.ceil(h / cell), paper = new Float32Array(gw * gh);
+  for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+    const vals = [];
+    for (let y = gy * cell; y < Math.min(h, (gy + 1) * cell); y += 3) for (let x = gx * cell; x < Math.min(w, (gx + 1) * cell); x += 3) vals.push(lum[y * w + x]);
+    vals.sort((a, b) => a - b); paper[gy * gw + gx] = vals[Math.floor(vals.length * 0.8)] || 255;
+  }
+  const at = (x, y) => { const fx = Math.min(gw - 1, Math.max(0, x / cell - 0.5)), fy = Math.min(gh - 1, Math.max(0, y / cell - 0.5)), x0 = Math.floor(fx), y0 = Math.floor(fy), x1 = Math.min(gw - 1, x0 + 1), y1 = Math.min(gh - 1, y0 + 1), tx = fx - x0, ty = fy - y0;
+    return (paper[y0 * gw + x0] * (1 - tx) + paper[y0 * gw + x1] * tx) * (1 - ty) + (paper[y1 * gw + x0] * (1 - tx) + paper[y1 * gw + x1] * tx) * ty; };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, ink = Math.min(1, Math.max(0, (1 - lum[i] / Math.max(40, at(x, y)) - 0.12) * 3.2));
+    px[i * 4] = 38; px[i * 4 + 1] = 35; px[i * 4 + 2] = 30; px[i * 4 + 3] = Math.round(ink * 255);
+  }
+  g.putImageData(d, 0, 0);
 }
 
 const fmt1 = (n) => (Math.round(n * 10) / 10).toLocaleString('fr-FR');
