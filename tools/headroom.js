@@ -13,12 +13,15 @@ export async function check(minClear = 2.0) {
     const w = (it.w ?? def.w) / 2, d = (it.d ?? def.d) / 2, r = ((it.rot || 0) * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
     const bad = [];
     let n = 0;
-    for (let y = -d + 8; y < d; y += 15) for (let x = -w + 8; x < w; x += 15) {
+    // On mesure au-dessus des marches : la bande de 12 cm côté rampe et le poteau central d'un colimaçon ne sont pas des marches.
+    const top = v.stairHeight(li);
+    for (let y = -d + 8; y < d; y += 15) for (let x = -w + 8; x < w - 12; x += 15) {
       const X = (it.x + x * c - y * s) / 100, Z = (it.y + x * s + y * c) / 100;
       rc.set(new T.Vector3(X, v.baseOf(li) + 6, Z), new T.Vector3(0, -1, 0));
       const hit = rc.intersectObject(obj, true)[0]; if (!hit) continue;
       n++;
       const tread = hit.point.y;
+      if (tread - v.baseOf(li) > top + 0.05) continue;
       rc.set(new T.Vector3(X, tread + 0.02, Z), new T.Vector3(0, 1, 0)); rc.far = minClear;
       const up = rc.intersectObjects([house], true).filter((h) => { for (let p = h.object; p; p = p.parent) if (!p.visible) return false; return true; })[0];
       rc.far = Infinity;

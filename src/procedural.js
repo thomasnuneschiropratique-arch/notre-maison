@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { solid, fabric, wood, glass, mirror, ceramic, chrome, blackMetal, brass, emissive, finishFromColor, texturedMaterial } from './materials.js';
+import { solid, fabric, wood, glass, mirror, ceramic, chrome, blackMetal, brass, emissive, finishFromColor, texturedMaterial, getMaterial } from './materials.js';
 import { carModel } from './cars.js';
 import { leafyTree, cypressTree, parasolPine, oliveTree, palmTree, clippedShrub, flowerBed, poolWaterMaterial, flames } from './foliage.js';
 
@@ -774,6 +774,13 @@ function stairs(p) {
     return g;
   }
   const run = d / n;
+  // Perron maçonné : chaque marche descend jusqu'au sol, en pierre claire, avec un mur d'échiffre de chaque côté.
+  if (p.solid) {
+    const st = trimStone();
+    for (let i = 0; i < n; i++) B(g, w, rise * (i + 1), run + 0.01, st, 0, 0, d / 2 - run * (i + 0.5));
+    for (const sx of [-1, 1]) for (let i = 0; i < n; i++) B(g, 0.22, rise * (i + 1) + 0.12, run + 0.01, st, sx * (w / 2 + 0.11), 0, d / 2 - run * (i + 0.5));
+    return g;
+  }
   for (let i = 0; i < n; i++) step(0, d / 2 - run * (i + 0.5), w, run + 0.03, i);
   if (!stone) for (const sx of [-1, 1]) {
     const len = Math.hypot(h, d), s = B(g, 0.03, 0.22, len, metal, sx * (w / 2 + 0.015), 0, 0);
@@ -801,6 +808,59 @@ function balcony(p) {
 function railing(p) {
   const g = new THREE.Group(), { w = 2, h = 1.05, rail = 'glass' } = p;
   railRun(g, [-w / 2, 0, 0], [w / 2, 0, 0], h, rail, blackMetal(), glass());
+  return g;
+}
+
+/** Pierre claire des villas Belle Époque : corniches, balustres, encadrements. */
+export const trimStone = (tint = '#ece2cd') => texturedMaterial('plastered_wall', 2.4, { tint, gain: 1.04 });
+let balusterGeo = null;
+/** Balustre tourné en vase, 1 m de haut, posé à l'origine. */
+function baluster() {
+  if (balusterGeo) return balusterGeo;
+  const prof = [[0, 0], [0.07, 0], [0.07, 0.05], [0.052, 0.07], [0.046, 0.1], [0.062, 0.18], [0.088, 0.3], [0.086, 0.38], [0.06, 0.5], [0.04, 0.6], [0.036, 0.7], [0.05, 0.75], [0.064, 0.82], [0.066, 0.9], [0.075, 0.92], [0.075, 1], [0, 1]];
+  balusterGeo = new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 12);
+  return balusterGeo;
+}
+/**
+ * Balustrade le long d'un segment (mètres) : socle, balustres en vase, main courante et dés aux extrémités.
+ * Ajoute ses maillages au groupe `g`. `y` est le niveau du socle, `h` la hauteur totale.
+ */
+export function balustradeRun(g, x0, z0, x1, z1, y, { h = 0.95, mat = trimStone(), piers = [true, true] } = {}) {
+  const L = Math.hypot(x1 - x0, z1 - z0); if (L < 0.3) return;
+  const ux = (x1 - x0) / L, uz = (z1 - z0) / L, ang = -Math.atan2(uz, ux);
+  const plinth = 0.16, rail = 0.13, bh = h - plinth - rail, pw = 0.34, parts = [];
+  const add = (geo, along, yy) => { geo.rotateY(ang); geo.translate(x0 + ux * along, y + yy, z0 + uz * along); parts.push(geo); };
+  add(new THREE.BoxGeometry(L, plinth, 0.3), L / 2, plinth / 2);
+  add(new THREE.BoxGeometry(L, 0.035, 0.34), L / 2, plinth - 0.0175);
+  add(new THREE.BoxGeometry(L, rail, 0.26), L / 2, h - rail / 2);
+  add(new THREE.BoxGeometry(L, 0.035, 0.32), L / 2, h - rail - 0.0175);
+  // Dés : aux extrémités demandées et tous les 3 m environ.
+  const n = Math.max(1, Math.round(L / 3)), at = [];
+  for (let i = 0; i <= n; i++) if ((i > 0 && i < n) || (i === 0 && piers[0]) || (i === n && piers[1])) at.push(Math.min(L - pw / 2, Math.max(pw / 2, (i * L) / n)));
+  for (const a of at) { add(new THREE.BoxGeometry(pw, h + 0.04, pw), a, (h + 0.04) / 2); add(new THREE.BoxGeometry(pw + 0.06, 0.05, pw + 0.06), a, h + 0.065); }
+  // Balustres entre les dés, au pas de 24 cm environ.
+  const stops = [0, ...at, L].sort((a, b) => a - b);
+  for (let k = 0; k < stops.length - 1; k++) {
+    const s0 = stops[k] + (at.includes(stops[k]) ? pw / 2 : 0), s1 = stops[k + 1] - (at.includes(stops[k + 1]) ? pw / 2 : 0), span = s1 - s0;
+    if (span < 0.2) continue;
+    const c = Math.max(1, Math.round(span / 0.24));
+    for (let i = 0; i < c; i++) { const b = baluster().clone(); b.scale(1, bh, 1); add(b, s0 + ((i + 0.5) * span) / c, plinth); }
+  }
+  const m = new THREE.Mesh(mergeGeometries(parts.map((q) => q.index ? q.toNonIndexed() : q)), mat);
+  uvMeters(m.geometry); m.castShadow = m.receiveShadow = true; g.add(m);
+  parts.forEach((q) => q.dispose());
+}
+function balustrade(p) {
+  const g = new THREE.Group(), { w = 3, h = 0.95 } = p;
+  balustradeRun(g, -w / 2, 0, w / 2, 0, 0, { h });
+  return g;
+}
+/** Souche de cheminée enduite, couronnée d'une corniche et de deux mitrons en terre cuite. */
+function chimneyStack(p) {
+  const g = new THREE.Group(), { w = 0.9, d = 0.6, h = 5 } = p, body = getMaterial(p.facadeId || 'facade_ocre_jaune'), trim = trimStone(), clay = solid('#a5583a', 0.8);
+  B(g, w, h - 0.26, d, body, 0, 0, 0);
+  B(g, w + 0.1, 0.08, d + 0.1, trim, 0, h - 0.5, 0); B(g, w + 0.16, 0.14, d + 0.16, trim, 0, h - 0.26, 0); B(g, w + 0.06, 0.06, d + 0.06, trim, 0, h - 0.12, 0);
+  for (const sx of [-1, 1]) C(g, 0.09, 0.11, 0.32, clay, sx * w * 0.24, h - 0.06, 0, 14);
   return g;
 }
 
@@ -1060,6 +1120,47 @@ function fireplace(p) {
   B(g, fw * 0.76, 0.03, 0.26, emb, 0, sill + 0.02, 0.08, 0);
   B(g, fw * 0.8, 0.09, 0.2, solid('#2a1a12', 0.9), 0, sill, 0.1, 0.03);
   if (!outdoor && h > 3.2) { const pw = w * 0.56; B(g, pw, h - 1.9, 0.05, walnutMat(), 0, 1.75, d / 2 + 0.01); }
+  return g;
+}
+
+/** Cheminée en marbre blanc à la française, surmontée d'un trumeau : miroir dans un cadre doré. */
+function marbleMantel(p) {
+  const g = new THREE.Group(), { w = 1.7, d = 0.45, h = 2.6 } = p, marble = solid('#eeebe5', 0.22), soot = solid('#161517', 0.92), gilt = brass();
+  const mh = 1.16, fw = w * 0.56, fh = 0.78;
+  B(g, w + 0.2, 0.04, d + 0.35, solid('#e3ded6', 0.3), 0, 0, 0.17);
+  for (const k of [-1, 1]) { B(g, (w - fw) / 2, fh, d, marble, k * (w + fw) / 4, 0.04, 0); B(g, 0.1, fh - 0.12, 0.04, marble, k * (fw / 2 + 0.1), 0.1, d / 2 + 0.02, 0.01); }
+  B(g, w, mh - fh - 0.1, d, marble, 0, fh + 0.04, 0);
+  B(g, w + 0.12, 0.06, d + 0.1, marble, 0, mh - 0.06, 0.03, 0.01);
+  B(g, fw, fh, 0.06, soot, 0, 0.04, -d / 2 + 0.05, 0); for (const k of [-1, 1]) B(g, 0.03, fh, d - 0.08, soot, k * (fw / 2 - 0.02), 0.04, 0, 0);
+  const fl = flames(fw * 0.7, fh * 0.55); fl.position.set(0, 0.08, 0.02); g.add(fl);
+  for (let i = 0; i < 3; i++) { const m = mesh(new THREE.CylinderGeometry(0.04, 0.05, fw * 0.45, 10), solid('#241710', 0.95), (i - 1) * 0.06, 0.1 + (i % 2) * 0.05, 0.02 + i * 0.03); m.rotation.z = Math.PI / 2; g.add(m); }
+  if (h > mh + 0.5) {
+    const mw = w * 0.86, top = h - 0.04, bot = mh + 0.04, frame = 0.07;
+    B(g, mw, top - bot, 0.03, mirror(), 0, bot, -d / 2 + 0.03, 0);
+    for (const k of [-1, 1]) B(g, frame, top - bot, 0.05, gilt, k * (mw / 2 - frame / 2), bot, -d / 2 + 0.04, 0.01);
+    B(g, mw, frame, 0.05, gilt, 0, bot, -d / 2 + 0.04, 0.01); B(g, mw + 0.06, frame + 0.03, 0.06, gilt, 0, top - frame - 0.03, -d / 2 + 0.045, 0.01);
+  }
+  return g;
+}
+
+/** Marquise Belle Époque : auvent de verre sur une ossature en fer forgé, consoles en volutes. */
+function marquise(p) {
+  const g = new THREE.Group(), { w = 2.6, d = 1.2, h = 0.6 } = p, iron = solid('#262a28', 0.45, 0.6), slope = Math.atan2(h * 0.55, d);
+  const pane = new THREE.Mesh(new THREE.BoxGeometry(w - 0.04, 0.012, Math.hypot(d, h * 0.55)), glass());
+  pane.rotation.x = slope; pane.position.set(0, h - h * 0.275, 0); g.add(pane);
+  const ribs = Math.max(3, Math.round(w / 0.45));
+  for (let i = 0; i <= ribs; i++) { const r = B(g, 0.03, 0.035, Math.hypot(d, h * 0.55), iron, -w / 2 + (i * w) / ribs, 0, 0); r.rotation.x = slope; r.position.y = h - h * 0.275; }
+  const front = B(g, w + 0.04, 0.12, 0.04, iron, 0, h - h * 0.55 - 0.1, d / 2); void front;
+  B(g, w + 0.04, 0.05, 0.06, iron, 0, h - 0.03, -d / 2 + 0.03);
+  // Lambrequin ajouré : petites dents sous le bord avant.
+  for (let i = 0; i < Math.round(w / 0.12); i++) B(g, 0.05, 0.08, 0.02, iron, -w / 2 + 0.06 + i * 0.12, h - h * 0.55 - 0.18, d / 2);
+  // Consoles : une courbe qui part bas contre le mur et remonte cueillir le bord de l'auvent.
+  for (const k of [-1, 1]) {
+    const x = k * (w / 2 - 0.12), zw = -d / 2 + 0.02, R = d * 0.8, top = h - (h * 0.55 * R) / d - 0.02;
+    const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(x, top - R * 0.75, zw), new THREE.Vector3(x, top, zw), new THREE.Vector3(x, top, zw + R));
+    const arm = new THREE.Mesh(new THREE.TubeGeometry(curve, 18, 0.02, 6, false), iron); arm.castShadow = true; g.add(arm);
+    const curl = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.014, 6, 16), iron); curl.rotation.y = Math.PI / 2; curl.position.set(x, top - 0.16, zw + 0.16); g.add(curl);
+  }
   return g;
 }
 
@@ -1417,7 +1518,7 @@ export const PROC = {
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
   flowerBed, daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
-  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive, kidneyPool, claustra, steelColumn, boulder, curvedSofa, drumFireplace, concreteColumn, sculpture, palm, arcDeck, arcPool, curvedSteps, roundBar, slantColumn,
+  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive, kidneyPool, claustra, steelColumn, boulder, curvedSofa, drumFireplace, concreteColumn, sculpture, palm, arcDeck, arcPool, curvedSteps, roundBar, slantColumn, balustrade, chimneyStack, marbleMantel, marquise,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */

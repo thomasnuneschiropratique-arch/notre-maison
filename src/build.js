@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { wallCorners, dot, sub, analyzeLevel, pointInPolygon } from './geometry.js';
 import { getMaterial, solid, glass, wood, blackMetal, chrome, texturedMaterial } from './materials.js';
+import { balustradeRun, trimStone, PROC } from './procedural.js';
 
 const M = 0.01;
 
@@ -147,6 +148,8 @@ function buildWall(group, level, wall, corners, analysis, rooms, baseY, H, proje
     }
   }
 
+  if (opts.facade) buildFacadeTrim(wg, wall, corners, A, dir, nor, L, baseY, H, project, opts);
+
   const extL = analysis.sideRoom.get(`${wall.id}:L`) === undefined, extR = analysis.sideRoom.get(`${wall.id}:R`) === undefined;
   if (extL !== extR) wg.userData.outward = new THREE.Vector3(nor.x * (extL ? 1 : -1), 0, nor.y * (extL ? 1 : -1));
 
@@ -175,6 +178,56 @@ function buildWall(group, level, wall, corners, analysis, rooms, baseY, H, proje
   for (const o of openings) buildOpening(wg, wall, o, A, dir, nor, baseY, project, H, outSide);
 }
 
+/**
+ * Modénature d'une façade classique : corniche moulurée sous le toit, bandeau au droit des planchers, chaînes d'angle en pierre.
+ * Les moulures se retournent aux angles saillants et s'arrêtent aux angles rentrants.
+ */
+function buildFacadeTrim(wg, wall, corners, A, dir, nor, L, baseY, H, project, opts) {
+  const { side, na, nb } = opts.facade, n = { x: nor.x * side, y: nor.y * side };
+  const s0 = side > 0 ? corners.aL : corners.aR, s1 = side > 0 ? corners.bL : corners.bR;
+  const u0 = dot(sub(s0, A), dir), u1 = dot(sub(s1, A), dir);
+  // Saillant (+1), rentrant (-1) ou dans le prolongement (0), à chaque bout.
+  const turn = (e, cont) => (e ? -(e.x * n.x + e.y * n.y) / (1 + (cont.x * e.x + cont.y * e.y)) : 0);
+  const ta = turn(na, { x: -dir.x, y: -dir.y }), tb = turn(nb, dir);
+  const batch = new QuadBatch();
+  const P = (u, out, v) => [(A.x + dir.x * u + n.x * out) * M, baseY + v * M, (A.y + dir.y * u + n.y * out) * M];
+  const nn = [n.x, 0, n.y], dd = [dir.x, 0, dir.y], md = [-dir.x, 0, -dir.y], uv = [[0, 0], [1, 0], [1, 1], [0, 1]];
+  const half = wall.thickness / 2;
+  // Une boîte collée à la façade : de u à u', de la face du mur jusqu'à `out` en avant, entre v0 et v1.
+  const slabBox = (a, b, out, v0, v1) => {
+    const f0 = P(a, half + out, v0), f1 = P(b, half + out, v0), f2 = P(b, half + out, v1), f3 = P(a, half + out, v1), w0 = P(a, half - 0.5, v0), w1 = P(b, half - 0.5, v0), w2 = P(b, half - 0.5, v1), w3 = P(a, half - 0.5, v1);
+    // Chaque face est remise dans le sens de sa normale : sinon la lumière la voit de dos et la pierre paraît noire.
+    const q = (p0, p1, p2, p3, nrm) => {
+      const ax = p1[0] - p0[0], ay = p1[1] - p0[1], az = p1[2] - p0[2], bx = p3[0] - p0[0], by = p3[1] - p0[1], bz = p3[2] - p0[2];
+      const dotN = (ay * bz - az * by) * nrm[0] + (az * bx - ax * bz) * nrm[1] + (ax * by - ay * bx) * nrm[2];
+      if (dotN >= 0) batch.quad(p0, p1, p2, p3, nrm, uv); else batch.quad(p0, p3, p2, p1, nrm, uv);
+    };
+    q(f0, f1, f2, f3, nn); q(f3, f2, w2, w3, [0, 1, 0]); q(w0, w1, f1, f0, [0, -1, 0]); q(w0, f0, f3, w3, md); q(f1, w1, w2, f2, dd);
+  };
+  if (project.style.cornice) {
+    const s = opts.slabAbove || 0;
+    const prof = s > 0 ? [[0, s, 3], [s - 9, s, 7], [-4, 0, 5]] : [[-38, -31, 3], [-31, -23, 7], [-23, -13, 13], [-13, -5, 21], [-5, 2, 28]];
+    for (const [v0, v1, out] of prof) slabBox(u0 - ta * out, u1 + tb * out, out, H + v0, H + v1);
+  }
+  if (project.style.quoins) {
+    const top = H + (opts.slabAbove || 0) - (project.style.cornice && !opts.slabAbove ? 38 : 0), course = 34, horiz = Math.abs(dir.x) > Math.abs(dir.y);
+    for (const [end, t] of [[0, ta], [1, tb]]) {
+      if (t < 0.5) continue;
+      for (let i = 0, v = 0; v < top - 4; i++, v += course) {
+        const len = (i % 2 === 0) === horiz ? 48 : 30, v1 = Math.min(top, v + course - 3);
+        if (end === 0) slabBox(u0 - 2, u0 + len, 2, v, v1); else slabBox(u1 - len, u1 + 2, 2, v, v1);
+      }
+    }
+  }
+  if (!batch.empty) wg.add(meshOf(batch, trimDouble(project.style.trim), { kind: 'wall', wallId: wall.id, exterior: true }));
+}
+const trimCache = new Map();
+/** Pierre claire visible des deux côtés : les moulures sont des boîtes ouvertes côté mur. */
+function trimDouble(tint) {
+  if (!trimCache.has(tint)) { const m = trimStone(tint).clone(); m.side = THREE.DoubleSide; trimCache.set(tint, m); }
+  return trimCache.get(tint);
+}
+
 function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H, outSide = 0) {
   const g = new THREE.Group();
   const cx = (A.x + dir.x * o.t) * M, cz = (A.y + dir.y * o.t) * M;
@@ -187,6 +240,14 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H, outSide =
   const fw = 0.055;
 
   if (o.type === 'passage') return;
+  // Encadrement en pierre claire côté façade ; `cornice` ajoute une petite corniche au-dessus (fenêtres nobles).
+  if (o.surround && outSide && o.type !== 'arch' && o.type !== 'garage') {
+    const tm = trimDouble(project.style.trim), z = outSide * (t / 2 + 0.012), bw = 0.15, y0 = o.sill > 0 ? -0.035 : 0;
+    for (const k of [-1, 1]) box(g, bw, h + bw - y0, 0.05, tm, k * (w / 2 + bw / 2), (y0 + h + bw) / 2, z);
+    box(g, w + bw * 2, bw, 0.05, tm, 0, h + bw / 2, z);
+    if (o.surround === 'cornice') { box(g, w + bw * 2 + 0.12, 0.05, 0.11, tm, 0, h + bw + 0.025, outSide * (t / 2 + 0.04)); box(g, w + bw * 2 + 0.2, 0.06, 0.16, tm, 0, h + bw + 0.08, outSide * (t / 2 + 0.065)); }
+    if (o.sill > 0) box(g, w + bw * 2 + 0.06, 0.05, 0.08, tm, 0, -0.06, outSide * (t / 2 + 0.03));
+  }
   if (o.type === 'arch') {
     // Arc en plein cintre : les écoinçons remplissent le haut de l'ouverture.
     // `stone` : arcade en pierre, les écoinçons prennent la matière de la façade.
@@ -293,9 +354,21 @@ function buildOpening(parent, wall, o, A, dir, nor, baseY, project, H, outSide =
   if (o.shutter) box(g, w, 0.18, 0.16, joinery, 0, h - 0.0, o.flip ? -t * 0.62 : t * 0.62);
   // Volets battants en bois, ouverts contre la façade : planches verticales et barres horizontales.
   if (o.shutters) {
-    const side = outSide || (o.flip ? -1 : 1), z = side * (t / 2 + 0.025), sw = w / 2, panel = solid(o.shutters, 0.62), bar = solid(o.shutters, 0.5);
+    const side = outSide || (o.flip ? -1 : 1), z = side * (t / 2 + 0.025 + (o.surround ? 0.03 : 0)), sw = w / 2, panel = solid(o.shutters, 0.62), bar = solid(o.shutters, 0.5);
+    // Persiennes : cadre et lames inclinées, réunies en un seul maillage par fenêtre.
+    if (o.louvres) {
+      const parts = [], step = 0.075, n = Math.max(4, Math.floor((h - 0.16) / step));
+      for (const k of [-1, 1]) {
+        // Persiennes fermées : chaque vantail couvre une moitié de la fenêtre.
+        const x = o.closed ? k * (sw / 2 - 0.004) : k * (w / 2 + sw / 2 + 0.02 + (o.surround ? 0.15 : 0));
+        for (const [bw2, bh2, xx, yy] of [[0.055, h, x - sw / 2 + 0.0275, h / 2], [0.055, h, x + sw / 2 - 0.0275, h / 2], [sw, 0.08, x, 0.04], [sw, 0.08, x, h - 0.04], [sw, 0.06, x, h * 0.48]]) parts.push(new THREE.BoxGeometry(bw2, bh2, 0.04).translate(xx, yy, z));
+        for (let i = 0; i < n; i++) { const yy = 0.08 + ((i + 0.5) * (h - 0.16)) / n; if (Math.abs(yy - h * 0.48) < 0.04) continue; parts.push(new THREE.BoxGeometry(sw - 0.1, 0.05, 0.008).rotateX(-0.55 * side).translate(x, yy, z)); }
+      }
+      const sm = new THREE.Mesh(mergeGeometries(parts), panel); sm.castShadow = true; g.add(sm); parts.forEach((p) => p.dispose());
+      return;
+    }
     for (const k of [-1, 1]) {
-      const x = k * (w / 2 + sw / 2 + 0.02);
+      const x = k * (w / 2 + sw / 2 + 0.02 + (o.surround ? 0.15 : 0));
       box(g, sw, h, 0.035, panel, x, h / 2, z);
       for (let i = 1; i < Math.max(3, Math.round(sw / 0.13)); i++) box(g, 0.006, h - 0.04, 0.038, solid('#000000', 0.9), x - sw / 2 + (i * sw) / Math.max(3, Math.round(sw / 0.13)), h / 2, z);
       for (const v of [0.18, 0.5, 0.82]) box(g, sw - 0.04, 0.07, 0.05, bar, x, h * v, z + side * 0.012);
@@ -333,7 +406,8 @@ export function stairVoids(lower, stairDefs) {
   const out = [];
   for (const it of lower?.items || []) {
     const def = stairDefs(it.cat);
-    if (!def || def.model?.type !== 'stairs') continue;
+    // Un perron ou des marches de jardin ne percent aucun plancher.
+    if (!def || def.model?.type !== 'stairs' || def.cat === 'exterieur') continue;
     const w = (it.w ?? def.w) / 2, d = (it.d ?? def.d) / 2;
     const r = ((it.rot || 0) * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
     const straight = !def.model.p?.shape || def.model.p.shape === 'straight';
@@ -390,9 +464,23 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
   // Un mur sous son propre toit (garage, véranda, séjour cathédrale) n'a pas d'étage au-dessus : pas de bandeau de dalle, sinon il dépasse du toit.
   const ownRoof = (project.roofs || []).filter((z) => z.level === level.id);
   const underOwnRoof = (w) => ownRoof.some((z) => inZone(level.nodes[w.a], z) && inZone(level.nodes[w.b], z));
+  // Façades classiques : chaque mur extérieur connaît son voisin de façade à chaque bout, pour raccorder corniches et chaînes d'angle.
+  const facadeOf = new Map();
+  if ((project.style.cornice || project.style.quoins) && !opts.cutHeight) {
+    for (const w of analysis.walls) {
+      const l = analysis.sideRoom.get(`${w.id}:L`) === undefined, r = analysis.sideRoom.get(`${w.id}:R`) === undefined;
+      if (l !== r) facadeOf.set(w.id, l ? 1 : -1);
+    }
+  }
+  const facadeNeighbor = (w, nodeId) => {
+    const o = analysis.walls.find((x) => x !== w && facadeOf.has(x.id) && (x.a === nodeId || x.b === nodeId)); if (!o) return null;
+    const P0 = level.nodes[nodeId], Q = level.nodes[o.a === nodeId ? o.b : o.a], L = Math.hypot(Q.x - P0.x, Q.y - P0.y) || 1;
+    return { x: (Q.x - P0.x) / L, y: (Q.y - P0.y) / L };
+  };
   for (const w of analysis.walls) {
     const c = corners.get(w.id);
-    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, wallHeight(w), project, underOwnRoof(w) ? { ...wallOpts, slabAbove: 0 } : wallOpts);
+    const fac = facadeOf.has(w.id) ? { side: facadeOf.get(w.id), na: facadeNeighbor(w, w.a), nb: facadeNeighbor(w, w.b) } : null;
+    if (c) buildWall(walls, level, w, c, analysis, level.rooms, baseY, wallHeight(w), project, { ...(underOwnRoof(w) ? { ...wallOpts, slabAbove: 0 } : wallOpts), facade: fac });
   }
   if (opts.groundAt && index <= (project.entry || 0)) buildFoundation(walls, level, index, project, analysis, corners, baseY, opts);
 
@@ -546,6 +634,16 @@ export function buildRoof(project, level, baseY, zone) {
   if (roof.type === 'flat') {
     const x0 = (b.x0 - maxT) * M, x1 = (b.x1 + maxT) * M, z0 = (b.y0 - maxT) * M, z1 = (b.y1 + maxT) * M;
     const w = x1 - x0, d = z1 - z0;
+    // Toit-terrasse à balustrade (tour belvédère) : dallage clair et balustres en pierre au droit des façades.
+    if (roof.balustrade) {
+      const pave = texturedMaterial('large_grey_tiles', 1.4, { tint: '#efe4d2', gain: 1.35 });
+      // Le dallage commence 1 cm au-dessus du plafond de la pièce, sinon les deux surfaces se disputent l'affichage.
+      box(g, w, 0.22, d, pave, (x0 + x1) / 2, top + 0.12, (z0 + z1) / 2);
+      const e = 0.15, c = [[x0 + e, z0 + e], [x1 - e, z0 + e], [x1 - e, z1 - e], [x0 + e, z1 - e]], mat = trimStone(project.style.trim);
+      c.forEach(([ax, az], k) => { const [bx, bz] = c[(k + 1) % 4]; balustradeRun(g, ax, az, bx, bz, top + 0.23, { mat, piers: [true, false] }); });
+      g.traverse((m) => { m.userData.kind = 'roof'; });
+      return g;
+    }
     box(g, w, 0.22, d, solid('#a9a69e', 0.9), (x0 + x1) / 2, top + 0.11, (z0 + z1) / 2);
     const h = 0.5, t = 0.2;
     box(g, w, h, t, facade, (x0 + x1) / 2, top + h / 2 + 0.1, z0 + t / 2);
@@ -606,6 +704,52 @@ export function buildRoof(project, level, baseY, zone) {
       for (let i = 0; i <= k; i++) { const s = s0 + ((s1 - s0) * i) / k, q = P(s, t, (top + y1) / 2); box(g, alongX ? 0.05 : 0.06, y1 - top, alongX ? 0.06 : 0.05, frame, q[0], q[1], q[2]); }
     }
     const cm = new THREE.Mesh(clear.geometry(), glass()); cm.userData.kind = 'roofGlass'; g.add(cm);
+  } else if (roof.type === 'mansard') {
+    // Toit à la Mansart : brisis presque vertical en ardoise, terrasson à faible pente, arêtiers et faîtage en zinc, lucarnes à fronton.
+    const ob = roof.overhang ?? 0, brisH = roof.brisH ?? 230, d = brisH / Math.tan(((roof.brisPitch ?? 74) * Math.PI) / 180);
+    const S0 = (alongX ? b.x0 : b.y0) - maxT - ob, S1 = (alongX ? b.x1 : b.y1) + maxT + ob, T0 = (alongX ? b.y0 : b.x0) - maxT - ob, T1 = (alongX ? b.y1 : b.x1) + maxT + ob;
+    const s0i = S0 + d, s1i = S1 - d, t0i = T0 + d, t1i = T1 - d, yB = top + brisH * M, hw = (t1i - t0i) / 2, tc = (t0i + t1i) / 2;
+    let rA = s0i + hw, rB = s1i - hw; if (rB < rA) rA = rB = (s0i + s1i) / 2;
+    const yR = yB + Math.min(hw, (s1i - s0i) / 2) * slope * M;
+    addPlane(P(S0, T0, top), P(S1, T0, top), P(s1i, t0i, yB), P(s0i, t0i, yB));
+    addPlane(P(S1, T1, top), P(S0, T1, top), P(s0i, t1i, yB), P(s1i, t1i, yB));
+    addPlane(P(S0, T1, top), P(S0, T0, top), P(s0i, t0i, yB), P(s0i, t1i, yB));
+    addPlane(P(S1, T0, top), P(S1, T1, top), P(s1i, t1i, yB), P(s1i, t0i, yB));
+    addPlane(P(s0i, t0i, yB), P(s1i, t0i, yB), P(rB, tc, yR), P(rA, tc, yR));
+    addPlane(P(s1i, t1i, yB), P(s0i, t1i, yB), P(rA, tc, yR), P(rB, tc, yR));
+    addPlane(P(s0i, t1i, yB), P(s0i, t0i, yB), P(rA, tc, yR), P(rA, tc, yR));
+    addPlane(P(s1i, t0i, yB), P(s1i, t1i, yB), P(rB, tc, yR), P(rB, tc, yR));
+    const zinc = solid('#8e9599', 0.42, 0.35), rods = [];
+    const rod = (p, q, r) => { const a = new THREE.Vector3(...p), c = new THREE.Vector3(...q), L = a.distanceTo(c); if (L < 0.01) return; const geo = new THREE.CylinderGeometry(r, r, L, 8); geo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), c.clone().sub(a).normalize())); geo.translate((a.x + c.x) / 2, (a.y + c.y) / 2, (a.z + c.z) / 2); rods.push(geo); };
+    const inner = [[s0i, t0i], [s1i, t0i], [s1i, t1i], [s0i, t1i]], outer = [[S0, T0], [S1, T0], [S1, T1], [S0, T1]];
+    inner.forEach(([s, t], k) => { const [s2, t2] = inner[(k + 1) % 4]; rod(P(s, t, yB), P(s2, t2, yB), 0.045); rod(P(outer[k][0], outer[k][1], top), P(s, t, yB), 0.03); rod(P(s, t, yB), P(s < (s0i + s1i) / 2 ? rA : rB, tc, yR), 0.03); });
+    rod(P(rA, tc, yR), P(rB, tc, yR), 0.05);
+    if (rods.length) { const zm = new THREE.Mesh(mergeGeometries(rods), zinc); zm.castShadow = true; g.add(zm); rods.forEach((q) => q.dispose()); }
+    // Souches de cheminée : elles partent de la corniche et dépassent le faîtage d'environ un mètre.
+    for (const c of roof.chimneys || []) {
+      const st = PROC.chimneyStack({ w: (c.w ?? 100) * M, d: (c.d ?? 60) * M, h: yR - top + (c.above ?? 0.95), facadeId: project.style.facade });
+      st.position.set(c.x * M, top + 0.02, c.y * M); st.rotation.y = ((c.rot ?? 0) * Math.PI) / 180; g.add(st);
+    }
+    // Lucarnes : façade en pierre claire posée sur la corniche, fenêtre à petits bois, fronton triangulaire ou cintré.
+    const trim = trimStone(project.style.trim), white = solid('#f1efe9', 0.5), dark = solid('#1c2023', 0.9);
+    for (const dm of roof.dormers || []) {
+      const w = (dm.w ?? 110) * M, h = (dm.h ?? 150) * M, sill = 0.22, fw = w + 0.32, ph = dm.kind === 'seg' ? 0.26 : 0.36, zTop = sill + h + 0.16 + ph, D = zTop / Math.tan(((roof.brisPitch ?? 74) * Math.PI) / 180) + 0.3;
+      const X0 = b.x0 - maxT - ob, X1 = b.x1 + maxT + ob, Y0 = b.y0 - maxT - ob, Y1 = b.y1 + maxT + ob;
+      const pos = { s: [dm.at, Y1 - 2, 0], n: [dm.at, Y0 + 2, Math.PI], e: [X1 - 2, dm.at, Math.PI / 2], w: [X0 + 2, dm.at, -Math.PI / 2] }[dm.side || 's'];
+      const lg = new THREE.Group(); lg.position.set(pos[0] * M, top + 0.02, pos[1] * M); lg.rotation.y = pos[2]; g.add(lg);
+      box(lg, w, sill, 0.16, trim, 0, sill / 2, -0.08);
+      for (const k of [-1, 1]) { box(lg, 0.16, sill + h, 0.2, trim, k * (w / 2 + 0.08), (sill + h) / 2, -0.08); box(lg, 0.05, sill + h + 0.16, D, tile, k * (w / 2 + 0.135), (sill + h + 0.16) / 2, -D / 2); }
+      box(lg, fw + 0.06, 0.16, 0.22, trim, 0, sill + h + 0.08, -0.09);
+      box(lg, w, h, 0.02, dark, 0, sill + h / 2, -0.17);
+      const gl = box(lg, w - 0.08, h - 0.08, 0.006, glass(), 0, sill + h / 2, -0.11); gl.castShadow = false;
+      for (const [bw, bh, x, y] of [[w, 0.05, 0, sill + 0.025], [w, 0.05, 0, sill + h - 0.025], [0.05, h, -w / 2 + 0.025, sill + h / 2], [0.05, h, w / 2 - 0.025, sill + h / 2], [0.03, h, 0, sill + h / 2], [w, 0.025, 0, sill + h * 0.36], [w, 0.025, 0, sill + h * 0.68]]) box(lg, bw, bh, 0.04, white, x, y, -0.1);
+      // Fronton : en pierre devant, en ardoise derrière (le petit toit de la lucarne).
+      const yP = sill + h + 0.16, gable = (base, hh) => { const sh = new THREE.Shape(); if (dm.kind === 'seg') { const R = (base * base / 4 + hh * hh) / (2 * hh); sh.moveTo(-base / 2, 0); sh.absarc(0, hh - R, R, Math.PI / 2 + Math.asin(base / 2 / R), Math.PI / 2 - Math.asin(base / 2 / R), true); sh.lineTo(base / 2, 0); sh.lineTo(-base / 2, 0); } else { sh.moveTo(-base / 2, 0); sh.lineTo(base / 2, 0); sh.lineTo(0, hh); sh.lineTo(-base / 2, 0); } return sh; };
+      const front = new THREE.ExtrudeGeometry(gable(fw + 0.12, ph), { depth: 0.16, bevelEnabled: false, curveSegments: 16 }); front.translate(0, yP, -0.12);
+      const fm = new THREE.Mesh(front, trim); fm.castShadow = fm.receiveShadow = true; lg.add(fm);
+      const back = new THREE.ExtrudeGeometry(gable(fw + 0.02, ph - 0.015), { depth: D, bevelEnabled: false, curveSegments: 16 }); back.translate(0, yP + 0.01, -D - 0.1);
+      const bm = new THREE.Mesh(back, tile); bm.castShadow = bm.receiveShadow = true; lg.add(bm);
+    }
   } else if (roof.type === 'mono') {
     const highY = top + (t1 - t0 + ov) * slope * M;
     addPlane(P(sA, tA, highY), P(sB, tA, highY), P(sB, tB, eaveY), P(sA, tB, eaveY));

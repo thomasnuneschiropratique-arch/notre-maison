@@ -74,6 +74,7 @@ export const FACADES = [
   { id: 'facade_enduit', name: 'Enduit blanc cassé', t: 'plastered_wall', s: 3, tint: '#efe9dc', price: 45 },
   { id: 'facade_ton_pierre', name: 'Enduit ton pierre', t: 'plastered_wall', s: 3, tint: '#d9c8ab', price: 45 },
   { id: 'facade_ocre', name: 'Enduit ocre', t: 'plastered_wall', s: 3, tint: '#cfa873', price: 45 },
+  { id: 'facade_ocre_jaune', name: 'Enduit ocre jaune de la Riviera', t: 'plastered_wall', s: 3, tint: '#e8c48a', gain: 1.06, price: 48 },
   { id: 'facade_gris', name: 'Enduit gris', t: 'plastered_wall', s: 3, tint: '#a7a6a1', price: 45 },
   { id: 'facade_brique', name: 'Brique rouge toulousaine', t: 'red_brick_03', s: 2, price: 110 },
   { id: 'facade_pierre_blonde', name: 'Pierre blonde appareillée', t: 'white_sandstone_bricks', s: 3.2, tint: '#f6ead6', gain: 2.2, price: 175 },
