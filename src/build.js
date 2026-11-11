@@ -411,7 +411,9 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
     const insideCeil = ceilingVoids.filter((v) => opts.inside(voidCenter(v), r.poly)).map((v) => clampVoid(v, r.poly));
     const zone = zones.find((z) => inZone(r.center, z));
     if (zone?.vault) return;
-    const cg = flipped(floorGeometry(r.poly, insideCeil));
+    // Oculus : le plafond s'ouvre en cercle sous le puits de lumière du toit.
+    const ceilHoles = info.oculus ? [...insideCeil, Array.from({ length: 32 }, (_, k) => ({ x: info.oculus.x + Math.cos((k / 32) * Math.PI * 2) * info.oculus.r, y: info.oculus.y + Math.sin((k / 32) * Math.PI * 2) * info.oculus.r }))] : insideCeil;
+    const cg = flipped(floorGeometry(r.poly, ceilHoles));
     const c = new THREE.Mesh(cg, getMaterial(info.ceiling || 'paint_blanc'));
     c.position.y = baseY + ((zone?.wallH > 0 ? zone.wallH : 0) || level.height) * M;
     c.castShadow = true; c.receiveShadow = true;
@@ -465,6 +467,8 @@ function buildFoundation(parent, level, index, project, analysis, corners, baseY
     if (L < 1) continue;
     const mid = { x: (A.x + B_.x) / 2, y: (A.y + B_.y) / 2 };
     if (lower && opts.coveredBy(lower, mid)) continue;
+    // Volume posé sur pilotis au-dessus du vide : pas de mur qui descend jusqu'au sol.
+    if (w.piles) continue;
     const dir = { x: (B_.x - A.x) / L, y: (B_.y - A.y) / L }, nor = { x: -dir.y, y: dir.x }, sign = extL ? 1 : -1;
     const c = corners.get(w.id); if (!c) continue;
     const s0 = extL ? c.aL : c.aR, s1 = extL ? c.bL : c.bR;
@@ -501,15 +505,26 @@ export function buildRoof(project, level, baseY, zone) {
   const eaveMat = solid('#e9e6df', 0.6);
   const top = baseY;
 
+  // Disque : grande dalle ronde en porte-à-faux, percée d'un oculus vitré au centre.
+  if (roof.type === 'disc') {
+    const cx = ((b.x0 + b.x1) / 2) * M, cz = ((b.y0 + b.y1) / 2) * M, R = ((b.x1 - b.x0) / 2 + maxT + (roof.overhang ?? 100)) * M, th = (roof.thick ?? 36) * M, oc = (roof.oculus || 0) * M;
+    const shape = new THREE.Shape(); shape.absarc(0, 0, R, 0, Math.PI * 2, false);
+    if (oc > 0) { const h = new THREE.Path(); h.absarc(0, 0, oc, 0, Math.PI * 2, true); shape.holes.push(h); }
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: th, bevelEnabled: false, curveSegments: 72 }); geo.rotateX(-Math.PI / 2);
+    const m = new THREE.Mesh(geo, solid('#f2f0eb', 0.5)); m.position.set(cx, top + 0.012, cz); m.castShadow = m.receiveShadow = true; g.add(m);
+    if (oc > 0) { const gl = new THREE.Mesh(new THREE.CircleGeometry(oc, 48).rotateX(-Math.PI / 2), glass()); gl.position.set(cx, top + th + 0.02, cz); g.add(gl); box(g, 0.01, 0.01, 0.01, eaveMat, cx, top, cz); }
+    g.traverse((o) => { o.userData.kind = 'roof'; });
+    return g;
+  }
   // Dalle contemporaine : plaque blanche fine qui déborde largement, éventuellement végétalisée.
   if (roof.type === 'slab') {
     const ov = roof.overhang ?? 120, o = { n: roof.ovN ?? ov, s: roof.ovS ?? ov, e: roof.ovE ?? ov, w: roof.ovW ?? ov };
     const x0 = (b.x0 - maxT - o.w) * M, x1 = (b.x1 + maxT + o.e) * M, z0 = (b.y0 - maxT - o.n) * M, z1 = (b.y1 + maxT + o.s) * M, th = (roof.thick ?? 32) * M;
     const white = solid('#f3f1ec', 0.55);
-    box(g, x1 - x0, th, z1 - z0, white, (x0 + x1) / 2, top + th / 2, (z0 + z1) / 2);
+    box(g, x1 - x0, th, z1 - z0, white, (x0 + x1) / 2, top + th / 2 + 0.012, (z0 + z1) / 2);
     if (roof.green) {
       const inset = 0.5, grass = texturedMaterial('sparse_grass', 1.6, { tint: '#a9c07f', gain: 1.7 });
-      const gm = box(g, x1 - x0 - inset * 2, 0.06, z1 - z0 - inset * 2, grass, (x0 + x1) / 2, top + th + 0.03, (z0 + z1) / 2), uv = gm.geometry.attributes.uv;
+      const gm = box(g, x1 - x0 - inset * 2, 0.06, z1 - z0 - inset * 2, grass, (x0 + x1) / 2, top + th + 0.042, (z0 + z1) / 2), uv = gm.geometry.attributes.uv;
       for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 - x0), uv.getY(i) * (z1 - z0));
     }
     g.traverse((m) => { m.userData.kind = 'roof'; });

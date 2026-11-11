@@ -4,7 +4,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { solid, fabric, wood, glass, mirror, ceramic, chrome, blackMetal, brass, emissive, finishFromColor, texturedMaterial } from './materials.js';
 import { carModel } from './cars.js';
-import { leafyTree, cypressTree, parasolPine, oliveTree, clippedShrub, flowerBed, poolWaterMaterial, flames } from './foliage.js';
+import { leafyTree, cypressTree, parasolPine, oliveTree, palmTree, clippedShrub, flowerBed, poolWaterMaterial, flames } from './foliage.js';
 
 /** UV en mètres par projection sur l'axe dominant, pour que les textures gardent leur échelle réelle. */
 function uvMeters(geo) {
@@ -943,6 +943,54 @@ function claustra(p) {
   return g;
 }
 
+/** Rocher posé dans la maison ou le jardin : galet géant aux arêtes adoucies. */
+function boulder(p) {
+  const g = new THREE.Group(), { w = 1.6, d = 1.2, h = 0.9 } = p, geo = new THREE.IcosahedronGeometry(0.5, 3), q = geo.attributes.position;
+  for (let i = 0; i < q.count; i++) { const x = q.getX(i), y = q.getY(i), z = q.getZ(i), k = 1 + 0.12 * Math.sin(5 * x + 1.3) * Math.cos(4 * z + 0.7) + 0.06 * Math.sin(11 * y + 2 * x); q.setXYZ(i, x * k, Math.max(-0.12, y) * k, z * k); }
+  geo.computeVertexNormals(); geo.translate(0, 0.12, 0);
+  const m = new THREE.Mesh(geo, texturedMaterial('rocky_terrain_02', 1.4, { tint: '#b8b2a6', gain: 1.75 })); m.scale.set(w, h * 1.3, d); m.castShadow = m.receiveShadow = true; g.add(m);
+  return g;
+}
+
+/** Canapé en arc de cercle, tourné vers la vue : assise continue, dossier bas, coussins posés. */
+function curvedSofa(p) {
+  const g = new THREE.Group(), { w = 6, d = 3 } = p, R = Math.max(w / 2, 1.5), span = 2 * Math.asin(Math.min(1, w / 2 / R)), n = 14, fab = fabric(p.color || '#cfc5b4', 'bouclette'), base = solid('#3b3631', 0.6);
+  const seg = (a0, a1, r0, r1, y0, y1, mat) => {
+    const sh = new THREE.Shape(); sh.absarc(0, 0, r1, a0, a1, false); sh.absarc(0, 0, r0, a1, a0, true);
+    const geo = new THREE.ExtrudeGeometry(sh, { depth: y1 - y0, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 2, curveSegments: 32 }); geo.rotateX(-Math.PI / 2); geo.translate(0, y0, R - 0.5);
+    const m = new THREE.Mesh(geo, mat); m.castShadow = m.receiveShadow = true; g.add(m);
+  };
+  const a0 = Math.PI / 2 - span / 2, a1 = Math.PI / 2 + span / 2;
+  seg(a0, a1, R - 0.95, R, 0.02, 0.12, base); seg(a0, a1, R - 0.95, R - 0.05, 0.12, 0.42, fab); seg(a0, a1, R - 0.2, R, 0.42, 0.78, fab);
+  for (let i = 0; i < n; i++) { const a = a0 + ((i + 0.5) / n) * (a1 - a0), c = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.38, 0.14, 3, 0.06), fabric(['#e9e2d4', '#b9a58a', '#d8cdb9'][i % 3], 'lin')); c.position.set(Math.cos(a) * (R - 0.32), 0.62, -Math.sin(a) * (R - 0.32) + (R - 0.5)); c.rotation.set(-0.25, Math.atan2(-Math.cos(a), Math.sin(a)), 0, 'YXZ'); c.castShadow = true; g.add(c); }
+  return g;
+}
+
+/** Cheminée en cylindre habillé de bois, foyer ouvert à mi-hauteur, conduit jusqu'au plafond. */
+function drumFireplace(p) {
+  const g = new THREE.Group(), { w = 1.6, h = 3 } = p, r = w / 2;
+  const shell = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 40, 1, false), texturedMaterial('american_walnut_veneer', 1.6, { tint: '#c99a6c', gain: 1.1 })); shell.position.y = h / 2; shell.castShadow = shell.receiveShadow = true; g.add(shell);
+  B(g, r * 1.3, 0.62, 0.3, solid('#111111', 0.9), 0, 0.42, r - 0.12, 0.01);
+  const f = flames(r * 1.1, 0.4); f.position.set(0, 0.48, r - 0.1); g.add(f);
+  B(g, r * 1.6, 0.1, 0.5, solid('#2a2724', 0.8), 0, 0.32, r - 0.05, 0.01);
+  return g;
+}
+
+/** Poteau de béton blanc, fuselé : il porte le disque au-dessus de la falaise. */
+function concreteColumn(p) {
+  const g = new THREE.Group(), h = p.h ?? 6, m = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, h, 28), solid('#eceae4', 0.55)); m.position.y = h / 2; m.castShadow = m.receiveShadow = true; g.add(m); return g;
+}
+
+/** Sculpture abstraite en bronze patiné : un ruban qui se noue sur lui-même, sur un socle rond. */
+function sculpture(p) {
+  const g = new THREE.Group(), { w = 2.2, h = 3 } = p;
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.55, w * 0.58, 0.55, 48), solid('#ecebe6', 0.6)); base.position.y = 0.275; base.castShadow = base.receiveShadow = true; g.add(base);
+  const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(w * 0.3, w * 0.09, 220, 24, 2, 3), solid('#3f6d68', 0.35, 0.75)); knot.scale.set(1, (h - 0.55) / (w * 0.85), 1); knot.position.y = 0.55 + (h - 0.55) / 2; knot.castShadow = true; g.add(knot);
+  return g;
+}
+
+function palm(p) { return palmTree(p); }
+
 function steelColumn(p) { const g = new THREE.Group(); B(g, 0.12, p.h ?? 2.8, 0.12, blackMetal(), 0, 0, 0, 0.004); return g; }
 
 const stoneMat = () => texturedMaterial('rustic_stone_wall', 1.8, { tint: '#f1e4cf', gain: 1.35 });
@@ -1321,7 +1369,7 @@ export const PROC = {
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
   flowerBed, daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
-  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive, kidneyPool, claustra, steelColumn,
+  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive, kidneyPool, claustra, steelColumn, boulder, curvedSofa, drumFireplace, concreteColumn, sculpture, palm,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */

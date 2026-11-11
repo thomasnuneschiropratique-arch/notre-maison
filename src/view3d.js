@@ -248,7 +248,11 @@ export class View3D {
 
   footprints() {
     const p = store.project, e = p.entry || 0;
-    return p.levels.slice(0, e + 1).flatMap((lv) => store.analysis(lv).rooms.map((r) => r.poly.map((q) => ({ x: q.x, y: q.y }))));
+    // Au-dessus d'un vide (porte-à-faux sur une falaise), le sol est bien plus bas : on ne le découpe pas.
+    const m = terrainOf(p);
+    return p.levels.slice(0, e + 1).flatMap((lv, i) => store.analysis(lv).rooms
+      .filter((r) => !m || heightAt(m, r.center.x, r.center.y) > this.baseOf(i) - 1.2)
+      .map((r) => r.poly.map((q) => ({ x: q.x, y: q.y }))));
   }
 
   terrainLive() {

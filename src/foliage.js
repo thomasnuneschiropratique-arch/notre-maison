@@ -134,6 +134,22 @@ export function oliveTree({ w = 4.5, h = 4.5 }) {
   return g;
 }
 
+const PALM = ['#4c6b2e', '#5a7a34', '#3f5a28', '#6a8a3e'];
+/** Palmier : stipe annelé légèrement courbé, palmes arquées en éventail. */
+export function palmTree({ w = 4, h = 9 }) {
+  const g = new THREE.Group(), segs = 6, lean = 0.06 * h;
+  let px = 0, py = 0;
+  for (let i = 0; i < segs; i++) { const t0 = i / segs, t1 = (i + 1) / segs, x0 = lean * t0 * t0, x1 = lean * t1 * t1; branch(g, x0, h * 0.86 * t0, 0, x1, h * 0.86 * t1, 0, 0.2 - 0.07 * t0, 0.2 - 0.07 * t1); px = x1; py = h * 0.86 * t1; }
+  const frond = once('frondGeo', () => { const s = new THREE.PlaneGeometry(1, 0.32, 8, 1); const p = s.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i) + 0.5; p.setZ(i, -x * x * 0.55); p.setY(i, p.getY(i) * (1 - x * 0.75)); } s.translate(0, 0, 0); s.computeVertexNormals(); return s; });
+  const mat = once('frondMat', () => new THREE.MeshStandardMaterial({ map: leafAtlas(PALM, 'needle'), alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.75 }));
+  for (let i = 0; i < 11; i++) {
+    const a = (i / 11) * Math.PI * 2, m = new THREE.Mesh(frond, mat), L = w * (0.5 + 0.12 * Math.sin(i * 2.3));
+    m.scale.set(L, L, L); m.position.set(px, py, 0); m.rotation.set(0, -a, 0); m.rotateZ(0.25 + 0.15 * Math.cos(i)); m.translateX(L / 2);
+    m.castShadow = true; m.userData.noAO = true; g.add(m);
+  }
+  return g;
+}
+
 /** Cyprès de Provence, élancé et dense. */
 export function cypressTree({ w = 1.1, h = 8 }) {
   const g = new THREE.Group();
