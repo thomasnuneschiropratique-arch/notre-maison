@@ -1660,49 +1660,47 @@ function houseRiviera() {
   const SMALL = { name: 'Petite fenêtre', muntins: [1, 2], surround: true };
   const SOUTH = [200, 550, 875, 1200, 1525, 1850, 2200];
 
-  // ——— Rez-de-chaussée : enfilade de salons côté mer, hall, cuisine et services côté cour ———
+  // ——— Rez-de-chaussée : un grand séjour ouvert de la cour à la mer, cuisine, repas, hall et salon d'un seul tenant ———
   const g = p.levels[0];
   g.name = 'Rez-de-chaussée'; g.height = 330; g.slab = 30;
   outline(g, SHELL, 45);
   partition(g, 2400, 500, 2400, 1150, 30);
-  partition(g, 0, 500, 2400, 500, 20);
-  for (const x of [750, 1650]) { partition(g, x, 0, x, 500, 20); partition(g, x, 500, x, 1150, 20); }
+  // Seul bloc fermé : WC, vestiaire et salle de sport, côté cour.
+  partition(g, 1650, 500, 2400, 500, 20); partition(g, 1650, 0, 1650, 500, 20);
   partition(g, 1900, 0, 1900, 500, 15); partition(g, 1650, 220, 1900, 220, 10);
+  // Mur-cheminée entre le séjour et le salon-bibliothèque : deux grands passages de part et d'autre des foyers adossés.
+  partition(g, 1650, 500, 1650, 1150, 25);
   // Côté cour (nord) : porte d'entrée vitrée, cuisine, WC, salle de sport.
   open(g, 1450, 0, 'entry', 170, 290, 0, { name: "Porte d'entrée vitrée", leaves: 2, glazed: true, color: '#3e4d45', surround: 'cornice' });
   for (const x of [200, 560]) open(g, x, 0, 'window2', 120, 175, 105, WIN);
   open(g, 1080, 0, 'window2', 120, 175, 105, { ...WIN, name: 'Fenêtre aux persiennes closes', closed: true });
   open(g, 1775, 0, 'window1', 60, 90, 150, SMALL); open(g, 2150, 0, 'window2', 120, 200, 80, WIN);
-  // Côté mer (sud) : sept portes-fenêtres, celles du grand salon couronnées d'une corniche.
+  // Côté mer (sud) : sept portes-fenêtres, celles du salon couronnées d'une corniche.
   for (const x of [200, 550, 1850, 2200]) open(g, x, 1150, 'window2', 130, 270, 0, FR);
   for (const x of [875, 1200, 1525]) open(g, x, 1150, 'window2', 130, 270, 0, FRC);
   open(g, 0, 250, 'window2', 120, 175, 105, WIN); open(g, 0, 880, 'window2', 120, 220, 60, WIN); open(g, 2400, 250, 'window2', 120, 200, 80, WIN);
   open(g, 2725, 1250, 'window2', 140, 280, 0, FRC); open(g, 3050, 875, 'window2', 140, 280, 0, FRC); open(g, 2725, 500, 'window2', 120, 200, 80, WIN);
-  // Circulations.
-  open(g, 650, 500, 'door', 83, 225, 0); open(g, 750, 430, 'door', 93, 225, 0);
-  open(g, 750, 620, 'double', 140, 260, 0, { name: 'Double porte' }); open(g, 1650, 620, 'double', 140, 260, 0, { name: 'Double porte' });
-  open(g, 1200, 500, 'double', 160, 270, 0, { name: 'Double porte du salon' });
+  // Circulations : grands passages toute hauteur, portes seulement pour les pièces de service.
+  const WIDE = { name: 'Grand passage' };
+  open(g, 1650, 613, 'passage', 200, 300, 0, WIDE); open(g, 1650, 1037, 'passage', 200, 300, 0, WIDE);
+  open(g, 2400, 825, 'passage', 260, 300, 0, { name: 'Passage du jardin d’hiver' });
   open(g, 1650, 360, 'door', 83, 225, 0); open(g, 1775, 220, 'door', 73, 215, 0); open(g, 1900, 360, 'door', 83, 225, 0);
-  open(g, 2400, 760, 'double', 140, 260, 0, { name: 'Double porte du jardin d’hiver' });
   const herring = 'herringbone', lime = 'paint_wimborne', panels = { moulding: 'panels' };
-  setRoom(g, 375, 250, 'cuisine', 'Cuisine', { floor: 'tile_cement', paint: 'paint_all_white' });
-  setRoom(g, 375, 825, 'repas', 'Salle à manger', { floor: herring, paint: 'paint_setting', ...panels });
-  setRoom(g, 1200, 250, 'entree', 'Hall', { floor: 'marble', paint: lime, ...panels });
-  setRoom(g, 1200, 825, 'salon', 'Grand salon', { floor: herring, paint: lime, ...panels });
+  setRoom(g, 1000, 700, 'salon', 'Grand séjour', { floor: 'marble', paint: 'paint_all_white', ...panels });
   setRoom(g, 1775, 110, 'wc', 'WC', { floor: 'marble', paint: 'paint_setting' });
   setRoom(g, 1775, 360, 'dressing', 'Vestiaire', { floor: 'marble', paint: lime });
   setRoom(g, 2150, 250, 'piece', 'Salle de sport', { floor: 'oak_natural', paint: 'paint_skimming' });
-  setRoom(g, 2025, 825, 'salon', 'Petit salon', { floor: herring, paint: 'paint_green_smoke', moulding: 'panels' });
-  setRoom(g, 2725, 875, 'piece', 'Jardin d’hiver', { floor: 'tile_cement', paint: 'paint_all_white' });
+  setRoom(g, 2025, 825, 'salon', 'Salon bibliothèque', { floor: herring, paint: 'paint_hague', ...panels });
+  setRoom(g, 2725, 875, 'piece', 'Jardin d’hiver', { floor: 'marble', paint: 'paint_all_white' });
   p.entry = 0; syncRooms(g);
 
-  // ——— Étage : cinq chambres autour d'un grand palier-bibliothèque, suite côté tour ———
+  // ——— Étage : un palier-salon lumineux au centre, ouvert sur la mer ; chambres dans les deux ailes ———
   const u = newLevel('Étage', 300); u.slab = 25;
   outline(u, SHELL, 45);
   partition(u, 2400, 500, 2400, 1150, 30);
-  partition(u, 0, 650, 2400, 650, 15); partition(u, 0, 500, 750, 500, 15); partition(u, 1650, 500, 2400, 500, 15);
-  partition(u, 450, 0, 450, 500, 12); partition(u, 750, 0, 750, 500, 15); partition(u, 1650, 0, 1650, 500, 15);
-  partition(u, 750, 650, 750, 1150, 15); partition(u, 1350, 650, 1350, 1150, 12); partition(u, 1650, 650, 1650, 1150, 12); partition(u, 1900, 650, 1900, 1150, 12);
+  for (const [x0, x1] of [[0, 750], [1650, 2400]]) { partition(u, x0, 500, x1, 500, 15); partition(u, x0, 650, x1, 650, 15); }
+  partition(u, 750, 0, 750, 1150, 15); partition(u, 1650, 0, 1650, 1150, 15);
+  partition(u, 450, 0, 450, 500, 12); partition(u, 1950, 650, 1950, 1150, 12);
   const UW = { ...WIN, muntins: [2, 3] };
   for (const [x, w, h, s, o] of [[200, 120, 185, 55, UW], [650, 80, 120, 120, SMALL], [1080, 120, 170, 70, UW], [1450, 120, 170, 70, UW], [1775, 120, 185, 55, UW], [2150, 120, 185, 55, UW]]) open(u, x, 0, 'window2', w, h, s, o);
   // Côté mer : portes-fenêtres sur balconnets en fer forgé.
@@ -1710,19 +1708,19 @@ function houseRiviera() {
   for (const x of SOUTH) open(u, x, 1150, 'window2', 120, 240, 0, UFR);
   open(u, 0, 250, 'window2', 120, 185, 55, UW); open(u, 0, 575, 'window1', 60, 120, 100, SMALL); open(u, 0, 880, 'window2', 120, 185, 55, UW); open(u, 2400, 250, 'window2', 120, 185, 55, UW);
   for (const [x, y] of [[2725, 1250], [3050, 875], [2725, 500]]) open(u, x, y, 'window2', 120, 160, 80, UW);
-  open(u, 225, 500, 'door', 83, 215, 0); open(u, 600, 500, 'door', 83, 215, 0); open(u, 1775, 500, 'door', 83, 215, 0);
-  open(u, 375, 650, 'door', 83, 215, 0); open(u, 1050, 650, 'door', 83, 215, 0); open(u, 2150, 650, 'door', 86, 225, 0, { name: 'Porte de la suite' });
-  open(u, 1900, 900, 'door', 83, 215, 0); open(u, 1650, 1050, 'door', 83, 215, 0); open(u, 2400, 575, 'door', 83, 215, 0, { name: 'Porte de la tour' });
-  const oak = 'oak_light';
+  open(u, 750, 575, 'passage', 120, 240, 0, WIDE); open(u, 1650, 575, 'passage', 120, 240, 0, WIDE);
+  open(u, 225, 500, 'door', 83, 215, 0); open(u, 600, 500, 'door', 83, 215, 0); open(u, 375, 650, 'door', 83, 215, 0);
+  open(u, 1775, 500, 'door', 83, 215, 0); open(u, 2150, 650, 'door', 86, 225, 0, { name: 'Porte de la suite' });
+  open(u, 1950, 760, 'door', 83, 215, 0); open(u, 2400, 575, 'door', 83, 215, 0, { name: 'Porte de la tour' });
   setRoom(u, 225, 250, 'chambre', 'Chambre 3', { floor: herring, paint: 'paint_skimming' });
-  setRoom(u, 600, 250, 'sdb', 'Salle de bain', { floor: 'mosaic_marble', paint: 'paint_setting' });
-  setRoom(u, 1200, 250, 'couloir', 'Palier', { floor: herring, paint: lime });
-  setRoom(u, 2025, 250, 'chambre', 'Chambre 4', { floor: herring, paint: 'paint_mizzle' });
+  setRoom(u, 600, 250, 'sdb', 'Salle de bain', { floor: 'marble', paint: 'wall_marbre' });
+  setRoom(u, 375, 575, 'couloir', 'Dégagement ouest', { floor: herring, paint: lime });
   setRoom(u, 375, 900, 'chambre', 'Chambre 2', { floor: herring, paint: 'paint_setting' });
-  setRoom(u, 1050, 900, 'chambre', 'Chambre 5', { floor: oak, paint: 'paint_all_white' });
-  setRoom(u, 1500, 900, 'sdb', 'Salle de bain parentale', { floor: 'mosaic_marble', paint: 'wall_marbre' });
-  setRoom(u, 1775, 900, 'dressing', 'Dressing', { floor: herring, paint: 'wall_noyer' });
-  setRoom(u, 2150, 900, 'parentale', 'Suite parentale', { floor: herring, paint: lime, ...panels });
+  setRoom(u, 1200, 600, 'couloir', 'Palier', { floor: herring, paint: 'paint_all_white', ...panels });
+  setRoom(u, 2025, 250, 'chambre', 'Chambre 4', { floor: herring, paint: 'paint_mizzle' });
+  setRoom(u, 2025, 575, 'couloir', 'Dégagement est', { floor: herring, paint: lime });
+  setRoom(u, 1800, 900, 'sdb', 'Salle de bain parentale', { floor: 'marble', paint: 'wall_marbre' });
+  setRoom(u, 2175, 900, 'parentale', 'Suite parentale', { floor: herring, paint: lime, ...panels });
   setRoom(u, 2725, 875, 'bureau', 'Bureau de la tour', { floor: herring, paint: 'paint_green_smoke' });
   p.levels.push(u); syncRooms(u);
 
@@ -1752,41 +1750,43 @@ function houseRiviera() {
     R(t4, 2400, 500, 3050, 1250, 'flat', 'x', 0, { balustrade: true }),
   ];
 
-  // ——— Meubles du rez-de-chaussée ———
-  const lustre = N('Lustre'), mantel = N('Cheminée en marbre blanc et trumeau'), mirror = N('Miroir doré ornementé');
-  const hang = (lv, x, y, z) => place(lv, lustre, x, y, 0, { w: 110, d: 110, h: 105 });
+  // ——— Meubles du rez-de-chaussée : un seul grand volume, des zones dessinées par les tapis et la lumière ———
+  const lustre = N('Lustre'), mantel = N('Cheminée en marbre blanc et trumeau');
+  const hang = (lv, x, y) => place(lv, lustre, x, y, 0, { w: 110, d: 110, h: 105 });
   place(g, N('Escalier américain droit'), 993, 82, 90);
-  place(g, N('Table piédestal en plâtre'), 1300, 300, 0); place(g, N('Grande jarre et branches fleuries'), 1300, 300, 0, { z: 80 });
-  place(g, K.bench, 1600, 170, 90); hang(g, 1250, 280);
-  // Grand salon : cheminée de marbre face au canapé, deux fauteuils, buffet et tableau en face.
-  place(g, mantel, 1616, 900, 90);
-  place(g, K.rug, 1300, 880, 0, { w: 420, d: 320 }); place(g, K.low, 1330, 880, 90, { w: 130, d: 70 }); place(g, K.vase, 1330, 880, 0, { z: K.top(K.low), w: 30, d: 30, h: 55 });
-  place(g, K.sofa, 1095, 880, 270); place(g, K.cush, 1075, 880, 270, { w: 200, z: 44 });
-  place(g, K.arm, 1330, 690, 0); place(g, K.arm, 1330, 1065, 180);
-  place(g, K.side, 1095, 1040, 0); place(g, K.lamp, 1095, 1040, 0, { z: K.top(K.side) });
-  composeWall(K, g, 'Grand salon', 'o', K.buffet, K.EARTH, 190, 130);
-  place(g, K.plant, 790, 1095, 0); hang(g, 1300, 880); curtainsFor(K, g, 'Grand salon', K.cream);
-  // Petit salon : bibliothèque sur tout le mur, cheminée adossée à celle du grand salon.
-  place(g, mantel, 1684, 900, 270);
-  place(g, K.books, 2020, 530, 0, { w: 560, h: 300, d: 38 });
-  place(g, K.rug, 1950, 900, 0, { w: 380, d: 320 }); place(g, K.low, 1940, 900, 90, { w: 120, d: 65 });
-  place(g, K.sofa, 2120, 900, 90); place(g, K.cush, 2140, 900, 90, { w: 200, z: 44 });
-  place(g, K.arm, 1975, 720, 0); place(g, K.arm, 1975, 1068, 180);
-  hang(g, 1975, 900); curtainsFor(K, g, 'Petit salon', K.cream);
-  // Salle à manger.
-  place(g, K.rug, 381, 819, 0, { w: 440, d: 320 }); place(g, N('Table en noyer massif'), 381, 819, 0, { w: 260, d: 105 });
-  for (const k of [-1.2, -0.4, 0.4, 1.2]) { place(g, K.chair, 381 + k * 80, 734, 0); place(g, K.chair, 381 + k * 80, 904, 180); }
-  for (const k of [-1, 1]) place(g, K.vase, 381 + k * 80, 819, 0, { z: 76, w: 30, d: 30, h: 62 });
-  place(g, K.buffet, 300, 536, 0, { w: 200 }); place(g, mirror, 300, 512, 0, { w: 90, h: 130, z: 125 });
-  for (const k of [-1, 1]) place(g, K.lamp, 300 + k * 76, 536, 0, { z: K.top(K.buffet) });
-  hang(g, 381, 819); curtainsFor(K, g, 'Salle à manger', K.cream);
-  // Cuisine : linéaire sous les fenêtres, piano entre les deux, colonnes, îlot de quatre places.
+  // Hall : une table ronde sculpturale dans l'axe de la porte, sous un lustre.
+  place(g, N('Table piédestal en plâtre'), 1380, 300, 0); place(g, N('Grande jarre et branches fleuries'), 1380, 300, 0, { z: 80 });
+  hang(g, 1380, 300); place(g, K.plant, 1600, 455, 0);
+  // Salon : canapé face à la cheminée de marbre, deux fauteuils en vis-à-vis, console derrière le canapé.
+  place(g, mantel, 1614, 825, 90);
+  place(g, K.rug, 1300, 825, 0, { w: 440, d: 340 }); place(g, K.low, 1310, 825, 90, { w: 130, d: 70 }); place(g, K.vase, 1310, 825, 0, { z: K.top(K.low), w: 30, d: 30, h: 55 });
+  place(g, K.sofa, 1060, 825, 270); place(g, K.cush, 1040, 825, 270, { w: 200, z: 44 });
+  const cons = K.N('Buffet noyer à portes cintrées'); place(g, cons, 960, 825, 90, { w: 200, d: 45 }); for (const k of [-1, 1]) place(g, K.lamp, 960, 825 + k * 75, 0, { z: K.top(cons) });
+  place(g, K.arm, 1330, 645, 0); place(g, K.arm, 1330, 1005, 180);
+  place(g, K.side, 1420, 645, 0); place(g, K.lamp, 1420, 645, 0, { z: K.top(K.side) });
+  hang(g, 1300, 825);
+  // Repas : grande table de noyer pour dix, suspension couronne, enfilade basse contre le mur ouest.
+  place(g, K.rug, 380, 830, 0, { w: 460, d: 330 }); place(g, N('Table en noyer massif'), 380, 830, 0, { w: 280, d: 105 });
+  for (const k of [-1.5, -0.5, 0.5, 1.5]) { place(g, K.chair, 380 + k * 66, 745, 0); place(g, K.chair, 380 + k * 66, 915, 180); }
+  for (const k of [-1, 1]) place(g, K.chair, 380 + k * 175, 830, k > 0 ? 90 : 270);
+  for (const k of [-1, 1]) place(g, K.vase, 380 + k * 80, 830, 0, { z: 76, w: 30, d: 30, h: 62 });
+  place(g, K.ring, 380, 830, 0, { z: 205, w: 200, d: 200, h: 125 });
+  place(g, K.buffet, 47, 1040, 270, { w: 150 });
+  // Cuisine ouverte : linéaire sous les fenêtres, piano entre les deux, colonnes à l'ouest, îlot de quatre places tourné vers la mer.
   place(g, N('Linéaire noyer et marbre'), 197, 55, 0, { w: 244 }); place(g, N('Linéaire noyer et marbre'), 557, 55, 0, { w: 232 });
   place(g, N('Piano de cuisson et hotte habillée'), 380, 56, 0, { w: 120, h: 300 });
-  place(g, N('Colonnes noyer et laiton'), 706, 215, 90, { w: 220, h: 300 });
-  place(g, N('Îlot noyer et marbre'), 350, 265, 0, { w: 300, d: 110 });
-  for (const k of [-1.5, -0.5, 0.5, 1.5]) place(g, K.stool, 350 + k * 64, 345, 180);
-  for (const k of [-1, 1]) place(g, N('Lanterne laiton et verre'), 350 + k * 80, 265, 0, { h: 140 });
+  place(g, N('Colonnes noyer et laiton'), 56, 435, 270, { w: 220, h: 300 });
+  place(g, N('Îlot noyer et marbre'), 400, 290, 0, { w: 300, d: 110 });
+  for (const k of [-1.5, -0.5, 0.5, 1.5]) place(g, K.stool, 400 + k * 64, 375, 180);
+  for (const k of [-1, 1]) place(g, N('Lanterne laiton et verre'), 400 + k * 80, 290, 0, { h: 140 });
+  curtainsFor(K, g, 'Grand séjour', K.cream);
+  // Salon-bibliothèque : bleu profond, livres sur tout un mur, l'autre face de la cheminée.
+  place(g, mantel, 1686, 825, 270);
+  place(g, K.books, 2025, 530, 0, { w: 600, h: 300, d: 38 });
+  place(g, K.rug, 1990, 825, 0, { w: 380, d: 320 }); place(g, K.low, 1980, 825, 90, { w: 120, d: 65 });
+  place(g, K.sofa, 2120, 825, 90); place(g, K.cush, 2140, 825, 90, { w: 200, z: 44 });
+  place(g, K.arm, 1980, 670, 0); place(g, K.arm, 1980, 990, 180);
+  hang(g, 1990, 825); curtainsFor(K, g, 'Salon bibliothèque', K.cream);
   // Services.
   place(g, K.wc, 1777, 62, 0); place(g, N('Vasque monobloc en marbre'), 1867, 130, 90, { w: 60, d: 40 });
   place(g, N('Dressing sur mesure en noyer'), 1776, 462, 180, { w: 200, h: 260, d: 55 });
@@ -1795,19 +1795,26 @@ function houseRiviera() {
   const rattan = pick('fauteuil', ['rotin', 'cannage', 'bouclé']);
   place(g, K.rug, 2740, 900, 0, { w: 300, d: 300, color: '#d8ccb4' }); place(g, N('Table basse ronde bois'), 2740, 900, 0);
   place(g, K.sofa, 2725, 590, 0); place(g, rattan, 2600, 1040, 160); place(g, rattan, 2880, 1040, 200);
-  for (const [x, y] of [[2470, 565], [2985, 565], [2985, 1185], [2470, 1185]]) place(g, K.plant, x, y, 0);
+  for (const [x, y] of [[2985, 565], [2985, 1185], [2470, 1185]]) place(g, K.plant, x, y, 0);
 
   // ——— Meubles de l'étage ———
   const rail = N('Garde-corps bois classique'), iron = N('Garde-corps métal 2 m');
   place(u, rail, 1073, 145, 0, { w: 305 }); place(u, rail, 920, 84, 90, { w: 122 });
-  place(u, K.books, 1622, 257, 90, { w: 440, h: 280, d: 38 });
-  place(u, N('Méridienne en bouclette'), 1555, 300, 90); place(u, K.rug, 1380, 330, 0, { w: 300, d: 200 });
-  place(u, K.N(K.INK), 1600, 640, 180, { w: 150, h: 100, z: 100 });
-  furnishBedroom(K, u, 'Chambre 3', 'e'); furnishBedroom(K, u, 'Chambre 4', 'o'); furnishBedroom(K, u, 'Chambre 2', 'e'); furnishBedroom(K, u, 'Chambre 5', 'o');
+  // Palier-salon : deux murs de livres face à face, un salon de lecture tourné vers les trois portes-fenêtres.
+  for (const [x, rot] of [[778, 270], [1622, 90]]) { place(u, K.books, x, 260, rot, { w: 420, h: 280, d: 38 }); place(u, K.books, x, 905, rot, { w: 420, h: 280, d: 38 }); }
+  place(u, K.rug, 1200, 900, 0, { w: 400, d: 300 }); place(u, K.low, 1200, 920, 0, { w: 120, d: 65 });
+  place(u, K.sofa, 1200, 770, 0); place(u, K.cush, 1200, 750, 0, { w: 200, z: 44 });
+  place(u, K.arm, 1010, 930, 270); place(u, K.arm, 1390, 930, 90);
+  place(u, lustre, 1200, 880, 0, { w: 100, d: 100, h: 95 });
+  furnishBedroom(K, u, 'Chambre 3', 'e'); furnishBedroom(K, u, 'Chambre 4', 'o'); furnishBedroom(K, u, 'Chambre 2', 'e');
   furnishBedroom(K, u, 'Suite parentale', 'e', true);
-  furnishShower(K, u, 'Salle de bain'); furnishBath(K, u, 'Salle de bain parentale');
-  place(u, N('Dressing sur mesure en noyer'), 1775, 686, 0, { w: 200, h: 260, d: 55 });
-  for (const r of ['Chambre 2', 'Chambre 3', 'Chambre 4', 'Chambre 5', 'Suite parentale']) curtainsFor(K, u, r, K.cream);
+  place(u, N('Dressing sur mesure en noyer'), 1984, 980, 270, { w: 280, h: 260, d: 55 });
+  furnishShower(K, u, 'Salle de bain');
+  // Salle de bain de la suite : baignoire îlot, double vasque, WC.
+  place(u, N('Baignoire îlot ovale'), 1775, 720, 0, { w: 170, d: 78 });
+  place(u, N('Double vasque noyer et pierre'), 1912, 905, 90, { w: 140 });
+  place(u, K.wc, 1693, 1047, 270);
+  for (const r of ['Chambre 2', 'Chambre 3', 'Chambre 4', 'Suite parentale', 'Palier']) curtainsFor(K, u, r, K.cream);
   for (const x of SOUTH) place(u, N('Balcon métal 3 m'), x, 1198, 0, { w: 160, d: 50, z: 0.5 });
   // Bureau de la tour, puis bibliothèque et belvédère, reliés par deux escaliers en colimaçon.
   const spiral = N('Colimaçon 1,60 m');
@@ -1879,7 +1886,7 @@ export const TEMPLATES = [
   { id: 'patio', name: 'Maison à patio, 4 chambres', desc: 'Un U autour d’une cour plantée et de son bassin, galerie vitrée, galerie-bibliothèque à l’étage, toits-terrasses, esprit japandi', make: housePatio },
   { id: 'midcentury', name: 'Maison mid-century, 4 chambres', desc: 'Pavillon sous toit papillon et bandeau vitré, boîte blanche en porte-à-faux sur l’abri voiture, claustra, terrazzo, noyer et piscine haricot', make: houseMidCentury },
   { id: 'barn', name: 'Grange contemporaine, 4 chambres', desc: 'Bardage noir, nef ouverte jusqu’à la charpente, cheminée monolithe, passerelle entre les deux ailes de nuit, esprit loft', make: houseBarn },
-  { id: 'riviera', name: 'Villa Belle Époque, 5 chambres', desc: 'Villa de la Riviera face à la mer : enduit ocre, toit à la Mansart en ardoise et lucarnes, tour belvédère à balustrade, salons en enfilade, long bassin et jardin en terrasses', make: houseRiviera },
+  { id: 'riviera', name: 'Villa Belle Époque, 4 chambres', desc: 'Villa de la Riviera face à la mer : enduit ocre, toit à la Mansart et lucarnes, tour belvédère à balustrade ; dedans, un grand séjour ouvert avec cuisine, un salon-bibliothèque, un palier-salon sur la mer, long bassin et jardin en terrasses', make: houseRiviera },
   { id: 'disques', name: 'Villa des Disques, 5 chambres', desc: 'Six disques blancs reliés par des passerelles de verre au bord d’une crique : salon rond en double hauteur au-dessus du vide, bibliothèque suspendue en anneau, terrasse et piscine en arc, pilotis inclinés', make: houseDiscs },
   { id: 'hill', name: 'Maison sur la colline', desc: 'Salon et cuisine en haut, chambres en dessous avec vue sur la vallée', make: houseHillside },
   { id: 'single', name: 'Plain-pied meublé', desc: '126 m², 3 chambres, déjà aménagé', make: houseSinglestorey },
