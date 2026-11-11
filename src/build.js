@@ -99,7 +99,10 @@ function buildWall(group, level, wall, corners, analysis, rooms, baseY, H, proje
       if (!c.o) add(c.a, c.b, 0, H);
       else {
         add(c.a, c.b, 0, Math.min(c.o.sill, H));
-        add(c.a, c.b, Math.min(c.o.sill + c.o.height, H), H);
+        // Deuxième baie superposée (passerelle de l'étage qui traverse un mur double hauteur).
+        const up = c.o.upper;
+        if (up) { add(c.a, c.b, Math.min(c.o.sill + c.o.height, H), Math.min(up.sill, H)); add(c.a, c.b, Math.min(up.sill + up.height, H), H); }
+        else add(c.a, c.b, Math.min(c.o.sill + c.o.height, H), H);
       }
     }
     if (exterior && opts.slabAbove && !opts.cutHeight) add(uS, uE, H, H + opts.slabAbove);
@@ -150,7 +153,7 @@ function buildWall(group, level, wall, corners, analysis, rooms, baseY, H, proje
   // Tableaux d'ouvertures, dessus du mur et extrémités libres
   const caps = new QuadBatch();
   const P = (u, s) => [(A.x + dir.x * u + nor.x * half * s) * M, (A.y + dir.y * u + nor.y * half * s) * M];
-  for (const o of openings) {
+  for (const o of openings.flatMap((o) => (o.upper ? [o, { ...o, ...o.upper, upper: null }] : [o]))) {
     const u0 = o.t - o.width / 2, u1 = o.t + o.width / 2;
     const v0 = baseY + o.sill * M, v1 = baseY + Math.min(o.sill + o.height, H) * M;
     const [ax, az] = P(u0, 1), [bx, bz] = P(u0, -1), [cx, cz] = P(u1, 1), [dx, dz] = P(u1, -1);
@@ -410,7 +413,7 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
 
     const insideCeil = ceilingVoids.filter((v) => opts.inside(voidCenter(v), r.poly)).map((v) => clampVoid(v, r.poly));
     const zone = zones.find((z) => inZone(r.center, z));
-    if (zone?.vault) return;
+    if (zone?.vault || info.open) return;
     // Oculus : le plafond s'ouvre en cercle sous le puits de lumière du toit.
     const ceilHoles = info.oculus ? [...insideCeil, Array.from({ length: 32 }, (_, k) => ({ x: info.oculus.x + Math.cos((k / 32) * Math.PI * 2) * info.oculus.r, y: info.oculus.y + Math.sin((k / 32) * Math.PI * 2) * info.oculus.r }))] : insideCeil;
     const cg = flipped(floorGeometry(r.poly, ceilHoles));
@@ -513,6 +516,15 @@ export function buildRoof(project, level, baseY, zone) {
     const geo = new THREE.ExtrudeGeometry(shape, { depth: th, bevelEnabled: false, curveSegments: 72 }); geo.rotateX(-Math.PI / 2);
     const m = new THREE.Mesh(geo, solid('#f2f0eb', 0.5)); m.position.set(cx, top + 0.012, cz); m.castShadow = m.receiveShadow = true; g.add(m);
     if (oc > 0) { const gl = new THREE.Mesh(new THREE.CircleGeometry(oc, 48).rotateX(-Math.PI / 2), glass()); gl.position.set(cx, top + th + 0.02, cz); g.add(gl); box(g, 0.01, 0.01, 0.01, eaveMat, cx, top, cz); }
+    // Sous-face habillée (bois sombre) quand la pièce monte jusqu'au toit, avec un liseré lumineux autour de l'oculus.
+    if (zone?.vault) {
+      const under = new THREE.Shape(); under.absarc(0, 0, R - 0.02, 0, Math.PI * 2, false);
+      if (oc > 0) { const h = new THREE.Path(); h.absarc(0, 0, oc + 0.25, 0, Math.PI * 2, true); under.holes.push(h); }
+      const ug = new THREE.ShapeGeometry(under, 72); ug.rotateX(Math.PI / 2);
+      const lm = getMaterial(zone.lining || 'wall_noyer').clone(); lm.side = THREE.DoubleSide;
+      const um = new THREE.Mesh(ug, lm); um.position.set(cx, top + 0.006, cz); um.receiveShadow = true; g.add(um);
+      if (oc > 0) { const ring = new THREE.Mesh(new THREE.RingGeometry(oc + 0.02, oc + 0.25, 64).rotateX(Math.PI / 2), solid('#ffffff', 0.4, 0, { emissive: new THREE.Color('#fff1d8'), emissiveIntensity: 1.6 })); ring.position.set(cx, top + 0.004, cz); g.add(ring); }
+    }
     g.traverse((o) => { o.userData.kind = 'roof'; });
     return g;
   }

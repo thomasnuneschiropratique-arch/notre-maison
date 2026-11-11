@@ -95,6 +95,8 @@ export function syncRooms(level) {
       floor: seed?.floor || rt[2], paint: seed?.paint || rt[3], ceiling: seed?.ceiling || 'paint_blanc',
       lightOn: seed?.lightOn ?? true,
       ...(seed?.moulding ? { moulding: seed.moulding } : {}),
+      ...(seed?.oculus ? { oculus: seed.oculus } : {}),
+      ...(seed?.open ? { open: true } : {}),
     };
   });
   level.rooms = next;

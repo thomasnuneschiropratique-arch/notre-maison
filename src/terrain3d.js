@@ -28,6 +28,27 @@ function splitByLine(tri, a, b, out) {
   for (const f of [onA, onB]) for (let i = 1; i + 1 < f.length; i++) out.push([f[0], f[i], f[i + 1]]);
 }
 
+// Roche sur les pentes raides : la texture est projetée selon l'orientation de la paroi, sans s'étirer.
+let rockTex = null;
+const rockCache = new WeakMap();
+function withRock(base) {
+  if (rockCache.has(base)) return rockCache.get(base);
+  if (!rockTex) { rockTex = new THREE.TextureLoader().load(`./${LOW ? 'textures-s' : 'textures'}/rocky_terrain_02/diff.webp`); rockTex.wrapS = rockTex.wrapT = THREE.RepeatWrapping; rockTex.colorSpace = THREE.SRGBColorSpace; rockTex.anisotropy = 4; }
+  const m = base.clone();
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uRock = { value: rockTex };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRP; varying vec3 vRN;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvRP = (modelMatrix * vec4(transformed, 1.0)).xyz; vRN = normalize(mat3(modelMatrix) * objectNormal);');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uRock; varying vec3 vRP; varying vec3 vRN;').replace('#include <map_fragment>', `#include <map_fragment>
+      { float steep = smoothstep(0.42, 0.72, 1.0 - abs(vRN.y)); vec3 bw = pow(abs(vRN), vec3(3.0)); bw /= (bw.x + bw.y + bw.z);
+        vec3 rk = texture2D(uRock, vRP.zy * 0.22).rgb * bw.x + texture2D(uRock, vRP.xz * 0.22).rgb * bw.y + texture2D(uRock, vRP.xy * 0.22).rgb * bw.z;
+        vec3 rk2 = texture2D(uRock, vRP.zy * 0.05 + 0.3).rgb * bw.x + texture2D(uRock, vRP.xz * 0.05).rgb * bw.y + texture2D(uRock, vRP.xy * 0.05 + 0.6).rgb * bw.z;
+        diffuseColor.rgb = mix(diffuseColor.rgb, (rk * 0.6 + rk2 * 0.4) * vec3(1.18, 1.1, 0.98) * 1.25, steep); }`);
+  };
+  m.customProgramCacheKey = () => 'groundRock';
+  rockCache.set(base, m);
+  return m;
+}
+
 function nearGeometry(m, polys) {
   const half = (T_N - 1) / 2, pos = [], nor = [], uv = [];
   const edges = [];
@@ -244,12 +265,12 @@ export class TerrainView {
   rebuildNear(project, m, polys) {
     const old = this.near;
     const geo = nearGeometry(m, polys);
-    const mesh = new THREE.Mesh(geo, getMaterial(project.site.ground));
+    const mesh = new THREE.Mesh(geo, withRock(getMaterial(project.site.ground)));
     mesh.receiveShadow = true; mesh.castShadow = true; mesh.userData.kind = 'ground';
     this.group.add(mesh); this.near = mesh;
     if (old) { this.group.remove(old); old.geometry.dispose(); }
     const token = (this.bakeToken = (this.bakeToken || 0) + 1);
-    if (m && m.p.some((v) => v)) bakeGround(project, m).then((mat) => { if (token === this.bakeToken && this.near === mesh) { mesh.material = mat; this.onChange?.(); } }).catch(() => {});
+    if (m && m.p.some((v) => v)) bakeGround(project, m).then((mat) => { if (token === this.bakeToken && this.near === mesh) { mesh.material = withRock(mat); this.onChange?.(); } }).catch(() => {});
   }
 
   /** Herbe, fleurs et oiseaux, seulement sur un jardin engazonné. */

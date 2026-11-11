@@ -251,7 +251,7 @@ export class View3D {
     // Au-dessus d'un vide (porte-à-faux sur une falaise), le sol est bien plus bas : on ne le découpe pas.
     const m = terrainOf(p);
     return p.levels.slice(0, e + 1).flatMap((lv, i) => store.analysis(lv).rooms
-      .filter((r) => !m || heightAt(m, r.center.x, r.center.y) > this.baseOf(i) - 1.2)
+      .filter((r) => !m || (p.site?.cliff ? r.poly.every((q) => heightAt(m, q.x, q.y) > this.baseOf(i) - 1.2) : heightAt(m, r.center.x, r.center.y) > this.baseOf(i) - 1.2))
       .map((r) => r.poly.map((q) => ({ x: q.x, y: q.y }))));
   }
 
@@ -601,7 +601,7 @@ export class View3D {
       root.add(holder);
       if (/lamp|chandelier/i.test(def.model.id) || def.sub === 'suspension') (root.userData.lights ||= []).push({ x: 0, y: size.h * 0.4 - size.h, z: 0, intensity: 18, color: '#ffd9a8' });
     } else {
-      const obj = buildProc({ ...def.model, color: def.model?.color }, def.model?.type === 'tv' ? {} : size, it.color);
+      const obj = buildProc({ ...def.model, color: def.model?.color, p: { ...def.model?.p, ...(it.p || {}) } }, def.model?.type === 'tv' ? {} : size, it.color);
       mergeStatic(obj);
       root.add(obj);
       root.userData.ownGeometry = true;
@@ -613,8 +613,8 @@ export class View3D {
   itemY(it, def, levelIndex) {
     const lv = store.project.levels[levelIndex];
     if (def.ceiling) return this.baseOf(levelIndex) + lv.height * M;
-    // Un arbre, une haie ou une clôture suivent le relief, sauf dans une pièce (terrasse couverte).
-    if (def.cat === 'exterieur' && !store.analysis(lv).rooms.some((r) => pointInPolygon({ x: it.x, y: it.y }, r.poly))) return this.groundY(it.x, it.y) + (it.z ?? def.z ?? 0) * M;
+    // Un arbre, une haie ou une clôture suivent le relief, sauf dans une pièce (terrasse couverte) ou s'ils sont accrochés à la maison (terrasse suspendue, pilotis).
+    if (def.cat === 'exterieur' && !it.fixed && !store.analysis(lv).rooms.some((r) => pointInPolygon({ x: it.x, y: it.y }, r.poly))) return this.groundY(it.x, it.y) + (it.z ?? def.z ?? 0) * M;
     return this.baseOf(levelIndex) + (it.z ?? def.z ?? 0) * M;
   }
 

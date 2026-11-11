@@ -969,7 +969,8 @@ function curvedSofa(p) {
 /** Cheminée en cylindre habillé de bois, foyer ouvert à mi-hauteur, conduit jusqu'au plafond. */
 function drumFireplace(p) {
   const g = new THREE.Group(), { w = 1.6, h = 3 } = p, r = w / 2;
-  const shell = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 40, 1, false), texturedMaterial('american_walnut_veneer', 1.6, { tint: '#c99a6c', gain: 1.1 })); shell.position.y = h / 2; shell.castShadow = shell.receiveShadow = true; g.add(shell);
+  const skin = p.stone ? texturedMaterial('rustic_stone_wall', 1.4, { tint: '#d9d2c4', gain: 1.4 }) : texturedMaterial('american_walnut_veneer', 1.6, { tint: '#c99a6c', gain: 1.1 });
+  const shell = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 40, 1, false), skin); shell.position.y = h / 2; shell.castShadow = shell.receiveShadow = true; g.add(shell);
   B(g, r * 1.3, 0.62, 0.3, solid('#111111', 0.9), 0, 0.42, r - 0.12, 0.01);
   const f = flames(r * 1.1, 0.4); f.position.set(0, 0.48, r - 0.1); g.add(f);
   B(g, r * 1.6, 0.1, 0.5, solid('#2a2724', 0.8), 0, 0.32, r - 0.05, 0.01);
@@ -990,6 +991,53 @@ function sculpture(p) {
 }
 
 function palm(p) { return palmTree(p); }
+
+/** Secteur d'anneau extrudé (terrasse, bassin, marche) : rayons et angles en mètres et degrés, centre de l'arc au centre de l'objet. */
+function annulus(r0, r1, a0, a1, y0, h, mat, seg = 64) {
+  const s = new THREE.Shape(), A0 = (a0 * Math.PI) / 180, A1 = (a1 * Math.PI) / 180;
+  s.absarc(0, 0, r1, A0, A1, false); s.absarc(0, 0, r0, A1, A0, true);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: h, bevelEnabled: false, curveSegments: seg }); geo.rotateX(Math.PI / 2); geo.translate(0, y0 + h, 0);
+  const m = new THREE.Mesh(geo, mat); m.castShadow = m.receiveShadow = true; return m;
+}
+/** Centre de l'arc décalé dans l'objet (p.ac = [x, z] en mètres) : l'objet garde le cadre serré de sa forme. */
+function atArc(g, p) { if (!p.ac) return g; const o = new THREE.Group(); g.position.set(p.ac[0], 0, p.ac[1]); o.add(g); return o; }
+/** Terrasse suspendue en arc, dalle blanche et garde-corps de verre sur le bord extérieur. */
+function arcDeck(p) {
+  const g = new THREE.Group(), { r0 = 7.5, r1 = 11, a0 = 20, a1 = 160, h = 0.3 } = p;
+  g.add(annulus(r0, r1, a0, a1, -h, h, solid('#f1efe9', 0.55)));
+  g.add(annulus(r0 + 0.01, r1 - 0.01, a0 + 0.2, a1 - 0.2, 0, 0.012, texturedMaterial('large_grey_tiles', 1.2, { tint: '#f7eedf', gain: 1.65 })));
+  const rail = annulus(r1 - 0.03, r1 - 0.01, a0, a1, 0, 1.05, glass()); rail.castShadow = false; g.add(rail);
+  g.add(annulus(r1 - 0.06, r1, a0, a1, 1.03, 0.04, solid('#d9d6cf', 0.3, 0.6)));
+  return atArc(g, p);
+}
+/** Piscine en arc : l'eau suit la courbe de la terrasse, margelle claire. */
+function arcPool(p) {
+  const g = new THREE.Group(), { r0 = 8.6, r1 = 10.4, a0 = 50, a1 = 130 } = p, stone = texturedMaterial('large_grey_tiles', 1.2, { tint: '#f7eedf', gain: 1.65 });
+  g.add(annulus(r0 - 0.35, r0, a0 - 2, a1 + 2, 0, 0.06, stone)); g.add(annulus(r1, r1 + 0.35, a0 - 2, a1 + 2, 0, 0.06, stone));
+  g.add(annulus(r0, r1, a0 - 2, a0, 0, 0.06, stone)); g.add(annulus(r0, r1, a1, a1 + 2, 0, 0.06, stone));
+  const w = annulus(r0, r1, a0, a1, 0.02, 0.012, poolWaterMaterial()); w.castShadow = false; g.add(w);
+  return atArc(g, p);
+}
+/** Estrade circulaire en gradins : trois marches qui dessinent un palier rond. */
+function curvedSteps(p) {
+  const g = new THREE.Group(), { r = 3, steps = 3, rise = 0.16, run = 0.4, a0 = 0, a1 = 360 } = p, mat = p.paver ? texturedMaterial('large_grey_tiles', 1.2, { tint: '#efe6d6', gain: 1.55 }) : texturedMaterial('marble_01', 2.5, { tint: '#f4f1ea', gain: 1.15 });
+  for (let i = 0; i < steps; i++) g.add(annulus(0, r - i * run, a0, a1, 0, rise * (i + 1), mat));
+  return atArc(g, p);
+}
+/** Bar rond : comptoir en arc, façade en noyer, plateau de marbre, étagère lumineuse derrière. */
+function roundBar(p) {
+  const g = new THREE.Group(), { r = 1.6, a0 = 200, a1 = 340 } = p;
+  g.add(annulus(r - 0.55, r, a0, a1, 0, 1.0, texturedMaterial('american_walnut_veneer', 1.6, { tint: '#c99a6c', gain: 1.1 })));
+  g.add(annulus(r - 0.65, r + 0.08, a0 - 2, a1 + 2, 1.0, 0.05, texturedMaterial('marble_01', 2.5, { tint: '#f4f1ea', gain: 1.15 })));
+  g.add(annulus(r - 0.62, r - 0.58, a0, a1, 1.05, 0.03, emissive('#ffe6c0', 2)));
+  return atArc(g, p);
+}
+/** Pilotis de béton blanc incliné : il part du rocher et rejoint le dessous du disque en biais. */
+function slantColumn(p) {
+  const g = new THREE.Group(), h = p.h ?? 8, tilt = ((p.tilt ?? 12) * Math.PI) / 180, L = h / Math.cos(tilt);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.36, L, 28), solid('#eceae4', 0.55)); m.position.set(0, h / 2, -Math.tan(tilt) * h / 2); m.rotation.x = tilt; m.castShadow = m.receiveShadow = true; g.add(m);
+  return g;
+}
 
 function steelColumn(p) { const g = new THREE.Group(); B(g, 0.12, p.h ?? 2.8, 0.12, blackMetal(), 0, 0, 0, 0.004); return g; }
 
@@ -1369,7 +1417,7 @@ export const PROC = {
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
   flowerBed, daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
-  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive, kidneyPool, claustra, steelColumn, boulder, curvedSofa, drumFireplace, concreteColumn, sculpture, palm,
+  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive, kidneyPool, claustra, steelColumn, boulder, curvedSofa, drumFireplace, concreteColumn, sculpture, palm, arcDeck, arcPool, curvedSteps, roundBar, slantColumn,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */

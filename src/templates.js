@@ -1387,150 +1387,259 @@ function cutPoly(pts, axis, v) {
 }
 const edgeMid = (cx, cy, r, n, angle) => [cx + r * Math.cos((Math.PI) / n) * Math.cos(angle * RAD), cy + r * Math.cos((Math.PI) / n) * Math.sin(angle * RAD)];
 
-/** Villa des Disques : des volumes ronds reliés par des galeries de verre, le grand salon lancé au-dessus de la falaise. */
+/** Villa des Disques : six volumes ronds reliés par des passerelles de verre ; le grand salon, rond et en double hauteur, s'avance au-dessus de la crique. */
 function houseDiscs() {
   const p = newProject('Villa des Disques');
   p.style = { facade: 'facade_enduit', roof: 'roof_grey', joinery: '#c9c6bf' };
   p.roof = { type: 'none', pitch: 0, overhang: 0, ridge: 'auto' };
   p.site.env = 'mer';
   const K = kit(), N = K.N, GLASS = { name: 'Vitrage courbe' };
+  const mar = 'marble', walnut = 'wall_noyer', white = 'paint_all_white', oak = 'oak_natural';
   const g = p.levels[0];
   g.name = 'Rez-de-chaussée'; g.height = 300; g.slab = 25;
-  const loop = (lv, pts, t, extra) => pts.forEach(([x, y], k) => { const [X, Y] = pts[(k + 1) % pts.length]; for (const w of wallLine(lv, x, y, X, Y, t)) Object.assign(w, extra || {}); });
-  // Les disques : A le salon sur la falaise, B la rotonde d'entrée, C la galerie des voitures, E bureau et sport.
-  const A = { x: 1500, y: 1150, r: 700 }, B = { x: 1500, y: -334, r: 520 }, C = { x: 2800, y: -334, r: 520 }, E = { x: 200, y: -334, r: 520 };
-  const PA = ringPts(A.x, A.y, A.r, 24, 7.5), PB = ringPts(B.x, B.y, B.r, 16, 11.25), PC = ringPts(C.x, C.y, C.r, 16, 11.25), PE = ringPts(E.x, E.y, E.r, 16, 11.25);
-  loop(g, PA, 30, { piles: true }); loop(g, PB, 30); loop(g, PC, 30); loop(g, PE, 30);
-  const yAtop = A.y - A.r * Math.cos(7.5 * RAD), yBbot = B.y + B.r * Math.cos(11.25 * RAD), xBe = B.x + B.r * Math.cos(11.25 * RAD), xBw = B.x - B.r * Math.cos(11.25 * RAD), xCw = C.x - C.r * Math.cos(11.25 * RAD), xEe = E.x + E.r * Math.cos(11.25 * RAD);
-  // Galeries de verre entre les disques.
-  partition(g, 1410, yBbot, 1410, yAtop, 20); partition(g, 1590, yBbot, 1590, yAtop, 20);
-  partition(g, xBe, -424, xCw, -424, 20); partition(g, xBe, -244, xCw, -244, 20);
-  partition(g, xEe, -424, xBw, -424, 20); partition(g, xEe, -244, xBw, -244, 20);
-  // Cloisons : corde du salon, salle d'eau et WC au nord de la rotonde, bureau et sport dans E.
-  const chA = cutPoly(PA, 1, 1000); partition(g, chA[0][0], 1000, chA[1][0], 1000, 20);
-  const chB = cutPoly(PB, 1, B.y - 220); partition(g, chB[0][0], B.y - 220, chB[1][0], B.y - 220, 15); const vB = cutPoly(PB, 0, 1500); partition(g, 1500, vB[0][1], 1500, B.y - 220, 12);
-  const vE = cutPoly(PE, 0, E.x); partition(g, E.x, vE[0][1], E.x, vE[1][1], 15);
-  // Passages, porte d'entrée et vitrages courbes.
-  open(g, 1500, yAtop, 'passage', 140, 260, 0); open(g, 1500, yBbot, 'passage', 140, 260, 0); open(g, xBe, -334, 'passage', 140, 260, 0); open(g, xCw, -334, 'passage', 140, 260, 0); open(g, xBw, -334, 'passage', 140, 260, 0); open(g, xEe, -334, 'passage', 140, 260, 0);
-  open(g, 1650, 1000, 'passage', 300, 270, 0); open(g, E.x, E.y + 200, 'door', 93, 230, 0);
-  open(g, 1300, B.y - 220, 'door', 73, 215, 0); open(g, 1700, B.y - 220, 'door', 73, 215, 0);
-  const em = (c, a) => edgeMid(c.x, c.y, c.r, c === A ? 24 : 16, a);
-  { const [x, y] = em(B, -22.5); open(g, x, y, 'entry', 150, 270, 0, { name: "Porte d'entrée pivotante", color: '#d8d5ce' }); }
-  for (const a of [-112.5, -67.5]) { const [x, y] = em(C, a); open(g, x, y, 'garage', 160, 240, 0, { name: 'Porte de garage', color: '#d8d5ce' }); }
-  for (const a of [22.5, 45, 67.5, 90, 112.5, 135, 157.5]) { const [x, y] = em(C, a); open(g, x, y, 'fixed', 165, 260, 12, GLASS); }
-  for (let k = 0; k < 24; k++) { const a = k * 15; if (a === 270) continue; const [x, y] = em(A, a); if (y < 1000 && (a > 200 && a < 340)) { open(g, x, y, 'fixed', 140, 100, 150, GLASS); continue; } open(g, x, y, 'fixed', 150, 285, 12, GLASS); }
-  for (const a of [90, 112.5, 135, 157.5, 180, 202.5]) { const [x, y] = em(E, a); open(g, x, y, 'fixed', 165, 270, 12, GLASS); }
-  for (const a of [45, 67.5, 90, 112.5, 135]) { const [x, y] = em(B, a); if (Math.abs(x - 1500) > 110) open(g, x, y, 'fixed', 165, 270, 12, GLASS); }
-  for (const yy of [yBbot + 140]) { open(g, 1410, yy, 'fixed', 220, 270, 5, GLASS); open(g, 1590, yy, 'fixed', 220, 270, 5, GLASS); }
-  for (const xx of [(xBe + xCw) / 2, (xEe + xBw) / 2]) { open(g, xx, -424, 'fixed', 220, 270, 5, GLASS); open(g, xx, -244, 'fixed', 220, 270, 5, GLASS); }
-  const mar = 'marble', walnut = 'wall_noyer', white = 'paint_all_white';
-  setRoom(g, 1500, 1350, 'salon', 'Grand salon', { floor: mar, paint: white, oculus: { x: A.x, y: A.y + 40, r: 150 } });
-  setRoom(g, 1500, 750, 'cuisine', 'Cuisine et salle à manger', { floor: mar, paint: white });
-  setRoom(g, 1500, 300, 'couloir', 'Galerie de la mer', { floor: mar, paint: white });
-  setRoom(g, 1500, -200, 'entree', 'Rotonde', { floor: mar, paint: white });
-  setRoom(g, 1300, -650, 'wc', 'WC', { floor: mar, paint: walnut });
-  setRoom(g, 1700, -650, 'douche', "Salle d'eau", { floor: mar, paint: 'wall_pierre_blonde' });
-  setRoom(g, 2150, -334, 'couloir', 'Galerie est', { floor: mar, paint: white });
-  setRoom(g, 2800, -334, 'garage', 'Galerie des voitures', { floor: 'concrete_floor', paint: white });
-  setRoom(g, 850, -334, 'couloir', 'Galerie ouest', { floor: mar, paint: white });
-  setRoom(g, 400, -334, 'bureau', 'Bureau', { floor: 'oak_natural', paint: walnut });
-  setRoom(g, 0, -334, 'piece', 'Salle de sport', { floor: 'oak_light', paint: white });
-  clad(g, 1500, 1350, walnut, 'n');
+  const u = newLevel('Étage', 280); u.slab = 25;
+  const r1 = (v) => Math.round(v * 10) / 10, nrm = (a) => ((a % 360) + 360) % 360;
+  const pol = (c, r, a) => [r1(c.x + r * Math.cos(a * RAD)), r1(c.y + r * Math.sin(a * RAD))];
+  const mid = (f) => [(f[0][0] + f[1][0]) / 2, (f[0][1] + f[1][1]) / 2];
+  /** Disque à n facettes ; chaque raccord (passerelle, porte) devient une facette droite de la largeur voulue. */
+  const ring = (c, r, n, joins = []) => {
+    const step = 360 / n, cuts = joins.map((j) => { const da = Math.asin((j.hw ?? 100) / r) / RAD; return { a: j.a, u: j.a - da, v: j.a + da }; });
+    const near = (a) => cuts.some((q) => { const d = nrm(a - q.u); return d < q.v - q.u + 2 || d > 358; });
+    const angs = [];
+    for (let k = 0; k < n; k++) { const a = step / 2 + k * step; if (!near(a)) angs.push(nrm(a)); }
+    cuts.forEach((q) => angs.push(nrm(q.u), nrm(q.v)));
+    angs.sort((x, y) => x - y);
+    const facet = {}; cuts.forEach((q) => { facet[q.a] = [pol(c, r, q.u), pol(c, r, q.v)]; });
+    return { c, r, pts: angs.map((a) => pol(c, r, a)), facet };
+  };
+  const chain = (lv, pts, t, extra, closed = true) => pts.forEach(([x, y], k) => { if (!closed && k === pts.length - 1) return; const [X, Y] = pts[(k + 1) % pts.length]; for (const w of wallLine(lv, x, y, X, Y, t)) Object.assign(w, extra || {}); });
+  /** Passerelle droite entre deux facettes qui se font face. */
+  const bridge = (lv, P, Q, t = 20) => {
+    const d = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]), [q0, q1] = d(P[0], Q[0]) + d(P[1], Q[1]) <= d(P[0], Q[1]) + d(P[1], Q[0]) ? Q : [Q[1], Q[0]];
+    for (const [a, b] of [[P[0], q0], [P[1], q1]]) for (const w of wallLine(lv, a[0], a[1], b[0], b[1], t)) w.piles = true;
+  };
+  /** Baie sur le tronçon de mur qui passe par (x, y), à la largeur de ce tronçon. */
+  const fit = (lv, x, y, type, sill, h, extra = GLASS, maxW = 600, margin = 16) => {
+    for (const w of lv.walls) {
+      const A = lv.nodes[w.a], B = lv.nodes[w.b], L = Math.hypot(B.x - A.x, B.y - A.y);
+      const t = ((x - A.x) * (B.x - A.x) + (y - A.y) * (B.y - A.y)) / L, d = Math.abs((x - A.x) * (B.y - A.y) - (y - A.y) * (B.x - A.x)) / L;
+      if (d > 2 || t <= 0 || t >= L) continue;
+      const width = Math.min(maxW, L - margin);
+      if (width >= 45 && !w.openings.length) w.openings.push({ id: uid('o'), type, width, height: h, sill, t: L / 2, open: 0, ...extra });
+      return;
+    }
+  };
+  /** Vitre les facettes d'un disque dont l'angle passe le test (les raccords, plus larges, sont laissés aux passages). */
+  const glaze = (lv, D, test, sill, h, extra = GLASS) => D.pts.forEach((a, k) => {
+    const b = D.pts[(k + 1) % D.pts.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    const ang = nrm(Math.atan2(my - D.c.y, mx - D.c.x) / RAD);
+    if (L < 150 && test(ang)) fit(lv, mx, my, 'fixed', sill, h, extra);
+  });
+  const way = (lv, f, w = 160, h = 260, extra = {}) => { const [x, y] = mid(f); open(lv, x, y, 'passage', w, h, 0, extra); };
+  const between = (a, lo, hi) => (lo <= hi ? a >= lo && a <= hi : a >= lo || a <= hi);
+
+  // ——— Rez-de-chaussée : au sud le salon rond au-dessus du vide, la cuisine et le bureau ; au nord l'entrée, le sport et les voitures ———
+  const S = ring({ x: 0, y: 300 }, 750, 48, [{ a: 180 }, { a: 0 }, { a: 270 }, { a: 90, hw: 200 }]);
+  const Kd = ring({ x: -1550, y: 300 }, 500, 32, [{ a: 0 }]), Od = ring({ x: 1550, y: 300 }, 500, 32, [{ a: 180 }]);
+  const E = ring({ x: 0, y: -1450 }, 420, 24, [{ a: 90 }, { a: 180 }, { a: 0 }, { a: 270, hw: 110 }]);
+  const F = ring({ x: -1500, y: -1450 }, 450, 24, [{ a: 0 }]), C = ring({ x: 1550, y: -1450 }, 550, 32, [{ a: 180 }, { a: 270, hw: 170 }]);
+  chain(g, S.pts, 30, { piles: true }); for (const D of [Kd, Od, E, F, C]) chain(g, D.pts, 28);
+  bridge(g, Kd.facet[0], S.facet[180]); bridge(g, S.facet[0], Od.facet[180]); bridge(g, E.facet[90], S.facet[270]); bridge(g, F.facet[0], E.facet[180]); bridge(g, E.facet[0], C.facet[180]);
+  // Bureau : salle d'eau et buanderie derrière, côté terre.
+  { const top = cutPoly(Od.pts, 0, 1550)[0]; partition(g, 1550, 180, 1550, top[1], 12); const ch = cutPoly(Od.pts, 1, 180); partition(g, ch[0][0], 180, ch[1][0], 180, 15); }
+  // Entrée : un sas entre le WC et le vestiaire, puis la rotonde et son escalier hélicoïdal.
+  { const [a, b] = E.facet[270], L = a[0] < b[0] ? a : b, R = a[0] < b[0] ? b : a; partition(g, L[0], -1600, L[0], L[1], 12); partition(g, R[0], -1600, R[0], R[1], 12); const ch = cutPoly(E.pts, 1, -1600); partition(g, ch[0][0], -1600, ch[1][0], -1600, 15); }
+  // Passages des passerelles ; ceux du salon s'ouvrent aussi à l'étage, où passent les passerelles hautes.
+  const UP = { upper: { sill: 325, height: 245 } };
+  way(g, Kd.facet[0]); way(g, S.facet[180], 160, 260, UP); way(g, S.facet[0], 160, 260, UP); way(g, Od.facet[180]); way(g, E.facet[90]); way(g, S.facet[270], 160, 260, UP);
+  way(g, F.facet[0]); way(g, E.facet[180]); way(g, E.facet[0]); way(g, C.facet[180]);
+  { const [x, y] = mid(E.facet[270]); open(g, x, y, 'entry', 150, 270, 0, { name: "Porte d'entrée pivotante", color: '#d8d5ce' }); }
+  { const [x, y] = mid(C.facet[270]); open(g, x, y, 'garage', 300, 250, 0, { name: 'Porte de garage', color: '#d8d5ce' }); }
+  { const [x, y] = mid(S.facet[90]); open(g, x, y, 'bay', 380, 690, 0, { name: 'Baie coulissante sur la terrasse' }); }
+  open(g, 0, -1600, 'passage', 180, 270, 0); open(g, -260, -1600, 'door', 73, 215, 0); open(g, 260, -1600, 'door', 83, 215, 0);
+  open(g, 1150, 180, 'door', 83, 215, 0); open(g, 1950, 180, 'door', 83, 215, 0);
+  // Verre : le salon vitré toute hauteur face à la mer, plus bas sous la bibliothèque ; ailleurs selon la pièce.
+  glaze(g, S, (a) => between(a, 15, 165), 12, 690); glaze(g, S, (a) => !between(a, 15, 165) && !between(a, 298, 338), 12, 250);
+  glaze(g, Kd, (a) => between(a, 15, 170), 12, 275); glaze(g, Kd, (a) => between(a, 170, 232) || between(a, 308, 345), 95, 180);
+  glaze(g, Od, (a) => between(a, 10, 165), 12, 275); glaze(g, Od, (a) => between(a, 200, 340), 175, 80);
+  glaze(g, E, (a) => between(a, 20, 165) || between(a, 195, 235) || between(a, 305, 345), 12, 275); glaze(g, E, (a) => between(a, 236, 304), 185, 60);
+  glaze(g, F, (a) => !between(a, 330, 30) && !between(a, 245, 295), 12, 275); glaze(g, C, (a) => between(a, 300, 240), 12, 270);
+  for (const [P, Q] of [[Kd.facet[0], S.facet[180]], [S.facet[0], Od.facet[180]], [E.facet[90], S.facet[270]], [F.facet[0], E.facet[180]], [E.facet[0], C.facet[180]]]) for (const k of [0, 1]) {
+    const a = P[k], b = Math.abs(Q[0][0] - a[0]) < 1 || Math.abs(Q[0][1] - a[1]) < 1 ? Q[0] : Q[1]; fit(g, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 'fixed', 5, 270, GLASS, 600, 30);
+  }
+  setRoom(g, 0, 300, 'salon', 'Grand salon', { floor: mar, paint: white });
+  setRoom(g, -1550, 300, 'cuisine', 'Cuisine et salle à manger', { floor: mar, paint: white });
+  setRoom(g, 1550, 500, 'bureau', 'Bureau-bibliothèque', { floor: oak, paint: walnut });
+  setRoom(g, 1400, 0, 'douche', "Salle d'eau", { floor: mar, paint: 'wall_pierre_blonde' });
+  setRoom(g, 1700, 0, 'piece', 'Buanderie', { floor: 'tile_cement', paint: white });
+  setRoom(g, 0, -1400, 'entree', 'Rotonde', { floor: mar, paint: white });
+  setRoom(g, 0, -1730, 'entree', "Sas d'entrée", { floor: mar, paint: walnut });
+  setRoom(g, -250, -1700, 'wc', 'WC', { floor: mar, paint: walnut });
+  setRoom(g, 250, -1700, 'dressing', 'Vestiaire', { floor: mar, paint: walnut });
+  setRoom(g, -1500, -1450, 'piece', 'Salle de sport', { floor: 'oak_light', paint: white });
+  setRoom(g, 1550, -1450, 'garage', 'Galerie des voitures', { floor: 'concrete_floor', paint: white });
+  setRoom(g, -900, 300, 'couloir', 'Passerelle ouest', { floor: mar, paint: white });
+  setRoom(g, 900, 300, 'couloir', 'Passerelle est', { floor: mar, paint: white });
+  setRoom(g, 0, -740, 'couloir', 'Galerie de la mer', { floor: mar, paint: white });
+  setRoom(g, -730, -1450, 'couloir', 'Galerie du sport', { floor: mar, paint: white });
+  setRoom(g, 710, -1450, 'couloir', 'Galerie du garage', { floor: mar, paint: white });
   p.entry = 0; syncRooms(g);
 
-  // ——— Étage : le disque des chambres, en rayons autour d'un palier rond et de l'escalier hélicoïdal ———
-  const u = newLevel('Étage', 290); u.slab = 25;
-  const PD = ringPts(B.x, B.y, 700, 24, 7.5), core = ringPts(B.x, B.y, 220, 12, 7.5);
-  loop(u, PD, 25); loop(u, core, 12);
-  const at2 = (r, a) => [B.x + r * Math.cos(a * RAD), B.y + r * Math.sin(a * RAD)];
-  for (const a of [7.5, 67.5, 127.5, 187.5, 247.5, 277.5, 307.5]) { const [x0, y0] = at2(220, a), [x1, y1] = at2(700, a); partition(u, x0, y0, x1, y1, 12); }
-  const coreDoor = (a, w = 83) => { const [x, y] = edgeMid(B.x, B.y, 220, 12, a); open(u, x, y, 'door', w, 220, 0); };
-  coreDoor(82.5); coreDoor(22.5); coreDoor(142.5); coreDoor(202.5); coreDoor(262.5, 73); coreDoor(292.5, 73); coreDoor(322.5);
-  { const [x, y] = at2(470, 67.5); open(u, x, y, 'door', 83, 220, 0); }
-  for (let k = 0; k < 24; k++) { const a = k * 15, [x, y] = edgeMid(B.x, B.y, 700, 24, a); const sea = a <= 180 && a >= 0; open(u, x, y, 'fixed', sea ? 150 : 120, sea ? 260 : 150, sea ? 12 : 90, GLASS); }
-  const sec = (a) => at2(470, a);
-  setRoom(u, B.x, B.y, 'couloir', 'Palier', { floor: mar, paint: walnut, oculus: { x: B.x, y: B.y, r: 120 } });
-  setRoom(u, ...sec(97.5), 'parentale', 'Suite parentale', { floor: 'oak_natural', paint: white });
-  setRoom(u, ...sec(37.5), 'sdb', 'Salle de bain parentale', { floor: mar, paint: 'wall_pierre_blonde' });
-  setRoom(u, ...sec(157.5), 'chambre', 'Chambre 2', { floor: 'oak_natural', paint: white });
-  setRoom(u, ...sec(217.5), 'chambre', 'Chambre 3', { floor: 'oak_natural', paint: white });
-  setRoom(u, ...sec(262.5), 'sdb', 'Salle de bain', { floor: mar, paint: white });
-  setRoom(u, ...sec(292.5), 'wc', 'WC', { floor: mar, paint: walnut });
-  setRoom(u, ...sec(337.5), 'enfant', 'Chambre 4 (bébé)', { floor: 'oak_natural', paint: white });
+  // ——— Étage : la suite à l'ouest, trois chambres à l'est, la salle de jeux au nord, reliées par une bibliothèque en anneau suspendue dans le salon ———
+  const K2 = ring(Kd.c, 500, 32, [{ a: 0 }]), O2 = ring(Od.c, 500, 32, [{ a: 180 }]), E2 = ring(E.c, 420, 24, [{ a: 90 }]);
+  const Mo = ring(S.c, 720, 48, [{ a: 180 }, { a: 270 }, { a: 0 }]), RI = 520, A0 = 165, A1 = 375;
+  const unw = (a) => (a < A0 ? a + 360 : a);
+  const outer = [pol(S.c, 720, A0), ...Mo.pts.filter(([x, y]) => { const a = unw(nrm(Math.atan2(y - S.c.y, x - S.c.x) / RAD)); return a > A0 + 1 && a < A1 - 1; }).sort(([x, y], [X, Y]) => unw(nrm(Math.atan2(y - S.c.y, x - S.c.x) / RAD)) - unw(nrm(Math.atan2(Y - S.c.y, X - S.c.x) / RAD))), pol(S.c, 720, A1)];
+  const inner = []; for (let a = A1; a >= A0 - 0.01; a -= 30) inner.push(pol(S.c, RI, a));
+  chain(u, outer, 12, null, false); chain(u, [outer[outer.length - 1], inner[0]], 12, null, false); chain(u, inner, 6, null, false); chain(u, [inner[inner.length - 1], outer[0]], 12, null, false);
+  for (const D of [K2, O2, E2]) chain(u, D.pts, 25);
+  bridge(u, E2.facet[90], Mo.facet[270]); bridge(u, K2.facet[0], Mo.facet[180]); bridge(u, Mo.facet[0], O2.facet[180]);
+  // Bord intérieur de l'anneau : des lames fines et un garde-corps de verre, tout est ouvert sur le salon.
+  inner.forEach((a, k) => { if (k === inner.length - 1) return; const b = inner[k + 1]; fit(u, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 'passage', 0, 280, {}, 600, 10); });
+  // Suite : antichambre-dressing, chambre face à la mer, salle de bain, chambre de bébé.
+  { const top = cutPoly(K2.pts, 0, -1400)[0]; partition(u, -1400, 420, -1400, top[1], 12); const ch = cutPoly(K2.pts, 1, 420); partition(u, ch[0][0], 420, ch[1][0], 420, 15); const w = cutPoly(K2.pts, 1, 100)[0]; partition(u, w[0], 100, -1400, 100, 12); }
+  // Aile des enfants : couloir central, deux chambres côté terre, une côté mer, salle de bain et WC.
+  { const [a, b] = O2.facet[180], lo = a[1] < b[1] ? a : b, hi = a[1] < b[1] ? b : a;
+    const top = cutPoly(O2.pts, 0, 1550)[0]; partition(u, 1550, 200, 1550, top[1], 12);
+    for (const x of [1650, 1850]) partition(u, x, 400, x, cutPoly(O2.pts, 0, x)[1][1], 12);
+    const e1 = cutPoly(O2.pts, 1, lo[1]).pop(), e2 = cutPoly(O2.pts, 1, hi[1]).pop(); partition(u, lo[0], lo[1], e1[0], lo[1], 12); partition(u, hi[0], hi[1], e2[0], hi[1], 12); }
+  way(u, K2.facet[0], 160, 240); way(u, Mo.facet[180], 160, 240); way(u, Mo.facet[0], 160, 240); way(u, O2.facet[180], 160, 240); way(u, E2.facet[90], 160, 240); way(u, Mo.facet[270], 160, 240);
+  open(u, -1232, 420, 'door', 83, 215, 0); open(u, -1400, -10, 'door', 83, 215, 0); open(u, -1400, 300, 'door', 83, 215, 0);
+  open(u, 1300, 200, 'door', 83, 215, 0); open(u, 1800, 200, 'door', 83, 215, 0); open(u, 1350, 400, 'door', 83, 215, 0); open(u, 1750, 400, 'door', 73, 215, 0); open(u, 1945, 400, 'door', 73, 215, 0);
+  glaze(u, K2, (a) => between(a, 25, 165), 12, 245); glaze(u, K2, (a) => between(a, 166, 200), 60, 170); glaze(u, K2, (a) => between(a, 201, 260), 160, 80);
+  glaze(u, O2, (a) => between(a, 80, 165), 12, 245); glaze(u, O2, (a) => between(a, 15, 50), 150, 90); glaze(u, O2, (a) => between(a, 200, 340), 60, 170); glaze(u, O2, (a) => between(a, 341, 14), 12, 245);
+  glaze(u, E2, () => true, 12, 245);
+  for (const [P, Q] of [[E2.facet[90], Mo.facet[270]], [K2.facet[0], Mo.facet[180]], [Mo.facet[0], O2.facet[180]]]) for (const k of [0, 1]) {
+    const a = P[k], b = Math.abs(Q[0][0] - a[0]) < 1 || Math.abs(Q[0][1] - a[1]) < 1 ? Q[0] : Q[1]; fit(u, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 'fixed', 5, 250, GLASS, 600, 30);
+  }
+  setRoom(u, ...pol(S.c, 620, 270), 'piece', 'Bibliothèque suspendue', { floor: 'oak_natural', paint: walnut, open: true });
+  setRoom(u, -1550, 620, 'parentale', 'Suite parentale', { floor: oak, paint: white });
+  setRoom(u, -1230, 150, 'dressing', 'Antichambre-dressing', { floor: oak, paint: walnut });
+  setRoom(u, -1700, -50, 'sdb', 'Salle de bain parentale', { floor: mar, paint: 'wall_pierre_blonde' });
+  setRoom(u, -1700, 260, 'enfant', 'Chambre 5 (bébé)', { floor: oak, paint: white });
+  setRoom(u, 1550, 300, 'couloir', 'Couloir des chambres', { floor: oak, paint: white });
+  setRoom(u, 1300, 0, 'chambre', 'Chambre 2', { floor: oak, paint: white });
+  setRoom(u, 1800, 0, 'chambre', 'Chambre 3', { floor: oak, paint: white });
+  setRoom(u, 1350, 600, 'chambre', 'Chambre 4', { floor: oak, paint: white });
+  setRoom(u, 1750, 600, 'sdb', 'Salle de bain', { floor: mar, paint: white });
+  setRoom(u, 1930, 500, 'wc', 'WC', { floor: mar, paint: walnut });
+  setRoom(u, 0, -1450, 'enfant', 'Palier et salle de jeux', { floor: oak, paint: white, oculus: { x: 0, y: -1450, r: 110 } });
+  setRoom(u, 0, -760, 'couloir', 'Passerelle haute', { floor: oak, paint: white });
+  setRoom(u, -900, 300, 'couloir', 'Passerelle de la suite', { floor: oak, paint: white });
+  setRoom(u, 900, 300, 'couloir', 'Passerelle des enfants', { floor: oak, paint: white });
   p.levels.push(u); syncRooms(u);
 
-  const disc = (lv, c, extra) => ({ id: uid('z'), level: lv.id, x0: c.x - c.r, y0: c.y - c.r, x1: c.x + c.r, y1: c.y + c.r, type: 'disc', pitch: 0, overhang: 100, ridge: 'x', wallH: 0, ...extra });
-  const slabZ = (x0, y0, x1, y1, ends) => ({ id: uid('z'), level: g.id, x0, y0, x1, y1, type: 'slab', pitch: 0, overhang: 25, ridge: 'x', wallH: 280, thick: 22, ...ends });
-  p.roofs = [disc(g, A, { overhang: 160, oculus: 150, thick: 42 }), disc(u, { x: B.x, y: B.y, r: 700 }, { overhang: 110, oculus: 120, thick: 38 }), disc(g, C, { overhang: 90, thick: 34 }), disc(g, E, { overhang: 90, thick: 34 }),
-    slabZ(1410, yBbot, 1590, yAtop, { ovN: -15, ovS: -15 }), slabZ(xBe, -424, xCw, -244, { ovE: -15, ovW: -15 }), slabZ(xEe, -424, xBw, -244, { ovW: -15, ovE: -15 })];
+  // ——— Toits : grands disques débordants, le salon sous un disque percé d'un oculus et doublé de noyer ———
+  const disc = (lv, D, extra) => ({ id: uid('z'), level: lv.id, x0: D.c.x - D.r, y0: D.c.y - D.r, x1: D.c.x + D.r, y1: D.c.y + D.r, type: 'disc', pitch: 0, overhang: 100, ridge: 'x', wallH: 0, ...extra });
+  const slabZ = (lv, x0, y0, x1, y1, wallH, ends) => ({ id: uid('z'), level: lv.id, x0, y0, x1, y1, type: 'slab', pitch: 0, overhang: 25, ridge: 'x', wallH, thick: 22, ...ends });
+  const xF = F.facet[0][0][0], xEw = E.facet[180][0][0], xEe = E.facet[0][0][0], xC = C.facet[180][0][0], yE2 = E2.facet[90][0][1], yM = Mo.facet[270][0][1];
+  p.roofs = [
+    disc(g, S, { wallH: 720, vault: true, lining: walnut, oculus: 210, overhang: 260, thick: 50 }),
+    disc(u, K2, { overhang: 160, thick: 40 }), disc(u, O2, { overhang: 160, thick: 40 }), disc(u, E2, { overhang: 140, oculus: 110, thick: 38 }),
+    disc(g, F, { overhang: 130, thick: 36 }), disc(g, C, { overhang: 150, thick: 36 }),
+    slabZ(g, xF, -1550, xEw, -1350, 280, { ovW: -15, ovE: -15 }), slabZ(g, xEe, -1550, xC, -1350, 280, { ovW: -15, ovE: -15 }),
+    slabZ(u, -100, yE2, 100, yM, 255, { ovN: -15, ovS: -15 }), slabZ(u, K2.facet[0][0][0], 200, Mo.facet[180][0][0], 400, 255, { ovW: -15, ovE: -15 }), slabZ(u, Mo.facet[0][0][0], 200, O2.facet[180][0][0], 400, 255, { ovW: -15, ovE: -15 }),
+  ];
 
-  // ——— Intérieur : marbre, noyer, rochers posés au sol, canapé courbe face à la mer ———
+  // ——— Intérieur ———
   const huxley = byName(/Fauteuil pivotant en cuir marron et métal noir HUXLEY/) || K.arm, arc = byName(/^Arc - Lampadaire design/), sasso = byName(/Table basse design en marbre blanc et métal noir/) || K.low;
-  const rock = N('Rocher décoratif');
-  place(g, N('Canapé courbe en bouclette'), 1500, 1440, 0, { w: 560, d: 300 }); place(g, sasso, 1500, 1620, 0); place(g, K.rug, 1500, 1610, 0, { w: 380, d: 280, color: '#b9ab96' });
-  place(g, N('Cheminée cylindrique habillée de noyer'), 1050, 1150, 90, { w: 170, h: 300 });
-  place(g, huxley, 1250, 1300, 70); place(g, huxley, 1800, 1300, 290); place(g, arc, 1150, 1450, 0);
-  for (const [x, y, w] of [[1050, 1180, 170], [1960, 1200, 150], [1260, 1650, 120], [1820, 1640, 140]]) place(g, rock, x, y, (x * 7) % 360, { w, d: w * 0.75, h: w * 0.55 });
-  place(g, K.plant, 1020, 1520, 0); place(g, K.plant, 1990, 1500, 0);
-  // Cuisine-bar le long de la corde, table ronde côté mer de la galerie.
-  place(g, N('Linéaire noyer et marbre avec crédence'), 1130, 955, 180, { w: 480 }); place(g, N('Îlot noyer et marbre'), 1130, 800, 0, { w: 300, d: 110 }); for (const k of [-2, -1, 0, 1, 2]) place(g, K.stool, 1130 + k * 58, 722, 0);
-  const roundT = byName(/Table à manger ronde en bois clair chêne D137/) || N('Table en noyer massif');
-  place(g, roundT, 1800, 800, 0, { w: 150, d: 150 }); for (let k = 0; k < 6; k++) { const a = (k * Math.PI) / 3; place(g, K.chair, 1800 + Math.sin(a) * 100, 800 - Math.cos(a) * 100, (k * 60 + 180) % 360); }
-  place(g, K.dome, 1800, 800, 0, { h: 70 }); place(g, N('Buffet noyer à portes cintrées'), 1650, 520, 0, { w: 160 });
-  // Rotonde : l'escalier hélicoïdal au centre, sous l'oculus de l'étage.
-  place(g, N('Colimaçon 1,60 m'), B.x, B.y, 0); for (const [x, y] of [[1220, -120], [1780, -120]]) place(g, rock, x, y, 30, { w: 140, d: 100, h: 80 }); place(g, K.plant, 1250, -420, 0); place(g, K.plant, 1750, -420, 0);
-  place(g, K.wc, 1300, -690, 0); place(g, N('Vasque monobloc en marbre'), 1390, -600, 90, { w: 60, d: 38 });
-  place(g, K.shower, 1625, -700, 0, { w: 120, d: 90 }); place(g, N('Double vasque noyer et pierre'), 1535, -650, 90, { w: 100 });
-  // Galerie des voitures : deux sportives sous le disque vitré.
-  place(g, N('Ferrari rouge'), 2700, -380, 90); place(g, N('Porsche 911 marron'), 2920, -240, 90);
-  // Bureau en noyer et salle de sport face à la mer.
-  place(g, K.books, 230, -360, 90, { w: 280, h: 270, d: 38 }); place(g, N('Table en noyer massif'), 420, -360, 90, { w: 170, d: 80 }); place(g, pick('siege', ['cuir', 'tissu']), 360, -360, 270); place(g, huxley, 450, -600, 330);
-  place(g, K.G_('g-sport-tapis-de-course'), -60, -200, 0); place(g, K.G_('g-sport-banc-de-musculation-r-glable'), 30, -480, 90); place(g, K.rug, 30, -480, 0, { w: 220, d: 240, color: '#3a3733' });
-  // Étage : lits tournés vers la mer, salle de bain parentale vitrée sur l'horizon.
-  // Lits la tête contre le mur de fin de secteur : la mer de côté, la porte du palier dégagée.
-  const bedIn = (a1, suite) => {
-    const t = { x: Math.sin(a1 * RAD), y: -Math.cos(a1 * RAD) }, base = at2(450, a1), rot = facing(t), P2 = (r, d) => { const [x, y] = at2(r, a1); return [x + t.x * d, y + t.y * d]; };
-    place(u, K.rug, ...P2(450, 200), rot, { w: 240, d: 260 }); place(u, K.bed, ...P2(450, 118), rot); place(u, K.cush, ...P2(450, 60), rot, { w: 165, z: 62 });
-    for (const dr of [-125, 125]) { const q = P2(450 + dr, 38); place(u, K.chevet, ...q, rot); place(u, K.lamp, ...q, 0, { z: K.top(K.chevet) }); }
-    if (suite) { place(u, K.bench, ...P2(450, 275), rot); place(u, huxley, ...P2(560, 230), rot + 90); }
-    void base;
+  const rock = N('Rocher décoratif'), roundT = byName(/Table à manger ronde en bois clair chêne D137/) || N('Table en noyer massif');
+  const out = (d, x, y, rot, extra) => place(g, d, x, y, rot, extra);
+  /** Pièce en arc : l'objet garde le cadre serré de son secteur, le centre de l'arc est passé à la forme. */
+  const arcItem = (lv, def, c, q, extra = {}) => {
+    const ro = q.r1 ?? q.r, ri = q.r0 ?? 0, a0 = q.a0 ?? 0, a1 = q.a1 ?? 360, xs = [], ys = [];
+    for (let a = a0; a <= a1 + 0.01; a += 2) for (const r of [ri, ro]) { xs.push(r * Math.cos(a * RAD)); ys.push(r * Math.sin(a * RAD)); }
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    const pm = Object.fromEntries(Object.entries(q).map(([k, v]) => [k, /^r\d?$/.test(k) ? v / 100 : v]));
+    place(lv, def, c.x + cx, c.y + cy, 0, { w: Math.round(x1 - x0), d: Math.round(y1 - y0), ...extra, p: { ...pm, ac: [-cx / 100, -cy / 100] } });
   };
-  bedIn(127.5, true); bedIn(187.5); bedIn(247.5); bedIn(367.5);
-  place(u, N('Baignoire îlot ovale'), ...at2(520, 37.5), facing({ x: -Math.sin(37.5 * RAD), y: Math.cos(37.5 * RAD) }), { w: 170, d: 78 }); place(u, N('Double vasque noyer et pierre'), ...at2(330, 37.5), 0, { w: 120 });
-  place(u, K.shower, ...at2(470, 262.5), 0, { w: 110, d: 90 }); place(u, K.wc, ...at2(500, 292.5), 0);
-  // Escalier : la rampe de verre entoure la trémie du colimaçon.
-  glassRail(u, B.x - 86, B.y - 86, B.x + 86, B.y - 86); glassRail(u, B.x - 86, B.y - 86, B.x - 86, B.y + 86); glassRail(u, B.x + 86, B.y - 86, B.x + 86, B.y + 20);
+  // Grand salon : une estrade ronde sous l'oculus, le canapé courbe tourné vers la mer, la cheminée de pierre, le bar rond sous la bibliothèque.
+  arcItem(g, N('Estrade circulaire en marbre'), S.c, { r: 360, steps: 2, rise: 0.15, run: 0.35 }, { h: 30 });
+  place(g, N('Canapé courbe en bouclette'), 0, 380, 0, { w: 480, d: 260, z: 30 }); place(g, K.rug, 0, 540, 0, { w: 300, d: 180, color: '#b9ab96', z: 30 }); place(g, sasso, 0, 545, 0, { z: 30 });
+  place(g, huxley, -440, 560, 120); place(g, huxley, 440, 560, 240); place(g, arc, -390, 420, 0);
+  place(g, N('Cheminée cylindrique habillée de noyer'), ...pol(S.c, 540, 150), 330, { w: 190, h: 690, p: { stone: true } });
+  arcItem(g, N('Bar rond en noyer et marbre'), { x: 430, y: -120 }, { r: 170, a0: 125, a1: 235 }); for (const a of [150, 180, 210]) place(g, K.stool, 430 + 205 * Math.cos(a * RAD), -120 + 205 * Math.sin(a * RAD), facing({ x: Math.cos(a * RAD), y: Math.sin(a * RAD) }));
+  place(g, K.plant, 600, 600, 0, { h: 220 }); place(g, K.plant, -640, 40, 0, { h: 200 });
+  // Coin lecture sous la bibliothèque : deux fauteuils face à face, un guéridon.
+  { const a = 222, c = pol(S.c, 610, a), t = { x: -Math.sin(a * RAD), y: Math.cos(a * RAD) };
+    place(g, K.rug, ...c, (a + 90) % 360, { w: 240, d: 170 }); place(g, K.arm, c[0] + t.x * 78, c[1] + t.y * 78, facing({ x: -t.x, y: -t.y })); place(g, K.arm, c[0] - t.x * 78, c[1] - t.y * 78, facing(t)); place(g, K.side, ...c, 0); }
+  for (const [x, y, w] of [[420, 720, 150], [560, 460, 110], [-300, 840, 130], [-650, 100, 100]]) place(g, rock, x, y, (x * 7 + 360) % 360, { w, d: w * 0.75, h: w * 0.55 });
+  // Cuisine : linéaire contre le mur nord, îlot, table ronde dans l'arrondi vitré face à la mer.
+  place(g, N('Linéaire noyer et marbre avec crédence'), -1550, -85, 0, { w: 470 }); place(g, N('Îlot noyer et marbre'), -1550, 140, 0, { w: 300, d: 110 }); for (const k of [-2, -1, 0, 1, 2]) place(g, K.stool, -1550 + k * 58, 225, 180);
+  place(g, roundT, -1580, 540, 0, { w: 160, d: 160 }); for (let k = 0; k < 6; k++) { const a = (k * Math.PI) / 3; place(g, K.chair, -1580 + Math.sin(a) * 105, 540 - Math.cos(a) * 105, (k * 60 + 180) % 360); }
+  place(g, K.dome, -1580, 540, 0, { h: 70 }); place(g, K.plant, -1950, 300, 0);
+  // Bureau-bibliothèque face à la mer, salle d'eau et buanderie derrière.
+  place(g, K.books, 1350, 207, 0, { w: 280, h: 270, d: 38 }); place(g, K.books, 1750, 207, 0, { w: 280, h: 270, d: 38 });
+  place(g, N('Table en noyer massif'), 1560, 520, 0, { w: 200, d: 90 }); place(g, pick('siege', ['cuir', 'tissu']), 1560, 450, 0); place(g, huxley, 1830, 380, 250); place(g, huxley, 1290, 430, 110); place(g, rock, 1850, 610, 40, { w: 110, d: 80, h: 60 });
+  place(g, K.shower, 1330, 40, 0, { w: 120, d: 90 }); place(g, N('Double vasque noyer et pierre'), 1450, 147, 180, { w: 100 }); place(g, K.wc, 1516, -20, 90);
+  for (const x of [1700, 1765]) place(g, N('Lave-linge 60 cm'), x, 140, 180);
+  // Entrée : l'escalier hélicoïdal au centre de la rotonde, sous l'oculus du disque de l'étage ; WC et vestiaire de part et d'autre du sas.
+  place(g, N('Colimaçon 1,60 m'), 0, -1450, 0); place(g, K.plant, -280, -1230, 0); place(g, K.plant, 280, -1230, 0);
+  place(g, K.wc, -200, -1760, 0); place(g, N('Vasque monobloc en marbre'), -134, -1660, 90, { w: 50, d: 36 });
+  place(g, pick('armoire', ['noyer', 'chêne', 'bois']), 146, -1700, 270, { w: 100 });
+  // Galerie des voitures et salle de sport.
+  place(g, N('Ferrari rouge'), 1420, -1430, 180); place(g, N('Porsche 911 marron'), 1690, -1430, 180);
+  for (const x of [-1730, -1630]) place(g, N('Tapis de course'), x, -1330, 90); place(g, N('Banc de musculation réglable'), -1400, -1600, 0); place(g, K.rug, -1450, -1520, 0, { w: 260, d: 240, color: '#3a3733' }); place(g, N('Rangement haltères'), -1500, -1850, 0); place(g, K.plant, -1230, -1700, 0);
+  // Bibliothèque suspendue : rayonnages sur tout l'anneau, fauteuils de lecture, garde-corps de verre côté vide.
+  const rail = named('Garde-corps verre 2 m');
+  inner.forEach((a, k) => { if (k === inner.length - 1) return; const b = inner[k + 1], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, n = { x: (mx - S.c.x) / RI, y: (my - S.c.y) / RI }; place(u, rail, mx + n.x * 8, my + n.y * 8, facing(n), { w: Math.hypot(b[0] - a[0], b[1] - a[1]) - 16 }); });
+  outer.forEach((a, k) => {
+    if (k === outer.length - 1) return; const b = outer[k + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, ang = nrm(Math.atan2(my - S.c.y, mx - S.c.x) / RAD);
+    if (L > 150 || L < 40) return; const n = { x: -(mx - S.c.x) / 720, y: -(my - S.c.y) / 720 }; place(u, K.books, mx + n.x * 25, my + n.y * 25, facing(n), { w: L - 8, h: 270, d: 34 }); void ang;
+  });
+  for (const a of [220, 320]) { const [x, y] = pol(S.c, 665, a), n = { x: -Math.cos(a * RAD), y: -Math.sin(a * RAD) }; place(u, huxley, x, y, facing(n)); place(u, arc, ...pol(S.c, 670, a + 9), 0); }
+  // Suite : lit face à la mer, baignoire îlot, double vasque ; bébé à côté.
+  place(u, K.rug, -1550, 640, 0, { w: 260, d: 240 }); place(u, K.bed, -1550, 540, 0); place(u, K.cush, -1550, 482, 0, { w: 165, z: 62 });
+  for (const dx of [-125, 125]) { place(u, K.chevet, -1550 + dx, 458, 0); place(u, K.lamp, -1550 + dx, 458, 0, { z: K.top(K.chevet) }); }
+  place(u, huxley, -1800, 560, 120);
+  place(u, N('Baignoire îlot ovale'), -1720, -20, 90, { w: 170, d: 78 }); place(u, N('Double vasque noyer et pierre'), -1431, -110, 90, { w: 90 });
+  { const a = -40, n = { x: -Math.cos(a * RAD), y: -Math.sin(a * RAD) }, [x, y] = pol(K2.c, 440, a); place(u, N('Dressing sur mesure en noyer'), x, y, facing(n), { w: 180, d: 60, h: 250 }); }
+  place(u, pick('lit-enfant', ['bébé', 'cododo', 'bois']) || K.bed, -1820, 260, 90); place(u, K.rug, -1680, 260, 0, { w: 160, d: 200 });
+  // Chambres des enfants, salle de bain et WC.
+  for (const [x, y, r] of [[1440, 20, 90], [1660, 20, 270], [1540, 600, 90]]) { place(u, K.bed, x, y, r); place(u, K.rug, x + (r === 90 ? -50 : 50), y, 0, { w: 220, d: 200 }); }
+  place(u, K.shower, 1715, 680, 180, { w: 100, d: 90 }); place(u, N('Double vasque noyer et pierre'), 1681, 520, 270, { w: 100 }); place(u, K.wc, 1900, 520, 180);
+  place(u, K.rug, -170, -1450, 0, { w: 180, d: 280, color: '#cbbfa8' }); place(u, K.sofa, -300, -1450, 270); place(u, K.plant, 300, -1290, 0); place(u, K.plant, 300, -1610, 0);
+  glassRail(u, -86, -1536, 86, -1536); glassRail(u, -86, -1536, -86, -1364); glassRail(u, 86, -1536, 86, -1430);
 
-  // ——— Dehors : parvis rond et sculpture, piscine à débordement au bord du vide, palmiers ———
-  const out = (d, x, y, rot, extra) => place(g, d, x, y, rot, extra), stone = K.G_('g-terrasse-terrasse-pierre'), palmT = N('Palmier'), cyp = N('Cyprès');
-  out(stone, 2150, -1250, 0, { w: 1500, d: 900 }); out(N('Sculpture en bronze'), 2150, -1250, 0, { w: 260, h: 340 });
-  out(stone, 250, 450, 0, { w: 1500, d: 500 }); out(N('Piscine à débordement 14 × 4'), 250, 560, 0, { w: 1100, d: 280, z: 10 });
-  for (const x of [-200, 100, 400]) out(N('Bain de soleil teck et matelas blanc'), x, 330, 180, { z: 10 });
-  for (const [x, y] of [[800, 200], [2400, 300], [2200, 900], [-500, 100], [1700, -1600], [2650, -1550], [3500, -500], [-600, -900]]) out(palmT, x, y, 0, { h: 800 + (x % 300) });
-  for (const y of [-1900, -2400, -2900]) { out(cyp, 1900, y, 0); out(cyp, 2400, y, 0); }
+  // ——— Dehors : terrasse suspendue en arc et sa piscine, pilotis inclinés, parvis rond et sculpture ———
+  arcItem(g, N('Terrasse suspendue en arc'), S.c, { r0: 762, r1: 1120, a0: 18, a1: 162 }, { h: 35, fixed: true });
+  arcItem(g, N('Piscine en arc'), S.c, { r0: 920, r1: 1070, a0: 52, a1: 128 }, { h: 10, fixed: true });
+  for (const a of [32, 42, 138, 148]) { const [x, y] = pol(S.c, 950, a); out(N('Bain de soleil teck et matelas blanc'), x, y, facing({ x: -Math.cos(a * RAD), y: -Math.sin(a * RAD) }), { z: 1, fixed: true }); }
+  arcItem(g, N('Estrade circulaire en marbre'), { x: 400, y: -2650 }, { r: 700, steps: 1, rise: 0.03, run: 0.3, paver: true }, { h: 3 });
+  out(N('Sculpture en bronze'), 400, -2650, 0, { w: 260, h: 340, z: 3 });
+  const palmT = N('Palmier'), cyp = N('Cyprès'), olive = N('Olivier');
+  for (let k = 0; k < 8; k++) { const a = k * 45 + 22.5; out(palmT, 400 + 820 * Math.cos(a * RAD), -2650 + 820 * Math.sin(a * RAD), 0, { h: 820 + (k % 3) * 120 }); }
+  for (const y of [-2300, -2900, -3500, -4100]) { out(cyp, 2600, y, 0); out(cyp, 3100, y, 0); }
+  for (const [x, y] of [[-2400, -700], [-900, -2200], [2500, -500], [-2600, 400], [2650, 450], [-650, -300], [650, -320]]) out(olive, x, y, (x % 90 + 90) % 90);
+  for (const [x, y, w] of [[-2900, 500, 220], [2900, 550, 200], [-2300, 750, 260], [2300, 780, 240], [-700, -2300, 180]]) out(rock, x, y, (x * 3 + 720) % 360, { w, d: w * 0.8, h: w * 0.5 });
 
-  // Falaise : plateau de la maison, puis paroi presque verticale jusqu'à la mer.
+  // Crique : plateau de la maison, falaise de près de 30 m qui s'enroule sous le salon et plonge dans la mer.
   shapeTerrain(p, 'flat', {});
-  const m = ensureTerrain(p), half = (T_N - 1) / 2, cx = 1500, cy = 600;
+  const m = ensureTerrain(p), half = (T_N - 1) / 2, cx = 0, cy = -600;
   p.site.terrain.cx = cx; p.site.terrain.cy = cy; m.cx = cx; m.cy = cy;
-  const gravel = GROUND_GRAVEL + 1;
+  const gravel = GROUND_GRAVEL + 1, edgeAt = (x) => Math.min(1250, -480 + 0.0009 * x * x) + 40 * Math.sin(x / 500) + 90 * Math.sin(x / 1900 + 1);
   for (let j = 0; j < T_N; j++) for (let i = 0; i < T_N; i++) {
-    const x = (i - half) * 100 + cx, y = (j - half) * 100 + cy, edge = 720 + 90 * Math.sin(x / 700) + 40 * Math.sin(x / 260 + 1);
+    const x = (i - half) * 100 + cx, y = (j - half) * 100 + cy, d = y - edgeAt(x);
     let h = 0;
-    // Paroi presque verticale, puis éboulis qui plongent sous la mer.
-    if (y > edge) h = Math.max(-4300, -smooth01((y - edge) / 420) * 2900 - Math.max(0, y - edge - 420) * 0.6);
-    if (y < -1500) h = smooth01((-1500 - y) / 3000) * 900;
+    if (d > 0) h = Math.max(-4600, -smooth01(d / 450) * 2800 - Math.max(0, d - 450) * 1.1);
+    if (y < -3400) h = smooth01((-3400 - y) / 2500) * 800;
     m.h[j * T_N + i] = Math.round(h);
-    if (y > edge + 40) m.p[j * T_N + i] = gravel;
+    if (d > 40) m.p[j * T_N + i] = gravel;
   }
   commitTerrain(p);
   p.site.altitude = 0;
-  // Pilotis : sous le disque du salon, là où la falaise s'est dérobée.
-  for (const [r, a] of [[560, 30], [560, 60], [560, 90], [560, 120], [560, 150], [300, 70], [300, 110]]) {
-    const x = A.x + r * Math.cos(a * RAD), y = A.y + r * Math.sin(a * RAD), ground = Math.round(heightAt(m, x, y) * 100);
-    if (ground < -60) out(N('Pilotis en béton blanc'), x, y, 0, { z: ground, h: -ground, w: 55, d: 55 });
+  // Pilotis inclinés en peigne : tous penchés vers la falaise, ils partent de l'éboulis et viennent cueillir le bord du salon et de la terrasse.
+  const tilt = 22, tan = Math.tan(tilt * RAD);
+  for (const [r, list] of [[690, [50, 90, 130]], [1080, [34, 62, 90, 118, 146]]]) for (const a of list) {
+    const [x, y] = pol(S.c, r, a), top = -36, ground = (h) => heightAt(m, x, y - tan * h) * 100;
+    if (ground(0) > -150) continue;
+    let lo = 50, hi = 5000; for (let k = 0; k < 40; k++) { const h = (lo + hi) / 2; if (ground(h) + h > top) hi = h; else lo = h; }
+    const h = Math.round(lo);
+    out(N('Pilotis incliné en béton'), x, y, 0, { z: Math.round(top - h), h, w: 70, d: Math.round(70 + tan * h), p: { tilt }, fixed: true });
   }
-  p.site.parcel = { pts: [{ x: -3500, y: -5000 }, { x: 6500, y: -5000 }, { x: 6500, y: 3500 }, { x: -3500, y: 3500 }] };
+  // Côte : seules les pièces entièrement posées sur le plateau découpent le terrain, les passerelles au bord du vide le laissent entier.
+  p.site.cliff = true;
+  p.site.parcel = { pts: [{ x: -5000, y: -5500 }, { x: 5000, y: -5500 }, { x: 5000, y: 3000 }, { x: -5000, y: 3000 }] };
   return p;
 }
 
@@ -1542,7 +1651,7 @@ export const TEMPLATES = [
   { id: 'patio', name: 'Maison à patio, 4 chambres', desc: 'Un U autour d’une cour plantée et de son bassin, galerie vitrée, galerie-bibliothèque à l’étage, toits-terrasses, esprit japandi', make: housePatio },
   { id: 'midcentury', name: 'Maison mid-century, 4 chambres', desc: 'Pavillon sous toit papillon et bandeau vitré, boîte blanche en porte-à-faux sur l’abri voiture, claustra, terrazzo, noyer et piscine haricot', make: houseMidCentury },
   { id: 'barn', name: 'Grange contemporaine, 4 chambres', desc: 'Bardage noir, nef ouverte jusqu’à la charpente, cheminée monolithe, passerelle entre les deux ailes de nuit, esprit loft', make: houseBarn },
-  { id: 'disques', name: 'Villa des Disques, 4 chambres', desc: 'Volumes ronds en béton blanc sur une falaise, grand salon en porte-à-faux sur pilotis, oculus, rotonde et escalier hélicoïdal, chambres en rayons', make: houseDiscs },
+  { id: 'disques', name: 'Villa des Disques, 5 chambres', desc: 'Six disques blancs reliés par des passerelles de verre au bord d’une crique : salon rond en double hauteur au-dessus du vide, bibliothèque suspendue en anneau, terrasse et piscine en arc, pilotis inclinés', make: houseDiscs },
   { id: 'hill', name: 'Maison sur la colline', desc: 'Salon et cuisine en haut, chambres en dessous avec vue sur la vallée', make: houseHillside },
   { id: 'single', name: 'Plain-pied meublé', desc: '126 m², 3 chambres, déjà aménagé', make: houseSinglestorey },
   { id: 'two', name: 'Maison à étage', desc: '2 niveaux, 88 m² au sol, avec escalier', make: houseTwoStorey },
