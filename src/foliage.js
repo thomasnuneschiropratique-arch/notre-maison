@@ -184,12 +184,16 @@ export function clippedShrub({ w = 1, d = 1, h = 1, ball = false }) {
 
 /** Massif : touffes vertes piquées de fleurs. */
 export function flowerBed({ w = 3, d = 0.7, h = 0.6, flower = 'lavande' }) {
-  const g = new THREE.Group(), kind = flower === 'rose' ? 'rose' : 'lav';
+  const g = new THREE.Group(), kind = flower === 'rose' ? 'rose' : flower === 'hortensia' ? 'hydr' : 'lav';
   const geo = once(`bed${kind}`, () => { const o = []; for (let i = 0; i < 14; i++) o.push({ x: -0.5 + (i + 0.5) / 14, y: 0.5, z: (rnd() - 0.5) * 0.4, rx: 0.1, ry: 0.5, rz: 0.3 }); return cloudGeometry(o, 900, 0.09); });
   if (!mats.has(`bed${kind}`)) {
     const tx = canvasTex(256, (c, S) => {
       for (let i = 0; i < 90; i++) { c.strokeStyle = ['#4d6b3a', '#5d7d45', '#3f5a31'][i % 3]; c.lineWidth = 1.6; const x = S / 2 + (rnd() - 0.5) * S * 0.8; c.beginPath(); c.moveTo(x, S); c.quadraticCurveTo(x + (rnd() - 0.5) * 30, S * 0.5, x + (rnd() - 0.5) * 50, S * 0.25); c.stroke(); }
-      for (let i = 0; i < (kind === 'rose' ? 26 : 60); i++) { const x = S * (0.08 + rnd() * 0.84), y = S * (0.06 + rnd() * 0.42); c.fillStyle = kind === 'rose' ? ['#d9849a', '#f2b7c2', '#c9506f', '#f6e4d8'][i % 4] : ['#7a5fb0', '#8d73c4', '#6a4fa0'][i % 3]; c.beginPath(); if (kind === 'rose') c.arc(x, y, S * 0.04, 0, 6.28); else c.ellipse(x, y, S * 0.012, S * 0.05, 0, 0, 6.28); c.fill(); }
+      if (kind === 'hydr') {
+        // Hortensias blancs : feuillage dense et grosses têtes rondes crème, ombrées en bas.
+        for (let i = 0; i < 70; i++) { const x = S * (0.05 + rnd() * 0.9), y = S * (0.3 + rnd() * 0.65); c.fillStyle = ['#36502c', '#44613a', '#2e4526'][i % 3]; c.beginPath(); c.ellipse(x, y, S * 0.05, S * 0.03, rnd() * 3, 0, 6.28); c.fill(); }
+        for (let i = 0; i < 24; i++) { const x = S * (0.1 + rnd() * 0.8), y = S * (0.1 + rnd() * 0.45), r = S * (0.06 + rnd() * 0.03); c.fillStyle = '#d9dccb'; c.beginPath(); c.arc(x, y + r * 0.15, r, 0, 6.28); c.fill(); c.fillStyle = ['#f7f6ee', '#eef0e2', '#fbfaf3'][i % 3]; c.beginPath(); c.arc(x, y, r * 0.9, 0, 6.28); c.fill(); }
+      } else for (let i = 0; i < (kind === 'rose' ? 26 : 60); i++) { const x = S * (0.08 + rnd() * 0.84), y = S * (0.06 + rnd() * 0.42); c.fillStyle = kind === 'rose' ? ['#d9849a', '#f2b7c2', '#c9506f', '#f6e4d8'][i % 4] : ['#7a5fb0', '#8d73c4', '#6a4fa0'][i % 3]; c.beginPath(); if (kind === 'rose') c.arc(x, y, S * 0.04, 0, 6.28); else c.ellipse(x, y, S * 0.012, S * 0.05, 0, 0, 6.28); c.fill(); }
     });
     const m = new THREE.MeshStandardMaterial({ map: tx, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.8 });
     m.onBeforeCompile = swayVertex(0.05); m.customProgramCacheKey = () => 'bed';

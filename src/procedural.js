@@ -825,7 +825,7 @@ function baluster() {
  * Balustrade le long d'un segment (mètres) : socle, balustres en vase, main courante et dés aux extrémités.
  * Ajoute ses maillages au groupe `g`. `y` est le niveau du socle, `h` la hauteur totale.
  */
-export function balustradeRun(g, x0, z0, x1, z1, y, { h = 0.95, mat = trimStone(), piers = [true, true] } = {}) {
+export function balustradeRun(g, x0, z0, x1, z1, y, { h = 0.95, mat = trimStone(), piers = [true, true], finials = false } = {}) {
   const L = Math.hypot(x1 - x0, z1 - z0); if (L < 0.3) return;
   const ux = (x1 - x0) / L, uz = (z1 - z0) / L, ang = -Math.atan2(uz, ux);
   const plinth = 0.16, rail = 0.13, bh = h - plinth - rail, pw = 0.34, parts = [];
@@ -837,7 +837,7 @@ export function balustradeRun(g, x0, z0, x1, z1, y, { h = 0.95, mat = trimStone(
   // Dés : aux extrémités demandées et tous les 3 m environ.
   const n = Math.max(1, Math.round(L / 3)), at = [];
   for (let i = 0; i <= n; i++) if ((i > 0 && i < n) || (i === 0 && piers[0]) || (i === n && piers[1])) at.push(Math.min(L - pw / 2, Math.max(pw / 2, (i * L) / n)));
-  for (const a of at) { add(new THREE.BoxGeometry(pw, h + 0.04, pw), a, (h + 0.04) / 2); add(new THREE.BoxGeometry(pw + 0.06, 0.05, pw + 0.06), a, h + 0.065); }
+  for (const a of at) { add(new THREE.BoxGeometry(pw, h + 0.04, pw), a, (h + 0.04) / 2); add(new THREE.BoxGeometry(pw + 0.06, 0.05, pw + 0.06), a, h + 0.065); if (finials) { add(new THREE.CylinderGeometry(0.06, 0.09, 0.1, 12), a, h + 0.14); add(new THREE.SphereGeometry(0.15, 16, 12), a, h + 0.33); } }
   // Balustres entre les dés, au pas de 24 cm environ.
   const stops = [0, ...at, L].sort((a, b) => a - b);
   for (let k = 0; k < stops.length - 1; k++) {
@@ -852,12 +852,12 @@ export function balustradeRun(g, x0, z0, x1, z1, y, { h = 0.95, mat = trimStone(
 }
 function balustrade(p) {
   const g = new THREE.Group(), { w = 3, h = 0.95 } = p;
-  balustradeRun(g, -w / 2, 0, w / 2, 0, 0, { h });
+  balustradeRun(g, -w / 2, 0, w / 2, 0, 0, { h, finials: p.finials });
   return g;
 }
 /** Souche de cheminée enduite, couronnée d'une corniche et de deux mitrons en terre cuite. */
 function chimneyStack(p) {
-  const g = new THREE.Group(), { w = 0.9, d = 0.6, h = 5 } = p, body = getMaterial(p.facadeId || 'facade_ocre_jaune'), trim = trimStone(), clay = solid('#a5583a', 0.8);
+  const g = new THREE.Group(), { w = 0.9, d = 0.6, h = 5 } = p, body = getMaterial(p.facadeId || 'facade_ocre_jaune'), trim = trimStone(p.trim), clay = p.copper ? solid('#b0683f', 0.35, 0.7) : solid('#a5583a', 0.8);
   B(g, w, h - 0.26, d, body, 0, 0, 0);
   B(g, w + 0.1, 0.08, d + 0.1, trim, 0, h - 0.5, 0); B(g, w + 0.16, 0.14, d + 0.16, trim, 0, h - 0.26, 0); B(g, w + 0.06, 0.06, d + 0.06, trim, 0, h - 0.12, 0);
   for (const sx of [-1, 1]) C(g, 0.09, 0.11, 0.32, clay, sx * w * 0.24, h - 0.06, 0, 14);
@@ -940,7 +940,7 @@ function pool(p) {
   }
   for (const sz of [-1, 1]) B(g, w + 0.8, 0.06, 0.4, stone, 0, 0, sz * (d / 2 + 0.2));
   for (const sx of [-1, 1]) B(g, 0.4, 0.06, d, stone, sx * (w / 2 + 0.2), 0, 0);
-  B(g, w, 0.01, d, poolWaterMaterial(), 0, 0.03, 0, 0);
+  B(g, w, 0.01, d, p.dark ? darkWater() : poolWaterMaterial(), 0, 0.03, 0, 0);
   return g;
 }
 
@@ -1087,8 +1087,8 @@ function curvedSteps(p) {
 /** Bar rond : comptoir en arc, façade en noyer, plateau de marbre, étagère lumineuse derrière. */
 function roundBar(p) {
   const g = new THREE.Group(), { r = 1.6, a0 = 200, a1 = 340 } = p;
-  g.add(annulus(r - 0.55, r, a0, a1, 0, 1.0, texturedMaterial('american_walnut_veneer', 1.6, { tint: '#c99a6c', gain: 1.1 })));
-  g.add(annulus(r - 0.65, r + 0.08, a0 - 2, a1 + 2, 1.0, 0.05, texturedMaterial('marble_01', 2.5, { tint: '#f4f1ea', gain: 1.15 })));
+  g.add(annulus(r - 0.55, r, a0, a1, 0, 1.0, p.viola ? marbleMat() : texturedMaterial('american_walnut_veneer', 1.6, { tint: '#c99a6c', gain: 1.1 })));
+  g.add(annulus(r - 0.65, r + 0.08, a0 - 2, a1 + 2, 1.0, 0.05, p.viola ? marbleMat() : texturedMaterial('marble_01', 2.5, { tint: '#f4f1ea', gain: 1.15 })));
   g.add(annulus(r - 0.62, r - 0.58, a0, a1, 1.05, 0.03, emissive('#ffe6c0', 2)));
   return atArc(g, p);
 }
@@ -1107,7 +1107,7 @@ const walnutMat = () => texturedMaterial('american_walnut_veneer', 2, { tint: '#
 /** Cheminée monumentale : masse de pierre, panneau de noyer, foyer allumé. */
 function fireplace(p) {
   const g = new THREE.Group(), { w = 4.2, h = 7, d = 0.9, outdoor } = p;
-  const stone = stoneMat(), soot = solid('#17161a', 0.92), fw = Math.min(w * 0.68, 2.6), fh = outdoor ? 0.75 : 0.62, sill = 0.42;
+  const stone = p.travertine ? texturedMaterial('white_sandstone_bricks', 3.4, { tint: '#f3eadb', gain: 2.1 }) : stoneMat(), soot = solid('#17161a', 0.92), fw = Math.min(w * 0.68, 2.6), fh = outdoor ? 0.75 : 0.62, sill = 0.42;
   B(g, w, sill, d, stone, 0, 0, 0);
   B(g, (w - fw) / 2, fh, d, stone, -(w + fw) / 4, sill, 0); B(g, (w - fw) / 2, fh, d, stone, (w + fw) / 4, sill, 0);
   B(g, w, h - sill - fh, d, stone, 0, sill + fh, 0);
@@ -1119,7 +1119,9 @@ function fireplace(p) {
   for (let i = 0; i < 5; i++) { const m = mesh(new THREE.CylinderGeometry(0.05, 0.06, fw * 0.3, 10), log, -fw * 0.28 + i * fw * 0.14, sill + 0.08 + (i % 2) * 0.05, 0.08 + (i % 2) * 0.05); m.rotation.z = Math.PI / 2 + (i % 3) * 0.12; g.add(m); }
   B(g, fw * 0.76, 0.03, 0.26, emb, 0, sill + 0.02, 0.08, 0);
   B(g, fw * 0.8, 0.09, 0.2, solid('#2a1a12', 0.9), 0, sill, 0.1, 0.03);
-  if (!outdoor && h > 3.2) { const pw = w * 0.56; B(g, pw, h - 1.9, 0.05, walnutMat(), 0, 1.75, d / 2 + 0.01); }
+  if (!outdoor && h > 3.2 && !p.travertine) { const pw = w * 0.56; B(g, pw, h - 1.9, 0.05, walnutMat(), 0, 1.75, d / 2 + 0.01); }
+  // Travertin : un manteau saillant encadre le foyer, la hotte monte d'un seul bloc jusqu'au plafond.
+  if (p.travertine) { B(g, fw + 0.5, 0.14, 0.08, stone, 0, sill + fh + 0.12, d / 2 + 0.04, 0.01); for (const k of [-1, 1]) B(g, 0.12, fh + 0.26, 0.08, stone, k * (fw / 2 + 0.19), sill - 0.02, d / 2 + 0.04, 0.01); }
   return g;
 }
 
@@ -1161,6 +1163,66 @@ function marquise(p) {
     const arm = new THREE.Mesh(new THREE.TubeGeometry(curve, 18, 0.02, 6, false), iron); arm.castShadow = true; g.add(arm);
     const curl = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.014, 6, 16), iron); curl.rotation.y = Math.PI / 2; curl.position.set(x, top - 0.16, zw + 0.16); g.add(curl);
   }
+  return g;
+}
+
+let darkCache = null;
+/** Eau d'un bassin au liner noir : reflets profonds, presque miroir. */
+function darkWater() {
+  if (darkCache) return darkCache;
+  darkCache = poolWaterMaterial().clone();
+  darkCache.color = new THREE.Color('#33454b'); darkCache.emissive = new THREE.Color('#2c4c55'); darkCache.emissiveIntensity = 0.08;
+  return darkCache;
+}
+/** Spa surélevé : muret de pierre, margelle claire, eau sombre. */
+function spa(p) {
+  const g = new THREE.Group(), { w = 2.6, d = 2.6, h = 0.55 } = p, wall = texturedMaterial('rustic_stone_wall', 1.6, { tint: '#d9cdb6', gain: 1.25 }), cope = texturedMaterial('large_grey_tiles', 1.2, { tint: '#efe4d2', gain: 1.5 });
+  for (const sz of [-1, 1]) B(g, w, h - 0.08, 0.3, wall, 0, 0, sz * (d / 2 - 0.15));
+  for (const sx of [-1, 1]) B(g, 0.3, h - 0.08, d - 0.6, wall, sx * (w / 2 - 0.15), 0, 0);
+  for (const sz of [-1, 1]) B(g, w + 0.08, 0.08, 0.42, cope, 0, h - 0.08, sz * (d / 2 - 0.17));
+  for (const sx of [-1, 1]) B(g, 0.42, 0.08, d - 0.76, cope, sx * (w / 2 - 0.17), h - 0.08, 0);
+  B(g, w - 0.6, h - 0.2, d - 0.6, solid('#1d2a2e', 0.4), 0, 0, 0);
+  B(g, w - 0.62, 0.01, d - 0.62, darkWater(), 0, h - 0.17, 0, 0);
+  return g;
+}
+/** Court de tennis en résine verte : lignes blanches, filet, grillage sombre sur poteaux. */
+function tennisCourt(p) {
+  const g = new THREE.Group(), { w = 36, d = 18 } = p, surf = solid('#3f6b4e', 0.85), out = solid('#2f5340', 0.85), white = solid('#f2f2ee', 0.6), iron = solid('#2a2b27', 0.5, 0.5);
+  B(g, w, 0.02, d, out, 0, 0, 0, 0);
+  const L = 23.77, W = 10.97, S = 8.23, sv = 6.4, lw = 0.05, y = 0.021;
+  B(g, L + 0.4, 0.004, W + 0.4, surf, 0, 0.02, 0, 0);
+  for (const z of [-W / 2, W / 2, -S / 2, S / 2]) B(g, L, 0.003, lw, white, 0, y, z, 0);
+  for (const x of [-L / 2, L / 2]) B(g, lw, 0.003, W, white, x, y, 0, 0);
+  for (const x of [-sv, sv]) B(g, lw, 0.003, S, white, x, y, 0, 0);
+  B(g, sv * 2, 0.003, lw, white, 0, y, 0, 0);
+  for (const x of [-L / 2, L / 2]) B(g, 0.3, 0.003, lw, white, x + (x < 0 ? 0.15 : -0.15), y, 0, 0);
+  // Filet : poteaux, bande blanche, maille sombre.
+  for (const z of [-(W / 2 + 0.9), W / 2 + 0.9]) C(g, 0.04, 0.04, 1.07, iron, 0, 0, z, 10);
+  const net = solid('#151615', 0.9, 0, { transparent: true, opacity: 0.45 });
+  B(g, 0.02, 0.88, W + 1.8, net, 0, 0.03, 0, 0); B(g, 0.05, 0.07, W + 1.8, white, 0, 0.88, 0, 0);
+  // Grillage tout autour, 3 m de haut.
+  const mesh2 = solid('#1c1d1b', 0.9, 0, { transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+  const fh = p.fence ?? 3;
+  for (const sz of [-1, 1]) { B(g, w, fh, 0.01, mesh2, 0, 0, sz * d / 2, 0); B(g, w, 0.05, 0.05, iron, 0, fh, sz * d / 2, 0); }
+  for (const sx of [-1, 1]) { B(g, 0.01, fh, d, mesh2, sx * w / 2, 0, 0, 0); B(g, 0.05, 0.05, d, iron, sx * w / 2, fh, 0, 0); }
+  for (let x = -w / 2; x <= w / 2 + 0.01; x += w / Math.round(w / 3)) for (const sz of [-1, 1]) C(g, 0.035, 0.035, fh, iron, x, 0, sz * d / 2, 8);
+  for (let z = -d / 2; z <= d / 2 + 0.01; z += d / Math.round(d / 3)) for (const sx of [-1, 1]) C(g, 0.035, 0.035, fh, iron, sx * w / 2, 0, z, 8);
+  return g;
+}
+/** Suspension en albâtre : longue capsule lumineuse dans un cadre de bronze, pendue sous le plafond. */
+function alabasterPendant(p) {
+  const g = new THREE.Group(), { w = 0.5, h = 1.6 } = p, len = Math.min(1.3, h * 0.7), r = w / 2;
+  const glow = solid('#f3e2c4', 0.6, 0, { emissive: new THREE.Color('#ffd9a0'), emissiveIntensity: 1.2 }), bronze = solid('#3b2f24', 0.4, 0.6);
+  const cap = new THREE.Mesh(new THREE.CapsuleGeometry(r * 0.82, len - r * 1.6, 8, 20), glow); cap.scale.z = 0.25; cap.position.y = -h + len / 2; g.add(cap);
+  const ring = new THREE.Mesh(new THREE.CapsuleGeometry(r, len - r * 2 + 0.02, 8, 20), bronze); ring.scale.z = 0.18; ring.position.y = -h + len / 2; g.add(ring);
+  C(g, 0.012, 0.012, h - len, bronze, 0, -h + len, 0, 8);
+  return g;
+}
+/** Table basse en marbre : plateau épais aux angles adoucis sur un socle en retrait. */
+function marbleCoffee(p) {
+  const g = new THREE.Group(), { w = 1.4, d = 0.9, h = 0.36 } = p, mat = p.black ? texturedMaterial('marble_01', 2, { tint: '#3a3633', gain: 0.6 }) : marbleMat();
+  B(g, w * 0.7, h * 0.55, d * 0.6, mat, 0, 0, 0, 0.02);
+  B(g, w, h * 0.45, d, mat, 0, h * 0.55, 0, 0.08);
   return g;
 }
 
@@ -1521,7 +1583,7 @@ export const PROC = {
   stairs, slab, pergola, hedge, tree, fence, pool, balcony, railing, retaining,
   flowerBed, daybed, walnutSideboard, pedestalTable, urnBouquet, lantern, marbleBlockVanity,
   fireplace, outdoorKitchen, firepit, column, ringChandelier, parasol, topiary, sportsCar,
-  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive, kidneyPool, claustra, steelColumn, boulder, curvedSofa, drumFireplace, concreteColumn, sculpture, palm, arcDeck, arcPool, curvedSteps, roundBar, slantColumn, balustrade, chimneyStack, marbleMantel, marquise,
+  bigArt, libraryWall, dressingWall, solidTable, branchVase, cushionSet, sconce, domePendant, cabinetRun, tallCabinets, marbleIsland, rangeHood, ovalTub, stoneVanity, stripedLounger, vintageParasol, cypress, umbrellaPine, treadmill, weightBench, slatPergola, modernLounger, olive, kidneyPool, claustra, steelColumn, boulder, curvedSofa, drumFireplace, concreteColumn, sculpture, palm, arcDeck, arcPool, curvedSteps, roundBar, slantColumn, balustrade, chimneyStack, marbleMantel, marquise, spa, tennisCourt, alabasterPendant, marbleCoffee,
 };
 
 /** Résout les finitions décrites dans le catalogue, puis construit le meuble. */

@@ -74,6 +74,8 @@ export const FACADES = [
   { id: 'facade_enduit', name: 'Enduit blanc cassé', t: 'plastered_wall', s: 3, tint: '#efe9dc', price: 45 },
   { id: 'facade_ton_pierre', name: 'Enduit ton pierre', t: 'plastered_wall', s: 3, tint: '#d9c8ab', price: 45 },
   { id: 'facade_ocre', name: 'Enduit ocre', t: 'plastered_wall', s: 3, tint: '#cfa873', price: 45 },
+  { id: 'facade_moellons', name: 'Moellons de pierre blonde', t: 'rustic_stone_wall', s: 2.8, tint: '#f6eddc', gain: 1.75, price: 190 },
+  { id: 'facade_bardage_taupe', name: 'Bardage vertical taupe', t: 'wood_cabinet_worn_long', s: 2.2, tint: '#9a8c78', gain: 0.95, price: 110 },
   { id: 'facade_ocre_jaune', name: 'Enduit ocre jaune de la Riviera', t: 'plastered_wall', s: 3, tint: '#e8c48a', gain: 1.06, price: 48 },
   { id: 'facade_gris', name: 'Enduit gris', t: 'plastered_wall', s: 3, tint: '#a7a6a1', price: 45 },
   { id: 'facade_brique', name: 'Brique rouge toulousaine', t: 'red_brick_03', s: 2, price: 110 },
@@ -90,6 +92,7 @@ export const ROOFS = [
   { id: 'roof_terracotta', name: 'Tuile canal terre cuite', t: 'clay_roof_tiles', s: 2.2 },
   { id: 'roof_terracotta2', name: 'Tuile romane', t: 'clay_roof_tiles_02', s: 2.2 },
   { id: 'roof_tile', name: 'Tuile brune', t: 'roof_tiles', s: 2.2 },
+  { id: 'roof_bardeau', name: 'Bardeaux vieillis gris', t: 'roof_slates_02', s: 2.4, tint: '#8f8780', gain: 0.95 },
   { id: 'roof_ardoise', name: 'Ardoise', t: 'roof_slates_02', s: 2.2, tint: '#6b7077', gain: 0.8 },
   { id: 'roof_grey', name: 'Tuile grise', t: 'grey_roof_tiles', s: 2.2 },
 ];

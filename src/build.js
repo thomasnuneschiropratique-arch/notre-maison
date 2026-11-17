@@ -413,7 +413,7 @@ export function stairVoids(lower, stairDefs) {
     const straight = !def.model.p?.shape || def.model.p.shape === 'straight';
     const f = (def.model.p?.flight || 0) * 50;
     // La trémie s'ouvre dès que la marche passe sous les 2,05 m de hauteur libre, quelle que soit la hauteur sous plafond.
-    const H = lower.height || 260, rise = H + (lower.slab ?? 22), need = Math.max(0, (H - 205) / rise);
+    const H = lower.height || 260, rise = H + (lower.slab ?? 22), need = Math.max(0, (H - 205 - (it.p?.voidMargin || 0)) / rise);
     const endStraight = Math.min(d, Math.max(d * 0.2, d * (1 - 2 * need)));
     const endQuarter = Math.min(d, Math.max(d * 0.2, d - (need / 0.76) * (2 * d - 2 * f)));
     const shape = def.model.p?.quarter ? [[-w - 3, -d - 3], [-w - 3, endQuarter], [-w + f * 2 + 3, endQuarter], [-w + f * 2 + 3, -d + f * 2 + 3], [w + 3, -d + f * 2 + 3], [w + 3, -d - 3]] : [[-w - 3, -d - 3], [-w - 3, straight ? endStraight : d + 3], [w + 3, straight ? endStraight : d + 3], [w + 3, -d - 3]];
@@ -452,6 +452,8 @@ export function buildLevel(project, level, index, analysis, baseY, opts) {
   const inZone = (p, z) => p.x >= z.x0 - 1 && p.x <= z.x1 + 1 && p.y >= z.y0 - 1 && p.y <= z.y1 + 1;
   // Plus bas (garage, appentis) : seuls les murs propres au volume descendent. Plus haut (séjour cathédrale) : tous ses murs montent.
   const wallHeight = (w) => {
+    // Un mur marqué `keepHeight` garde la hauteur de l'étage : l'étage au-dessus prend le relais (mur entre un hall et un séjour double hauteur).
+    if (w.keepHeight) return H;
     const sides = ['L', 'R'].map((s) => analysis.sideRoom.get(`${w.id}:${s}`));
     for (const z of zones) {
       if (!(z.wallH > 0) || !inZone(level.nodes[w.a], z) || !inZone(level.nodes[w.b], z)) continue;
@@ -671,6 +673,7 @@ export function buildRoof(project, level, baseY, zone) {
   const eaveY = top - ovT * slope * M + lift, eaveA = top - ovA * slope * M + lift, eaveB = top - ovB * slope * M + lift;
   const sA = s0 - (cutS0 ? 0 : ov), sB = s1 + (cutS1 ? 0 : ov), tA = t0 - ovA, tB = t1 + ovB;
   const hipIn = roof.type === 'hip' ? half + ovT : 0;
+  let peakY = ridgeY;
   const rA = sA + hipIn, rB = sB - hipIn;
   const roofB = new QuadBatch(), gable = new QuadBatch();
 
@@ -725,11 +728,7 @@ export function buildRoof(project, level, baseY, zone) {
     inner.forEach(([s, t], k) => { const [s2, t2] = inner[(k + 1) % 4]; rod(P(s, t, yB), P(s2, t2, yB), 0.045); rod(P(outer[k][0], outer[k][1], top), P(s, t, yB), 0.03); rod(P(s, t, yB), P(s < (s0i + s1i) / 2 ? rA : rB, tc, yR), 0.03); });
     rod(P(rA, tc, yR), P(rB, tc, yR), 0.05);
     if (rods.length) { const zm = new THREE.Mesh(mergeGeometries(rods), zinc); zm.castShadow = true; g.add(zm); rods.forEach((q) => q.dispose()); }
-    // Souches de cheminée : elles partent de la corniche et dépassent le faîtage d'environ un mètre.
-    for (const c of roof.chimneys || []) {
-      const st = PROC.chimneyStack({ w: (c.w ?? 100) * M, d: (c.d ?? 60) * M, h: yR - top + (c.above ?? 0.95), facadeId: project.style.facade });
-      st.position.set(c.x * M, top + 0.02, c.y * M); st.rotation.y = ((c.rot ?? 0) * Math.PI) / 180; g.add(st);
-    }
+    peakY = yR;
     // Lucarnes : façade en pierre claire posée sur la corniche, fenêtre à petits bois, fronton triangulaire ou cintré.
     const trim = trimStone(project.style.trim), white = solid('#f1efe9', 0.5), dark = solid('#1c2023', 0.9);
     for (const dm of roof.dormers || []) {
@@ -775,6 +774,11 @@ export function buildRoof(project, level, baseY, zone) {
       }
     }
   }
+  // Souches de cheminée : elles partent du haut des murs et dépassent le faîtage d'environ un mètre (ou de `h` cm au-dessus du toit).
+  for (const c of roof.chimneys || []) {
+    const st = PROC.chimneyStack({ w: (c.w ?? 100) * M, d: (c.d ?? 60) * M, h: c.h ? c.h * M : peakY - top + (c.above ?? 0.95), facadeId: c.facade || project.style.facade, trim: project.style.trim, copper: c.copper });
+    st.position.set(c.x * M, top + 0.02, c.y * M); st.rotation.y = ((c.rot ?? 0) * Math.PI) / 180; g.add(st);
+  }
   const rm = new THREE.Mesh(roofB.geometry(), tile.clone());
   rm.material.side = THREE.DoubleSide;
   rm.castShadow = rm.receiveShadow = true;
@@ -788,7 +792,7 @@ export function buildRoof(project, level, baseY, zone) {
     g.add(lining);
   }
   if (!gable.empty) {
-    const gm = new THREE.Mesh(gable.geometry(), facade.clone());
+    const gm = new THREE.Mesh(gable.geometry(), (zone?.facade ? getMaterial(zone.facade) : facade).clone());
     // Dehors, la façade ; dedans (séjour cathédrale), un enduit clair au lieu de la pierre extérieure.
     gm.material.side = zone?.vault && roof.type !== 'butterfly' ? THREE.FrontSide : THREE.DoubleSide;
     gm.castShadow = gm.receiveShadow = true;
