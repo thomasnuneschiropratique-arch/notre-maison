@@ -1312,6 +1312,8 @@ function domePendant(p) {
   const g = new THREE.Group(), { w = 0.6, h = 0.9 } = p, metal = brass();
   const dome = mesh(new THREE.SphereGeometry(w / 2, 28, 12, 0, 6.3, 0, 1.45), metal.clone(), 0, 0.02, 0); dome.material.side = THREE.DoubleSide; g.add(dome);
   S(g, 0.05, emissive('#ffe2b8', 4), 0, 0.03, 0); C(g, 0.006, 0.006, h, metal, 0, w / 2, 0, 8);
+  // Posée au plafond : tout pend sous le point d'accroche, la hauteur `h` est la longueur de la descente.
+  for (const c of g.children) c.position.y -= h + w / 2;
   return g;
 }
 
@@ -1409,6 +1411,7 @@ function lantern(p) {
   B(g, w + 0.03, 0.02, w + 0.03, metal, 0, 0, 0); const cap = C(g, 0.03, hw * 1.45, 0.16, metal, 0, body, 0, 4); cap.rotation.y = Math.PI / 4;
   const pane = glass(); B(g, w, body, 0.004, pane, 0, 0, hw); B(g, w, body, 0.004, pane, 0, 0, -hw); B(g, 0.004, body, w, pane, hw, 0, 0); B(g, 0.004, body, w, pane, -hw, 0, 0);
   S(g, 0.05, emissive('#ffe2b8', 3.5), 0, body * 0.5, 0); C(g, 0.006, 0.006, Math.max(0.1, h - body - 0.16), metal, 0, body + 0.16, 0, 6);
+  for (const c of g.children) c.position.y -= Math.max(h, body + 0.26);
   return g;
 }
 
